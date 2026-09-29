@@ -753,9 +753,7 @@ create policy households_delete  on households for delete using (is_admin(id)); 
 create policy members_read on household_members for select using (is_member(household_id));
 create policy members_self_update on household_members for update
   using (user_id = auth.uid()) with check (user_id = auth.uid());
--- Cada membro só pode alterar a hora do resumo; o role não (evita subir-se a admin)
-revoke update on household_members from anon, authenticated;
-grant  update (daily_summary_time) on household_members to authenticated;
+-- (as permissões de coluna em household_members estão na secção 11)
 
 -- Tabelas simples da casa
 create policy invites_rw     on household_invites   for all using (is_member(household_id)) with check (is_member(household_id));
@@ -845,3 +843,26 @@ insert into product_templates
   (6, 'Papel higiénico',        '🧻', 13, 'rolo',  12, null, null, null, null),
   (7, 'Rolos de cozinha',       '🧻', 13, 'rolo',   6, null, null, null, null),
   (8, 'Detergente da loiça',    '🧴', 11, 'dose', 100, 'Lavar a loiça à mão',    7, 'week', 1);
+
+
+-- =====================================================================
+-- 11. PERMISSÕES DA DATA API
+-- O projeto Supabase é criado SEM "Automatically expose new tables", por isso
+-- damos as permissões à mão. Só o papel `authenticated` (inclui sessões anónimas)
+-- acede; o `anon` não recebe nada. A RLS decide que linhas cada um vê.
+-- =====================================================================
+
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant execute on all functions in schema public to authenticated;
+
+-- Tabelas de referência: só leitura
+revoke insert, update, delete on product_categories, product_templates from authenticated;
+
+-- Membros: nada de escrever diretamente (entram via create_household / accept_invite);
+-- cada membro só altera a hora do resumo, nunca o role (evita subir-se a admin)
+revoke insert, update, delete on household_members from authenticated;
+grant  update (daily_summary_time) on household_members to authenticated;
+
+-- Casas: só se criam pela função create_household
+revoke insert on households from authenticated;
