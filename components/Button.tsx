@@ -1,4 +1,7 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
+
+import { Text } from '@/components/Text';
+import { colors, fonts, radius } from '@/lib/theme';
 
 type Props = {
   title: string;
@@ -22,13 +25,14 @@ export function Button({ title, onPress, disabled, variant = 'primary' }: Props)
 const styles = StyleSheet.create({
   button: {
     alignSelf: 'stretch',
-    backgroundColor: '#208AEF',
-    borderRadius: 10,
-    padding: 16,
+    backgroundColor: colors.primary,
+    borderRadius: radius.button,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
     alignItems: 'center',
   },
-  secondary: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#208AEF' },
+  secondary: { backgroundColor: colors.lavender },
   disabled: { opacity: 0.4 },
-  text: { color: '#fff', fontSize: 17, fontWeight: '600' },
-  secondaryText: { color: '#208AEF' },
+  text: { color: '#fff', fontSize: 15, fontFamily: fonts.heading },
+  secondaryText: { color: colors.primary },
 });

@@ -1,6 +1,8 @@
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { DatePicker } from '@/components/DatePicker';
@@ -270,11 +272,11 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   container: { padding: 16, gap: 12, paddingBottom: 80 },
   hint: { color: '#666', textAlign: 'center' },
-  card: { gap: 6, padding: 16, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff' },
+  card: { gap: 6, padding: 16, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
   title: { fontSize: 22, fontWeight: '700' },
   line: { fontSize: 15, color: '#444' },
   actions: { gap: 10 },
-  picker: { gap: 10, padding: 14, borderWidth: 1, borderColor: '#208AEF', borderRadius: 12, backgroundColor: '#f6f9ff' },
+  picker: { gap: 10, padding: 14, borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 12, backgroundColor: '#F4F3FF' },
   deleted: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: '#fdecea' },
   deletedText: { color: '#8a2c22' },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 8 },

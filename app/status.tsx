@@ -1,6 +1,8 @@
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
@@ -138,10 +140,10 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16, gap: 10, paddingBottom: 60 },
   hint: { color: '#666', fontSize: 13, textAlign: 'center' },
-  error: { color: '#c0392b', textAlign: 'center' },
+  error: { color: '#DC4F89', textAlign: 'center' },
   group: { gap: 10, marginTop: 8 },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase' },
-  card: { gap: 6, padding: 14, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff' },
+  card: { gap: 6, padding: 14, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
   dim: { opacity: 0.65 },
   title: { fontSize: 17, fontWeight: '600' },
   sub: { color: '#666', fontSize: 13 },

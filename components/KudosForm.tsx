@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 
@@ -46,13 +48,13 @@ export function KudosForm({ name, onSend, onCancel }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  box: { gap: 10, padding: 14, borderWidth: 1, borderColor: '#208AEF', borderRadius: 12, backgroundColor: '#f2f8ff' },
+  box: { gap: 10, padding: 14, borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 12, backgroundColor: '#F4F3FF' },
   title: { fontSize: 16, fontWeight: '600' },
   chips: { flexDirection: 'row', gap: 8 },
-  chip: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: '#208AEF', alignItems: 'center', justifyContent: 'center' },
-  chipOn: { backgroundColor: '#208AEF' },
-  chipText: { color: '#208AEF', fontSize: 18, fontWeight: '600' },
+  chip: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
+  chipOn: { backgroundColor: '#5C4DB1' },
+  chipText: { color: '#5C4DB1', fontSize: 18, fontWeight: '600' },
   chipTextOn: { color: '#fff' },
-  input: { borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 12, fontSize: 16, backgroundColor: '#fff' },
+  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16, backgroundColor: '#fff' },
   buttons: { flexDirection: 'row', gap: 10 },
 });

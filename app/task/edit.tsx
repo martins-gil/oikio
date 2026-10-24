@@ -1,6 +1,8 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { DateSheet } from '@/components/DateSheet';
@@ -304,27 +306,27 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 10 },
   sub: { fontSize: 15, fontWeight: '600' },
   hint: { color: '#777', fontSize: 13 },
-  input: { borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 12, fontSize: 17, backgroundColor: '#fff' },
+  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 17, backgroundColor: '#fff' },
   options: { gap: 6 },
-  option: { padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, backgroundColor: '#fff' },
-  optionOn: { borderColor: '#208AEF', backgroundColor: '#eaf3ff' },
+  option: { padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 10, backgroundColor: '#fff' },
+  optionOn: { borderColor: '#5C4DB1', backgroundColor: '#ECEBFF' },
   optionText: { fontSize: 16 },
-  optionTextOn: { fontWeight: '600', color: '#208AEF' },
-  block: { gap: 10, padding: 12, borderRadius: 10, backgroundColor: '#f6f9fc' },
+  optionTextOn: { fontWeight: '600', color: '#5C4DB1' },
+  block: { gap: 10, padding: 12, borderRadius: 10, backgroundColor: '#F4F3FF' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: '#208AEF', borderRadius: 16, paddingVertical: 7, paddingHorizontal: 12, backgroundColor: '#fff' },
-  chipOn: { backgroundColor: '#208AEF' },
-  chipText: { color: '#208AEF', fontWeight: '600' },
+  chip: { borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 16, paddingVertical: 7, paddingHorizontal: 12, backgroundColor: '#fff' },
+  chipOn: { backgroundColor: '#5C4DB1' },
+  chipText: { color: '#5C4DB1', fontWeight: '600' },
   chipTextOn: { color: '#fff' },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
-  stepButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#208AEF', alignItems: 'center', justifyContent: 'center' },
+  stepButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
   stepText: { color: '#fff', fontSize: 26, fontWeight: '600', lineHeight: 30 },
   stepValue: { fontSize: 20, fontWeight: '700', minWidth: 140, textAlign: 'center' },
   off: { opacity: 0.3 },
-  error: { color: '#c0392b', textAlign: 'center' },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderWidth: 1, borderColor: '#208AEF', borderRadius: 10, backgroundColor: '#fff' },
+  error: { color: '#DC4F89', textAlign: 'center' },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 10, backgroundColor: '#fff' },
   dateIcon: { fontSize: 20 },
   dateText: { flex: 1, fontSize: 16, textTransform: 'capitalize' },
-  dateChange: { color: '#208AEF', fontWeight: '600' },
-  link: { color: '#208AEF', fontWeight: '600' },
+  dateChange: { color: '#5C4DB1', fontWeight: '600' },
+  link: { color: '#5C4DB1', fontWeight: '600' },
 });

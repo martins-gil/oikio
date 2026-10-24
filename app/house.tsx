@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -56,7 +58,7 @@ export default function HouseScreen() {
     const until = new Date(invite.expires_at).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' });
     await Share.share({
       message:
-        `Entra na nossa casa na App da Casa! Abre a app, toca em "Tenho um convite" e escreve o código:\n\n` +
+        `Entra na nossa casa no NestKeep! Abre a app, toca em "Tenho um convite" e escreve o código:\n\n` +
         `${formatInviteCode(invite.token)}\n\n(válido até ${until})`,
     });
   };
@@ -167,20 +169,20 @@ const styles = StyleSheet.create({
   container: { padding: 20, gap: 12, paddingBottom: 80 },
   title: { fontSize: 24, fontWeight: '600' },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 12 },
-  card: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 14, backgroundColor: '#fff', gap: 2 },
+  card: { borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, padding: 14, backgroundColor: '#fff', gap: 2 },
   cardTitle: { fontSize: 17, fontWeight: '600' },
   cardLine: { color: '#666' },
   row: { flexDirection: 'row' },
-  input: { flex: 1, borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 12, fontSize: 17 },
-  inviteBox: { gap: 10, borderWidth: 1, borderColor: '#208AEF', borderRadius: 12, padding: 16, alignItems: 'center' },
+  input: { flex: 1, borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 17 },
+  inviteBox: { gap: 10, borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 12, padding: 16, alignItems: 'center' },
   code: { fontSize: 30, fontWeight: '700', letterSpacing: 3 },
   warn: { gap: 10, backgroundColor: '#fff4e5', borderRadius: 12, padding: 16 },
   warnText: { color: '#8a5a00' },
   group: { gap: 10 },
   modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  mode: { borderWidth: 1, borderColor: '#208AEF', borderRadius: 16, paddingVertical: 8, paddingHorizontal: 14 },
-  modeOn: { backgroundColor: '#208AEF' },
+  mode: { borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 16, paddingVertical: 8, paddingHorizontal: 14 },
+  modeOn: { backgroundColor: '#5C4DB1' },
   modeOff: { opacity: 0.5 },
-  modeText: { color: '#208AEF', fontWeight: '600' },
+  modeText: { color: '#5C4DB1', fontWeight: '600' },
   modeTextOn: { color: '#fff' },
 });

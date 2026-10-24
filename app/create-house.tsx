@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
@@ -63,12 +65,12 @@ const styles = StyleSheet.create({
   input: {
     alignSelf: 'stretch',
     borderWidth: 1,
-    borderColor: '#999',
+    borderColor: '#C9C5EC',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
   },
-  error: { color: '#c0392b', textAlign: 'center' },
+  error: { color: '#DC4F89', textAlign: 'center' },
   or: { alignItems: 'center' },
   orText: { color: '#666' },
 });

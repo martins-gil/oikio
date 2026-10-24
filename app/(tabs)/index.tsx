@@ -1,7 +1,10 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
+
+import { Screen } from '@/components/Screen';
 import { ActionSheet, type SheetOption } from '@/components/ActionSheet';
 import { Button } from '@/components/Button';
 import { DateSheet } from '@/components/DateSheet';
@@ -415,6 +418,7 @@ export default function HomeScreen() {
   };
 
   return (
+    <Screen title="Resumo" logo>
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container}>
         {error && <Text style={styles.error}>{error}</Text>}
@@ -512,7 +516,7 @@ export default function HomeScreen() {
                         {whoName(r.user_id)}
                       </Text>
                       <View style={styles.track}>
-                        <View style={[styles.fill, { width: `${share}%`, backgroundColor: '#208AEF' }]} />
+                        <View style={[styles.fill, { width: `${share}%`, backgroundColor: '#5C4DB1' }]} />
                       </View>
                       <Text style={styles.taskLine}>
                         {r.tasks_done} {r.tasks_done === 1 ? 'tarefa' : 'tarefas'} · {share}% do esforço
@@ -591,6 +595,7 @@ export default function HomeScreen() {
       />
       <Toast message={toast} onHide={hideToast} />
     </View>
+    </Screen>
   );
 }
 
@@ -604,9 +609,9 @@ const styles = StyleSheet.create({
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 4 },
   hint: { color: '#666', textAlign: 'center' },
   tip: { color: '#888', fontSize: 12, marginBottom: 2 },
-  link: { color: '#208AEF', fontSize: 15, fontWeight: '600' },
+  link: { color: '#5C4DB1', fontSize: 15, fontWeight: '600' },
   // Estado da casa
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
   dotSmall: { width: 16, height: 16, borderRadius: 8 },
   statusText: { flex: 1, gap: 6 },
   statusTitle: { fontSize: 16, fontWeight: '600' },
@@ -616,13 +621,13 @@ const styles = StyleSheet.create({
   // Resumo da semana
   weekRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8, marginTop: 6 },
   week: { fontSize: 18, fontWeight: '700' },
-  arrow: { fontSize: 20, color: '#208AEF' },
+  arrow: { fontSize: 20, color: '#5C4DB1' },
   arrowOff: { opacity: 0.25 },
   total: { fontSize: 24, fontWeight: '700', textAlign: 'center' },
-  personCard: { gap: 6, padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff' },
+  personCard: { gap: 6, padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
   personName: { fontSize: 16, fontWeight: '600' },
   // Tarefas (como em "Hoje")
-  task: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff' },
+  task: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
   taskDone: { opacity: 0.6 },
   circle: { fontSize: 24 },
   dot: { width: 22, height: 22, borderRadius: 11, margin: 1 },
@@ -631,13 +636,13 @@ const styles = StyleSheet.create({
   strike: { textDecorationLine: 'line-through' },
   taskLine: { color: '#666', fontSize: 14 },
   doneBy: { color: '#777', fontSize: 12 },
-  late: { color: '#d9534f', fontSize: 14, fontWeight: '600' },
+  late: { color: '#DC4F89', fontSize: 14, fontWeight: '600' },
   doneWrap: { gap: 8 },
   thanked: { color: '#666', fontSize: 14, paddingLeft: 4 },
-  banner: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: '#eaf3ff', borderWidth: 1, borderColor: '#208AEF' },
+  banner: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: '#ECEBFF', borderWidth: 1, borderColor: '#5C4DB1' },
   bannerText: { fontSize: 16 },
   bannerButtons: { flexDirection: 'row', gap: 10 },
   empty: { gap: 16, marginTop: 12 },
   allDone: { fontSize: 18, textAlign: 'center', marginTop: 8 },
-  error: { color: '#c0392b', textAlign: 'center' },
+  error: { color: '#DC4F89', textAlign: 'center' },
 });

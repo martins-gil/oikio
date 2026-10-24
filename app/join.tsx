@@ -1,6 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
@@ -73,7 +75,7 @@ const styles = StyleSheet.create({
   container: { padding: 24, gap: 12, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '600', textAlign: 'center', marginBottom: 8 },
   label: { fontSize: 14, color: '#666', textTransform: 'uppercase' },
-  input: { borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 14, fontSize: 17 },
+  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 14, fontSize: 17 },
   code: { fontSize: 22, letterSpacing: 2, textAlign: 'center' },
-  error: { color: '#c0392b', textAlign: 'center' },
+  error: { color: '#DC4F89', textAlign: 'center' },
 });

@@ -1,6 +1,8 @@
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
@@ -109,13 +111,13 @@ const styles = StyleSheet.create({
   hint: { color: '#666', fontSize: 14 },
   group: { gap: 8 },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, backgroundColor: '#fff' },
-  rowOn: { borderColor: '#208AEF', backgroundColor: '#eaf3ff' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 10, backgroundColor: '#fff' },
+  rowOn: { borderColor: '#5C4DB1', backgroundColor: '#ECEBFF' },
   dim: { opacity: 0.5 },
-  check: { fontSize: 22, width: 28, textAlign: 'center', color: '#208AEF' },
+  check: { fontSize: 22, width: 28, textAlign: 'center', color: '#5C4DB1' },
   rowText: { flex: 1, gap: 2 },
   title: { fontSize: 16 },
   sub: { color: '#777', fontSize: 13 },
-  error: { color: '#c0392b', textAlign: 'center' },
+  error: { color: '#DC4F89', textAlign: 'center' },
   footer: { padding: 16, borderTopWidth: 1, borderTopColor: '#eee', backgroundColor: '#fff' },
 });

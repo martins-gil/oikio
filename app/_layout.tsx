@@ -1,17 +1,46 @@
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 
 import { HouseholdProvider } from '@/lib/household';
 import { SessionProvider } from '@/lib/session';
+import { colors, fonts } from '@/lib/theme';
+
+// O ecrã de arranque fica até os tipos de letra estarem carregados
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [loaded, fontError] = useFonts({
+    Montserrat_600SemiBold: require('../assets/fonts/Montserrat-SemiBold.ttf'),
+    Montserrat_700Bold: require('../assets/fonts/Montserrat-Bold.ttf'),
+    Ubuntu_400Regular: require('../assets/fonts/Ubuntu-Regular.ttf'),
+    Ubuntu_500Medium: require('../assets/fonts/Ubuntu-Medium.ttf'),
+    Ubuntu_700Bold: require('../assets/fonts/Ubuntu-Bold.ttf'),
+  });
+
+  useEffect(() => {
+    if (loaded || fontError) SplashScreen.hideAsync();
+  }, [loaded, fontError]);
+
+  if (!loaded && !fontError) return null;
+
   return (
     <SessionProvider>
       <HouseholdProvider>
-        <StatusBar style="auto" />
-        <Stack>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.primary },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontFamily: fonts.heading, fontSize: 18 },
+            headerShadowVisible: false,
+            headerBackButtonDisplayMode: 'minimal',
+            contentStyle: { backgroundColor: colors.bg },
+          }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="create-house" options={{ title: 'App da Casa' }} />
+          <Stack.Screen name="create-house" options={{ title: 'NestKeep' }} />
           <Stack.Screen name="onboarding" options={{ title: 'Consumíveis' }} />
           <Stack.Screen name="product/[id]" options={{ title: 'Produto' }} />
           <Stack.Screen name="house" options={{ title: 'Casa' }} />

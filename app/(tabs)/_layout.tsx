@@ -1,19 +1,21 @@
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { TabBar } from '@/components/TabBar';
+import { Text } from '@/components/Text';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
+import { colors } from '@/lib/theme';
 
 export default function TabsLayout() {
-  const router = useRouter();
   const { session, loading: sessionLoading, error: sessionError } = useSession();
   const { household, loading } = useHousehold();
 
   if (sessionLoading || (session && loading)) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -28,44 +30,19 @@ export default function TabsLayout() {
 
   if (!household) return <Redirect href="/create-house" />;
 
+  // Cada ecrã desenha o seu próprio cabeçalho (componente Screen); a barra de baixo é a nossa
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#208AEF',
-        // Casa (membros, convites, conta) fica na engrenagem de qualquer ecrã
-        headerRight: () => (
-          <Pressable hitSlop={12} style={styles.gear} onPress={() => router.push('/house')}>
-            <Text style={styles.icon}>⚙️</Text>
-          </Pressable>
-        ),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Resumo', headerTitle: 'Resumo da semana', tabBarIcon: () => <Text style={styles.icon}>📊</Text> }}
-      />
-      <Tabs.Screen
-        name="shopping"
-        options={{ title: 'Compras', tabBarIcon: () => <Text style={styles.icon}>🛒</Text> }}
-      />
-      <Tabs.Screen
-        name="stock"
-        options={{ title: 'Consumíveis', tabBarIcon: () => <Text style={styles.icon}>🧺</Text> }}
-      />
-      <Tabs.Screen
-        name="money"
-        options={{ title: 'Dinheiro', tabBarIcon: () => <Text style={styles.icon}>💶</Text> }}
-      />
-      <Tabs.Screen
-        name="personal"
-        options={{ title: 'Pessoal', tabBarIcon: () => <Text style={styles.icon}>🔒</Text> }}
-      />
+    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
+      <Tabs.Screen name="index" options={{ title: 'Resumo' }} />
+      <Tabs.Screen name="shopping" options={{ title: 'Compras' }} />
+      <Tabs.Screen name="stock" options={{ title: 'Consumíveis' }} />
+      <Tabs.Screen name="money" options={{ title: 'Dinheiro' }} />
+      <Tabs.Screen name="personal" options={{ title: 'Pessoal' }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  icon: { fontSize: 20 },
-  gear: { paddingHorizontal: 16 },
-  error: { color: '#c0392b', textAlign: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
+  error: { color: colors.pink, textAlign: 'center' },
 });

@@ -47,3 +47,6 @@ example
 .env.local
 supabase/.temp/
 supabase/.branches/
+design/node_modules/
+design/out/
+design/tmp-*.html

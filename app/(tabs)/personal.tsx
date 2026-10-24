@@ -1,15 +1,9 @@
+import { Screen } from '@/components/Screen';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Toast } from '@/components/Toast';
 import { formatMinutes } from '@/lib/money';
@@ -195,6 +189,7 @@ export default function PersonalScreen() {
   const done = occurrences.filter((o) => o.status === 'done');
 
   return (
+    <Screen title="Pessoal" subtitle="Só tu vês isto">
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.privacy}>🔒 Só tu vês isto</Text>
@@ -281,6 +276,7 @@ export default function PersonalScreen() {
       </ScrollView>
       <Toast message={toast} onHide={hideToast} />
     </View>
+    </Screen>
   );
 }
 
@@ -295,12 +291,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderWidth: 1,
-    borderColor: '#208AEF',
+    borderColor: '#5C4DB1',
     borderRadius: 12,
     backgroundColor: '#fff',
   },
   hoursTitle: { fontSize: 16, fontWeight: '600' },
-  hoursValue: { fontSize: 16, color: '#208AEF', fontWeight: '600' },
+  hoursValue: { fontSize: 16, color: '#5C4DB1', fontWeight: '600' },
   group: { gap: 8 },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase' },
   hint: { color: '#666' },
@@ -310,7 +306,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E7E5F7',
     borderRadius: 12,
     backgroundColor: '#fff',
   },
@@ -320,29 +316,29 @@ const styles = StyleSheet.create({
   taskTitle: { fontSize: 18 },
   strike: { textDecorationLine: 'line-through' },
   line: { color: '#666', fontSize: 14 },
-  late: { color: '#d9534f', fontSize: 14, fontWeight: '600' },
+  late: { color: '#DC4F89', fontSize: 14, fontWeight: '600' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E7E5F7',
     borderRadius: 12,
     backgroundColor: '#fff',
   },
   cardMain: { flex: 1, gap: 2 },
-  doneNow: { backgroundColor: '#208AEF', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
+  doneNow: { backgroundColor: '#5C4DB1', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
   doneNowText: { color: '#fff', fontWeight: '600' },
-  remove: { fontSize: 18, color: '#999' },
+  remove: { fontSize: 18, color: '#C9C5EC' },
   addRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: '#208AEF', borderRadius: 10, width: 48, alignItems: 'center', justifyContent: 'center' },
+  input: { flex: 1, borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16 },
+  addButton: { backgroundColor: '#5C4DB1', borderRadius: 10, width: 48, alignItems: 'center', justifyContent: 'center' },
   addText: { color: '#fff', fontSize: 26, fontWeight: '600' },
   disabled: { opacity: 0.4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: '#208AEF', borderRadius: 16, paddingVertical: 6, paddingHorizontal: 12 },
-  chipOn: { backgroundColor: '#208AEF' },
-  chipText: { color: '#208AEF' },
+  chip: { borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 16, paddingVertical: 6, paddingHorizontal: 12 },
+  chipOn: { backgroundColor: '#5C4DB1' },
+  chipText: { color: '#5C4DB1' },
   chipTextOn: { color: '#fff' },
 });

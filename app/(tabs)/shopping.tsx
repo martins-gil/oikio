@@ -1,14 +1,9 @@
+import { Screen } from '@/components/Screen';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
@@ -95,6 +90,7 @@ export default function ShoppingScreen() {
   const bought = items.filter((i) => i.checked_at);
 
   return (
+    <Screen title="Compras" subtitle="O que falta comprar">
     <View style={styles.flex}>
       <View style={styles.addRow}>
         <TextInput
@@ -143,6 +139,7 @@ export default function ShoppingScreen() {
       </ScrollView>
       <Toast message={toast} onHide={hideToast} />
     </View>
+    </Screen>
   );
 }
 
@@ -150,8 +147,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   addRow: { flexDirection: 'row', gap: 8, padding: 16, paddingBottom: 4 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: '#208AEF', borderRadius: 10, width: 48, alignItems: 'center', justifyContent: 'center' },
+  input: { flex: 1, borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16 },
+  addButton: { backgroundColor: '#5C4DB1', borderRadius: 10, width: 48, alignItems: 'center', justifyContent: 'center' },
   addText: { color: '#fff', fontSize: 26, fontWeight: '600' },
   disabled: { opacity: 0.4 },
   container: { padding: 16, gap: 8, paddingBottom: 80 },
@@ -164,7 +161,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingRight: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E7E5F7',
     borderRadius: 12,
     backgroundColor: '#fff',
   },
@@ -175,5 +172,5 @@ const styles = StyleSheet.create({
   name: { fontSize: 18, flexShrink: 1 },
   detail: { color: '#666', fontSize: 14 },
   strike: { textDecorationLine: 'line-through' },
-  remove: { fontSize: 18, color: '#999' },
+  remove: { fontSize: 18, color: '#C9C5EC' },
 });

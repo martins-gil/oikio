@@ -11,9 +11,9 @@ export const LEVEL_LABEL: Record<StockLevel, string> = {
 };
 
 export const LEVEL_COLOR: Record<StockLevel, string> = {
-  full: '#2e9e5b',
-  half: '#e0a100',
-  low: '#d9534f',
+  full: '#35B38A',
+  half: '#E59A1E', // amarelo mais escuro, para se ler em texto
+  low: '#DC4F89',
   empty: '#999999',
 };
 

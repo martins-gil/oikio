@@ -1,4 +1,4 @@
-# App da Casa
+# NestKeep (App da Casa)
 
 App móvel (iOS e Android) para um casal gerir a casa: tarefas domésticas recorrentes,
 stock de consumíveis e alimentos, lista de compras, sugestões de refeições com IA,
@@ -24,6 +24,12 @@ Qualquer ação diária em ≤ 2 toques. Nenhum campo obrigatório além do nome
 - `supabase/migrations/` — alterações à base de dados (nunca editar uma migração já aplicada; criar uma nova)
 - `supabase/functions/` — Edge Functions (notificações, talões, sugestões de refeição)
 - `docs/` — decisões de produto e desenho
+
+## Marca e aspeto
+- Nome: **NestKeep** ("Your home in flow."). Cores em `lib/theme.ts`: roxo `#5C4DB1`, amarelo `#FFBF67`, rosa `#DC4F89`, lavanda `#DFDEFF`.
+- Letras: Montserrat (títulos) e Ubuntu (texto), em `assets/fonts/`. Usar `Text`/`TextInput` de `components/Text` (não os do React Native).
+- Cada separador usa `components/Screen` (cabeçalho roxo + folha branca arredondada); a barra de baixo é `components/TabBar`.
+- Ícones e logótipo gerados em `design/` (ver `design/README.md`); cores de urgência: verde → amarelo → rosa (em atraso).
 
 ## Convenções
 - Interface em português de Portugal (PT-PT): "ecrã", "utilizador", "telemóvel", "registar".

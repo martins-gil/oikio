@@ -1,4 +1,6 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 export type SheetOption = { label: string; onPress: () => void; destructive?: boolean };
 
@@ -48,7 +50,7 @@ const styles = StyleSheet.create({
   options: { gap: 2, marginTop: 4 },
   option: { paddingVertical: 14, paddingHorizontal: 8, borderRadius: 10 },
   optionText: { fontSize: 17 },
-  destructive: { color: '#c0392b' },
+  destructive: { color: '#DC4F89' },
   cancel: { marginTop: 4, backgroundColor: '#f2f2f2', alignItems: 'center' },
   cancelText: { fontSize: 17, fontWeight: '600' },
 });

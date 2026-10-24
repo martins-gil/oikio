@@ -1,6 +1,8 @@
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
@@ -215,19 +217,19 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#DCD9F5',
     borderRadius: 10,
   },
-  rowSelected: { borderColor: '#208AEF', backgroundColor: '#e8f3fe' },
+  rowSelected: { borderColor: '#5C4DB1', backgroundColor: '#ECEBFF' },
   rowBlocked: { opacity: 0.4 },
   emoji: { fontSize: 24 },
   emojiBig: { fontSize: 56, textAlign: 'center' },
   rowText: { flex: 1, fontSize: 17 },
-  check: { fontSize: 20, color: '#208AEF', width: 24, textAlign: 'center' },
+  check: { fontSize: 20, color: '#5C4DB1', width: 24, textAlign: 'center' },
   levelButton: { borderWidth: 2, borderRadius: 12, padding: 20, alignItems: 'center' },
   levelText: { fontSize: 20, fontWeight: '600' },
-  card: { borderWidth: 1, borderColor: '#ccc', borderRadius: 10, padding: 14, gap: 4 },
+  card: { borderWidth: 1, borderColor: '#DCD9F5', borderRadius: 10, padding: 14, gap: 4 },
   cardTitle: { fontSize: 17, fontWeight: '600' },
   cardLine: { color: '#555' },
-  error: { color: '#c0392b', textAlign: 'center' },
+  error: { color: '#DC4F89', textAlign: 'center' },
 });

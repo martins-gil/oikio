@@ -1,6 +1,8 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -173,8 +175,8 @@ const styles = StyleSheet.create({
   levelButton: { borderWidth: 2, borderRadius: 12, padding: 18, alignItems: 'center' },
   levelText: { fontSize: 19, fontWeight: '600' },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  stepButton: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#208AEF', alignItems: 'center', justifyContent: 'center' },
-  stepButtonSmall: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#208AEF', alignItems: 'center', justifyContent: 'center' },
+  stepButton: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
+  stepButtonSmall: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
   stepText: { color: '#fff', fontSize: 32, fontWeight: '600', lineHeight: 36 },
   big: { fontSize: 44, fontWeight: '700' },
   unit: { fontSize: 20, fontWeight: '400', color: '#666' },

@@ -12,11 +12,11 @@ export type TaskStatus = {
 };
 
 export function urgencyColor(ratio: number | null | undefined): string {
-  if (ratio === null || ratio === undefined) return '#bbbbbb';
-  if (ratio <= 0.5) return '#2e9e5b'; // verde
-  if (ratio <= 0.85) return '#e0a100'; // amarelo
-  if (ratio <= 1) return '#e8741a'; // laranja
-  return '#d9534f'; // vermelho
+  if (ratio === null || ratio === undefined) return '#C9C5EC';
+  if (ratio <= 0.5) return '#35B38A'; // verde
+  if (ratio <= 0.85) return '#FFBF67'; // amarelo
+  if (ratio <= 1) return '#F28C6B'; // laranja
+  return '#DC4F89'; // rosa (em atraso)
 }
 
 // 0..1 para a largura da barra

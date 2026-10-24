@@ -1,14 +1,9 @@
+import { Screen } from '@/components/Screen';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
@@ -66,6 +61,7 @@ export default function StockScreen() {
   };
 
   return (
+    <Screen title="Consumíveis" subtitle="O que há em casa">
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.addRow}>
         <TextInput
@@ -96,7 +92,7 @@ export default function StockScreen() {
             <Text
               style={[
                 styles.itemValue,
-                { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : '#333' },
+                { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : '#1F1B4D' },
               ]}>
               {p.tracking_mode === 'level' && p.level
                 ? LEVEL_LABEL[p.level]
@@ -108,25 +104,26 @@ export default function StockScreen() {
       )}
       <Button title="Escolher dos sugeridos" variant="secondary" onPress={() => router.push('/onboarding')} />
     </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 10 },
   addRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: '#208AEF', borderRadius: 10, width: 48, alignItems: 'center', justifyContent: 'center' },
+  input: { flex: 1, borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16 },
+  addButton: { backgroundColor: '#5C4DB1', borderRadius: 10, width: 48, alignItems: 'center', justifyContent: 'center' },
   addText: { color: '#fff', fontSize: 26, fontWeight: '600' },
   disabled: { opacity: 0.4 },
   hint: { color: '#666' },
-  error: { color: '#c0392b' },
+  error: { color: '#DC4F89' },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E7E5F7',
     borderRadius: 12,
     backgroundColor: '#fff',
   },

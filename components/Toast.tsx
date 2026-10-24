@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 type Props = { message: string | null; onHide: () => void; durationMs?: number };
 
@@ -23,6 +25,6 @@ export function Toast({ message, onHide, durationMs = 4000 }: Props) {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 16, right: 16, bottom: 16, alignItems: 'center' },
-  toast: { backgroundColor: '#333', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16 },
+  toast: { backgroundColor: '#1F1B4D', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16 },
   text: { color: '#fff', fontSize: 15, textAlign: 'center' },
 });

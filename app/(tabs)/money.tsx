@@ -1,16 +1,9 @@
+import { Screen } from '@/components/Screen';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -144,6 +137,7 @@ export default function MoneyScreen() {
   const monthLabel = new Date(year, month, 1).toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
 
   return (
+    <Screen title="Dinheiro" subtitle="Despesas da casa">
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
@@ -227,6 +221,7 @@ export default function MoneyScreen() {
       </ScrollView>
       <Toast message={toast} onHide={hideToast} />
     </View>
+    </Screen>
   );
 }
 
@@ -234,19 +229,19 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16, gap: 14, paddingBottom: 80 },
-  card: { gap: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 14, padding: 14, backgroundColor: '#fff' },
+  card: { gap: 10, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 14, padding: 14, backgroundColor: '#fff' },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase' },
-  input: { borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 12, fontSize: 16 },
+  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16 },
   amount: { fontSize: 28, fontWeight: '600', textAlign: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: '#208AEF', borderRadius: 16, paddingVertical: 6, paddingHorizontal: 12 },
-  chipOn: { backgroundColor: '#208AEF' },
-  chipText: { color: '#208AEF' },
+  chip: { borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 16, paddingVertical: 6, paddingHorizontal: 12 },
+  chipOn: { backgroundColor: '#5C4DB1' },
+  chipText: { color: '#5C4DB1' },
   chipTextOn: { color: '#fff' },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   switchLabel: { fontSize: 16 },
   monthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8 },
-  arrow: { fontSize: 20, color: '#208AEF' },
+  arrow: { fontSize: 20, color: '#5C4DB1' },
   month: { fontSize: 18, fontWeight: '600', textTransform: 'capitalize' },
   summary: { alignItems: 'center', gap: 2, paddingVertical: 8 },
   total: { fontSize: 32, fontWeight: '700' },
@@ -259,11 +254,11 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E7E5F7',
     borderRadius: 12,
     backgroundColor: '#fff',
   },
   rowMain: { flex: 1, gap: 2 },
   rowTitle: { fontSize: 18, fontWeight: '600' },
-  remove: { fontSize: 18, color: '#999' },
+  remove: { fontSize: 18, color: '#C9C5EC' },
 });

@@ -1,6 +1,8 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -163,17 +165,17 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { padding: 16, gap: 14, paddingBottom: 80 },
   privacy: { color: '#555', fontSize: 15 },
-  tabs: { flexDirection: 'row', borderWidth: 1, borderColor: '#208AEF', borderRadius: 10, overflow: 'hidden' },
+  tabs: { flexDirection: 'row', borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 10, overflow: 'hidden' },
   tab: { flex: 1, padding: 10, alignItems: 'center' },
-  tabOn: { backgroundColor: '#208AEF' },
-  tabText: { color: '#208AEF', fontWeight: '600' },
+  tabOn: { backgroundColor: '#5C4DB1' },
+  tabText: { color: '#5C4DB1', fontWeight: '600' },
   tabTextOn: { color: '#fff' },
   summary: { alignItems: 'center', gap: 2, paddingVertical: 6 },
   total: { fontSize: 36, fontWeight: '700' },
   line: { color: '#555', fontSize: 14 },
   small: { color: '#888', fontSize: 12 },
-  card: { gap: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 14, padding: 14, backgroundColor: '#fff' },
-  input: { borderWidth: 1, borderColor: '#999', borderRadius: 10, padding: 12, fontSize: 16 },
+  card: { gap: 10, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 14, padding: 14, backgroundColor: '#fff' },
+  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16 },
   big: { fontSize: 22, textAlign: 'center' },
   buttons: { flexDirection: 'row', gap: 10 },
   hint: { color: '#666', textAlign: 'center' },
@@ -183,11 +185,11 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E7E5F7',
     borderRadius: 12,
     backgroundColor: '#fff',
   },
   rowMain: { flex: 1, gap: 2 },
   rowTitle: { fontSize: 18, fontWeight: '600' },
-  remove: { fontSize: 18, color: '#999' },
+  remove: { fontSize: 18, color: '#C9C5EC' },
 });
