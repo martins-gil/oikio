@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { Text } from '@/components/Text';
 
@@ -25,15 +25,18 @@ export default function ProductScreen() {
   const { household } = useHousehold();
   const [product, setProduct] = useState<StockRow | null>(null);
   const [listItemId, setListItemId] = useState<string | null>(null); // item por comprar deste produto
+  const [essential, setEssential] = useState(false);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
 
   const load = useCallback(async (): Promise<{ product: StockRow | null; inList: boolean }> => {
-    const [stock, list] = await Promise.all([
+    const [stock, list, ess] = await Promise.all([
       supabase.from('v_stock').select(STOCK_COLUMNS).eq('product_id', id).maybeSingle(),
       supabase.from('shopping_list_items').select('id').eq('product_id', id).is('checked_at', null).maybeSingle(),
+      supabase.from('products').select('is_essential').eq('id', id).maybeSingle(),
     ]);
+    setEssential(!!ess.data?.is_essential);
     const p = (stock.data ?? null) as StockRow | null;
     setProduct(p);
     setListItemId((list.data?.id as string | undefined) ?? null);
@@ -74,6 +77,14 @@ export default function ProductScreen() {
       if (upd.error) return upd;
       return supabase.rpc('refill_shopping_list', { p_product: id });
     }, 'Não foi possível guardar o mínimo.');
+  };
+  const toggleEssential = async (value: boolean) => {
+    setEssential(value);
+    const { error } = await supabase.from('products').update({ is_essential: value }).eq('id', id);
+    if (error) {
+      setEssential(!value);
+      setToast('Não foi possível guardar.');
+    }
   };
   const addToList = () =>
     run(
@@ -156,6 +167,14 @@ export default function ProductScreen() {
           </>
         )}
 
+        <View style={styles.essentialRow}>
+          <View style={styles.flex}>
+            <Text style={styles.essentialTitle}>Essencial</Text>
+            <Text style={styles.essentialHint}>Se faltar, aparece nos lembretes diários (ex.: leite, iogurtes).</Text>
+          </View>
+          <Switch value={essential} onValueChange={toggleEssential} />
+        </View>
+
         <View style={styles.spacer} />
         {listItemId ? (
           <Button title="🛒 Está na lista — tirar" variant="secondary" disabled={busy} onPress={removeFromList} />
@@ -172,6 +191,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 20, gap: 12, paddingBottom: 80 },
+  essentialRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
+  essentialTitle: { fontSize: 16, color: colors.ink },
+  essentialHint: { fontSize: 13, color: colors.muted },
   label: { fontSize: 14, color: colors.muted, textTransform: 'uppercase', marginTop: 4 },
   levelButton: { borderWidth: 2, borderRadius: 12, padding: 18, alignItems: 'center' },
   levelText: { fontSize: 19, fontWeight: '600' },

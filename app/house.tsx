@@ -144,6 +144,9 @@ export default function HouseScreen() {
           {!isAdmin && ' Só o administrador altera.'}
         </Text>
 
+        <Text style={styles.section}>Lembretes</Text>
+        <Button title="🔔 Horas dos lembretes" variant="secondary" onPress={() => router.push('/notifications')} />
+
         <Text style={styles.section}>A tua conta</Text>
         {anonymous ? (
           <View style={styles.warn}>

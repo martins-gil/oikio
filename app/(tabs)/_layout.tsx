@@ -1,16 +1,24 @@
 import { Redirect } from 'expo-router';
+import { useEffect } from 'react';
 import { Tabs } from 'expo-router/js-tabs';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
 import { useHousehold } from '@/lib/household';
+import { registerForPush } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
 import { colors } from '@/lib/theme';
 
 export default function TabsLayout() {
   const { session, loading: sessionLoading, error: sessionError } = useSession();
   const { household, loading } = useHousehold();
+
+  // Mantém o telemóvel registado para os lembretes (só se a permissão já foi dada)
+  const signedIn = !!session && !!household;
+  useEffect(() => {
+    if (signedIn) registerForPush(false);
+  }, [signedIn]);
 
   if (sessionLoading || (session && loading)) {
     return (

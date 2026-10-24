@@ -1,10 +1,11 @@
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { HouseholdProvider } from '@/lib/household';
+import { isExpoGo, setupNotificationHandler } from '@/lib/notifications';
 import { SessionProvider } from '@/lib/session';
 import { colors, fonts } from '@/lib/theme';
 
@@ -19,6 +20,17 @@ export default function RootLayout() {
     Ubuntu_500Medium: require('../assets/fonts/Ubuntu-Medium.ttf'),
     Ubuntu_700Bold: require('../assets/fonts/Ubuntu-Bold.ttf'),
   });
+
+  const router = useRouter();
+
+  // Mostra os lembretes com a app aberta e abre o Resumo ao tocar neles (só na versão real da app)
+  useEffect(() => {
+    if (isExpoGo) return;
+    setupNotificationHandler();
+    const Notifications = require('expo-notifications') as typeof import('expo-notifications');
+    const sub = Notifications.addNotificationResponseReceivedListener(() => router.navigate('/'));
+    return () => sub.remove();
+  }, [router]);
 
   useEffect(() => {
     if (loaded || fontError) SplashScreen.hideAsync();
@@ -50,6 +62,7 @@ export default function RootLayout() {
           <Stack.Screen name="task/suggestions" options={{ title: 'Sugestões' }} />
           <Stack.Screen name="hours" options={{ title: 'Banco de horas' }} />
           <Stack.Screen name="receipt" options={{ title: 'Registar compra' }} />
+          <Stack.Screen name="notifications" options={{ title: 'Lembretes' }} />
           <Stack.Screen name="join" options={{ title: 'Tenho um convite' }} />
           <Stack.Screen name="sign-in" options={{ title: 'Entrar' }} />
           <Stack.Screen name="account" options={{ title: 'Proteger a conta' }} />
