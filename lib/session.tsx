@@ -25,7 +25,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setState({
         session: anon.session,
         loading: false,
-        error: error ? 'Não foi possível iniciar sessão. Verifica a ligação e tenta outra vez.' : null,
+        error: error
+          ? `Não foi possível iniciar sessão. Verifica a ligação e tenta outra vez.\n\nDetalhe técnico: ${error.message}`
+          : null,
       });
     })();
 
