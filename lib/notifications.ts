@@ -4,31 +4,46 @@ import { Platform } from 'react-native';
 import { supabase } from './supabase';
 
 // No Expo Go as notificações push não funcionam (só na versão real da app, o "development build")
-export const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+export const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient || Constants.appOwnership === 'expo';
 
 export type PushStatus = 'ok' | 'expo_go' | 'no_device' | 'denied' | 'no_project' | 'error';
 
 export type Prefs = { enabled: boolean; hour_first: number; hour_second: number | null };
 export const DEFAULT_PREFS: Prefs = { enabled: true, hour_first: 9, hour_second: 17 };
 
-// Carregadas só quando precisam (no Expo Go não se carregam)
-const notificationsModule = () => require('expo-notifications') as typeof import('expo-notifications');
-const deviceModule = () => require('expo-device') as typeof import('expo-device');
+type NotificationsModule = typeof import('expo-notifications');
+type DeviceModule = typeof import('expo-device');
+
+// Carregadas só quando precisam. Se a parte nativa não existir (Expo Go, emulador…), devolvem null em vez de rebentar.
+export function getNotifications(): NotificationsModule | null {
+  if (isExpoGo) return null;
+  try {
+    return require('expo-notifications') as NotificationsModule;
+  } catch {
+    return null;
+  }
+}
+function getDevice(): DeviceModule | null {
+  try {
+    return require('expo-device') as DeviceModule;
+  } catch {
+    return null;
+  }
+}
 
 // Mostra a notificação mesmo com a app aberta
 export function setupNotificationHandler() {
-  if (isExpoGo) return;
-  notificationsModule().setNotificationHandler({
+  getNotifications()?.setNotificationHandler({
     handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
   });
 }
 
 // Regista este telemóvel para receber lembretes. Com askPermission = false só atualiza se a permissão já foi dada.
 export async function registerForPush(askPermission: boolean): Promise<PushStatus> {
-  if (isExpoGo) return 'expo_go';
+  const Notifications = getNotifications();
+  if (!Notifications) return 'expo_go';
   try {
-    if (!deviceModule().isDevice) return 'no_device';
-    const Notifications = notificationsModule();
+    if (!getDevice()?.isDevice) return 'no_device';
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {

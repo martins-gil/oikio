@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { HouseholdProvider } from '@/lib/household';
-import { isExpoGo, setupNotificationHandler } from '@/lib/notifications';
+import { getNotifications, setupNotificationHandler } from '@/lib/notifications';
 import { SessionProvider } from '@/lib/session';
 import { colors, fonts } from '@/lib/theme';
 
@@ -25,9 +25,9 @@ export default function RootLayout() {
 
   // Mostra os lembretes com a app aberta e abre o Resumo ao tocar neles (só na versão real da app)
   useEffect(() => {
-    if (isExpoGo) return;
+    const Notifications = getNotifications();
+    if (!Notifications) return;
     setupNotificationHandler();
-    const Notifications = require('expo-notifications') as typeof import('expo-notifications');
     const sub = Notifications.addNotificationResponseReceivedListener(() => router.navigate('/'));
     return () => sub.remove();
   }, [router]);
