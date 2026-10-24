@@ -9,12 +9,14 @@ import { ActionSheet, type SheetOption } from '@/components/ActionSheet';
 import { Button } from '@/components/Button';
 import { DateSheet } from '@/components/DateSheet';
 import { KudosForm } from '@/components/KudosForm';
+import { ProgressRing } from '@/components/ProgressRing';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { addDaysIso, localDate, mondayOf } from '@/lib/money';
 import { friendlyTaskError } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
 import { formatQty } from '@/lib/stock';
+import { colors, radius, shadow } from '@/lib/theme';
 import { sinceText, urgencyColor, urgencyFill, type TaskStatus } from '@/lib/urgency';
 import { supabase } from '@/lib/supabase';
 
@@ -352,6 +354,14 @@ export default function HomeScreen() {
   const score = (r: SummaryRow) => r.effort_points + r.kudos_points;
   const best = Math.max(0, ...people.map(score));
 
+  // Cabeçalho: saudação, anel de progresso da semana e tira dos dias
+  const myName = members.find((m) => m.user_id === me)?.display_name;
+  const weekTotal = doneWeek.length + pending.length;
+  const weekPercent = weekTotal === 0 ? 0 : (doneWeek.length / weekTotal) * 100;
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDaysIso(weekStart, i));
+  const DAY_LETTERS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+  const doneOnDay = new Set(doneWeek.filter((o) => o.completed_at).map((o) => localDate(new Date(o.completed_at!))));
+
   const renderTask = (o: Occurrence, isDone: boolean) => {
     const doneToday = isDone && !!o.completed_at && localDate(new Date(o.completed_at)) === todayStr;
     return (
@@ -361,9 +371,11 @@ export default function HomeScreen() {
         onPress={() => (isDone ? (doneToday ? askUndo(o) : undefined) : markDone(o))}
         onLongPress={!isDone && (o.assigned_to === me || o.assigned_to === null) ? () => setMenuFor(o) : undefined}>
         {isDone ? (
-          <Text style={styles.circle}>✅</Text>
+          <View style={[styles.check, styles.checkDone]}>
+            <Text style={styles.checkMark}>✓</Text>
+          </View>
         ) : (
-          <View style={[styles.dot, { backgroundColor: urgencyColor(urgency[o.task_id]) }]} />
+          <View style={[styles.check, { borderColor: urgencyColor(urgency[o.task_id]) }]} />
         )}
         <View style={styles.taskText}>
           <Text style={[styles.taskTitle, isDone && styles.strike]}>{o.tasks?.title ?? 'Tarefa'}</Text>
@@ -423,6 +435,19 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         {error && <Text style={styles.error}>{error}</Text>}
 
+        {/* ----- Saudação e progresso da semana ----- */}
+        <View style={styles.hero}>
+          <View style={styles.heroText}>
+            <Text style={styles.hello}>Olá{myName ? `, ${myName}` : ''} 👋</Text>
+            <Text style={styles.heroLine}>
+              {weekTotal === 0
+                ? 'Ainda sem tarefas esta semana'
+                : `${doneWeek.length} de ${weekTotal} tarefas feitas${current ? ' esta semana' : ' nessa semana'}`}
+            </Text>
+          </View>
+          <ProgressRing percent={weekPercent} />
+        </View>
+
         {incoming.map((sw) => (
           <View key={sw.id} style={styles.banner}>
             <Text style={styles.bannerText}>
@@ -476,16 +501,26 @@ export default function HomeScreen() {
               </Pressable>
             );
           })}
-          {canManage && (
-            <View style={styles.bannerButtons}>
-              <View style={styles.flex}>
-                <Button title="+ Nova tarefa" variant="secondary" onPress={() => router.push('/task/edit')} />
-              </View>
-              <View style={styles.flex}>
-                <Button title="💡 Sugestões" variant="secondary" onPress={() => router.push('/task/suggestions')} />
-              </View>
-            </View>
-          )}
+          <View style={styles.tiles}>
+            {canManage && (
+              <Pressable style={styles.tile} onPress={() => router.push('/task/edit')}>
+                <Text style={styles.tileIcon}>＋</Text>
+                <Text style={styles.tileText}>Nova tarefa</Text>
+              </Pressable>
+            )}
+            {canManage && (
+              <Pressable style={styles.tile} onPress={() => router.push('/task/suggestions')}>
+                <Text style={styles.tileIcon}>💡</Text>
+                <Text style={styles.tileText}>Sugestões</Text>
+              </Pressable>
+            )}
+            {current && scheduled.length > 0 && (
+              <Pressable style={styles.tile} onPress={() => setShowScheduled(!showScheduled)}>
+                <Text style={styles.tileIcon}>📅</Text>
+                <Text style={styles.tileText}>Agendadas ({scheduled.length})</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
 
         {/* ----- Resumo da semana ----- */}
@@ -497,6 +532,18 @@ export default function HomeScreen() {
           <Pressable hitSlop={12} disabled={current} onPress={() => setWeekOffset(weekOffset + 1)}>
             <Text style={[styles.arrow, current && styles.arrowOff]}>▶</Text>
           </Pressable>
+        </View>
+
+        <View style={styles.strip}>
+          {weekDays.map((d, i) => (
+            <View key={d} style={styles.stripDay}>
+              <Text style={styles.stripLetter}>{DAY_LETTERS[i]}</Text>
+              <View style={[styles.stripCircle, d === todayStr && styles.stripToday]}>
+                <Text style={[styles.stripNum, d === todayStr && styles.stripNumToday]}>{Number(d.slice(8))}</Text>
+              </View>
+              <View style={[styles.stripDot, doneOnDay.has(d) && styles.stripDotOn]} />
+            </View>
+          ))}
         </View>
 
         {social && (
@@ -611,7 +658,7 @@ const styles = StyleSheet.create({
   tip: { color: '#888', fontSize: 12, marginBottom: 2 },
   link: { color: '#5C4DB1', fontSize: 15, fontWeight: '600' },
   // Estado da casa
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   dotSmall: { width: 16, height: 16, borderRadius: 8 },
   statusText: { flex: 1, gap: 6 },
   statusTitle: { fontSize: 16, fontWeight: '600' },
@@ -627,10 +674,28 @@ const styles = StyleSheet.create({
   personCard: { gap: 6, padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
   personName: { fontSize: 16, fontWeight: '600' },
   // Tarefas (como em "Hoje")
-  task: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
+  task: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   taskDone: { opacity: 0.6 },
-  circle: { fontSize: 24 },
-  dot: { width: 22, height: 22, borderRadius: 11, margin: 1 },
+  check: { width: 30, height: 30, borderRadius: 15, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  checkDone: { backgroundColor: colors.success, borderColor: colors.success },
+  checkMark: { color: '#fff', fontSize: 16 },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  heroText: { flex: 1, gap: 4 },
+  hello: { fontSize: 22, color: colors.ink },
+  heroLine: { color: colors.muted, fontSize: 14 },
+  tiles: { flexDirection: 'row', gap: 10 },
+  tile: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 14, paddingHorizontal: 6, borderRadius: radius.card, backgroundColor: colors.primary },
+  tileIcon: { fontSize: 22, color: colors.accent },
+  tileText: { fontSize: 13, color: colors.accent, textAlign: 'center' },
+  strip: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
+  stripDay: { alignItems: 'center', gap: 4, flex: 1 },
+  stripLetter: { color: colors.faint, fontSize: 12 },
+  stripCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  stripToday: { backgroundColor: colors.accent },
+  stripNum: { color: colors.ink, fontSize: 15 },
+  stripNumToday: { color: colors.ink },
+  stripDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'transparent' },
+  stripDotOn: { backgroundColor: colors.success },
   taskText: { flex: 1, gap: 2 },
   taskTitle: { fontSize: 18 },
   strike: { textDecorationLine: 'line-through' },
