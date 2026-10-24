@@ -84,4 +84,4 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [ ] M9 Sugestões de refeições com IA
 - [ ] M10 Separador pessoal (privado)
 - [ ] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
-- [ ] M12 Despesas e banco de horas
+- [x] M12 Despesas e banco de horas
