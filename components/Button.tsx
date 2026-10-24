@@ -31,8 +31,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
   },
-  secondary: { backgroundColor: colors.lavender },
+  secondary: { backgroundColor: colors.primary },
   disabled: { opacity: 0.4 },
   text: { color: '#fff', fontSize: 15, fontFamily: fonts.body },
-  secondaryText: { color: colors.primary },
+  secondaryText: { color: colors.accent },
 });
