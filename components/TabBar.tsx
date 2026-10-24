@@ -59,6 +59,6 @@ const styles = StyleSheet.create({
   item: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 6, marginHorizontal: 2, borderRadius: 18 },
   itemOn: { backgroundColor: colors.lavender },
   icon: { width: 28, height: 28 },
-  label: { fontSize: 10.5, color: colors.faint, fontFamily: fonts.bodyMedium },
+  label: { fontSize: 10.5, color: colors.faint, fontFamily: fonts.body },
   labelOn: { color: colors.primary },
 });

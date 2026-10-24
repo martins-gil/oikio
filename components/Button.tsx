@@ -33,6 +33,6 @@ const styles = StyleSheet.create({
   },
   secondary: { backgroundColor: colors.lavender },
   disabled: { opacity: 0.4 },
-  text: { color: '#fff', fontSize: 15, fontFamily: fonts.heading },
+  text: { color: '#fff', fontSize: 15, fontFamily: fonts.body },
   secondaryText: { color: colors.primary },
 });
