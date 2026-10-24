@@ -31,8 +31,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       setState((prev) => ({ ...prev, session }));
+      // Depois de terminar sessão, fica-se de novo com uma sessão anónima (ecrã de entrar / criar casa).
+      // Fora do callback, para não bloquear o cliente de autenticação.
+      if (event === 'SIGNED_OUT') setTimeout(() => supabase.auth.signInAnonymously(), 0);
     });
 
     return () => {

@@ -14,6 +14,10 @@ export default function RootLayout() {
           <Stack.Screen name="create-house" options={{ title: 'App da Casa' }} />
           <Stack.Screen name="onboarding" options={{ title: 'Consumíveis' }} />
           <Stack.Screen name="product/[id]" options={{ title: 'Produto' }} />
+          <Stack.Screen name="join" options={{ title: 'Tenho um convite' }} />
+          <Stack.Screen name="sign-in" options={{ title: 'Entrar' }} />
+          <Stack.Screen name="account" options={{ title: 'Proteger a conta' }} />
+          <Stack.Screen name="invite/[code]" options={{ headerShown: false }} />
         </Stack>
       </HouseholdProvider>
     </SessionProvider>

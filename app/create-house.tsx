@@ -48,6 +48,11 @@ export default function CreateHouseScreen() {
         onPress={createHousehold}
       />
       {error && <Text style={styles.error}>{error}</Text>}
+      <View style={styles.or}>
+        <Text style={styles.orText}>ou</Text>
+      </View>
+      <Button title="Tenho um convite" variant="secondary" onPress={() => router.push('/join')} />
+      <Button title="Já tenho conta" variant="secondary" onPress={() => router.push('/sign-in')} />
     </View>
   );
 }
@@ -64,4 +69,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   error: { color: '#c0392b', textAlign: 'center' },
+  or: { alignItems: 'center' },
+  orText: { color: '#666' },
 });

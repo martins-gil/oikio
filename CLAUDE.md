@@ -52,6 +52,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Stock em lotes (`stock_lots`) com consumo FEFO via `consume_product()`.
 - Produtos em modo `level` (Cheio/Meio/Quase a acabar) usam `set_stock_level()`.
 - Lista de compras: `add_to_shopping_list()`; riscar = `buy_shopping_item()` (repõe o stock); `undo_occurrence()` desfaz uma tarefa feita.
+- Convites: `get_or_create_invite()` (só admin) dá um código de 10 caracteres; `accept_invite(código, nome)` entra na casa.
 - Onboarding: `onboard_from_template()` cria produto + tarefa + consumo num passo.
 - Ocorrências: `generate_occurrences()` (SQL, `pg_cron` de hora a hora); regras em `docs/geracao-ocorrencias.md`.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
@@ -75,7 +76,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M3 Ecrã "Hoje": listar ocorrências, marcar como feita com 1 toque
 - [x] M4 Geração diária de ocorrências + atribuição (função SQL agendada com pg_cron)
 - [x] M5 Stock e lista de compras (níveis, +/−, riscar)
-- [ ] M6 Convidar o parceiro por link; associar conta Apple/Google
+- [ ] M6 Convidar o parceiro por código; guardar a conta com e-mail (Apple/Google na fase das lojas)
 - [ ] M7 Resumo diário por notificação
 - [ ] M8 Talões por foto com IA (Edge Function + ecrã de confirmação)
 - [ ] M9 Sugestões de refeições com IA

@@ -32,7 +32,7 @@ function consumptionText(o: Occurrence): string | null {
 export default function TodayScreen() {
   const router = useRouter();
   const { session } = useSession();
-  const { household } = useHousehold();
+  const { household, members } = useHousehold();
   const me = session?.user.id;
 
   const [occurrences, setOccurrences] = useState<Occurrence[] | null>(null);
@@ -144,10 +144,13 @@ export default function TodayScreen() {
 
   const pending = occurrences.filter((o) => o.status === 'pending');
   const done = occurrences.filter((o) => o.status === 'done');
+  const nameOf = (id: string | null) => members.find((m) => m.user_id === id)?.display_name ?? 'outra pessoa';
+  const others = pending.filter((o) => o.assigned_to !== null && o.assigned_to !== me);
+  const otherIds = [...new Set(others.map((o) => o.assigned_to as string))];
   const groups = [
     { title: 'As minhas', items: pending.filter((o) => o.assigned_to === me) },
     { title: 'Para qualquer um', items: pending.filter((o) => o.assigned_to === null) },
-    { title: 'Do(a) parceiro(a)', items: pending.filter((o) => o.assigned_to !== null && o.assigned_to !== me) },
+    ...otherIds.map((id) => ({ title: `De ${nameOf(id)}`, items: others.filter((o) => o.assigned_to === id) })),
   ];
 
   const renderTask = (o: Occurrence, isDone: boolean) => (

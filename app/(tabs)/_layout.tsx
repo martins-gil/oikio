@@ -41,6 +41,10 @@ export default function TabsLayout() {
         name="stock"
         options={{ title: 'Consumíveis', tabBarIcon: () => <Text style={styles.icon}>🧺</Text> }}
       />
+      <Tabs.Screen
+        name="house"
+        options={{ title: 'Casa', tabBarIcon: () => <Text style={styles.icon}>🏠</Text> }}
+      />
     </Tabs>
   );
 }
