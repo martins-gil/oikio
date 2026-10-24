@@ -1,13 +1,20 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
+import { HouseholdProvider } from '@/lib/household';
 import { SessionProvider } from '@/lib/session';
 
 export default function RootLayout() {
   return (
     <SessionProvider>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerTitle: 'App da Casa' }} />
+      <HouseholdProvider>
+        <StatusBar style="auto" />
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="create-house" options={{ title: 'App da Casa' }} />
+          <Stack.Screen name="onboarding" options={{ title: 'Consumíveis' }} />
+        </Stack>
+      </HouseholdProvider>
     </SessionProvider>
   );
 }
