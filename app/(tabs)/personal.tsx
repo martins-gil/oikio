@@ -36,11 +36,11 @@ type PersonalOccurrence = {
 
 // Frequências que se podem escolher ao criar (só o nome é obrigatório: a predefinida é "sem frequência")
 const FREQUENCIES = [
-  { key: 'none', label: 'Sem frequência', fields: { recurrence: 'no_frequency' } },
-  { key: 'daily', label: 'Todos os dias', fields: { recurrence: 'times_per_period', times_per_period: 1, period: 'day' } },
-  { key: 'w3', label: '3×/semana', fields: { recurrence: 'times_per_period', times_per_period: 3, period: 'week' } },
-  { key: 'w1', label: '1×/semana', fields: { recurrence: 'times_per_period', times_per_period: 1, period: 'week' } },
-  { key: 'm1', label: '1×/mês', fields: { recurrence: 'times_per_period', times_per_period: 1, period: 'month' } },
+  { key: 'none', label: 'Sem frequência', args: { p_kind: 'none' } },
+  { key: 'daily', label: 'Todos os dias', args: { p_kind: 'times', p_times: 1, p_period: 'day' } },
+  { key: 'w3', label: '3×/semana', args: { p_kind: 'times', p_times: 3, p_period: 'week' } },
+  { key: 'w1', label: '1×/semana', args: { p_kind: 'times', p_times: 1, p_period: 'week' } },
+  { key: 'm1', label: '1×/mês', args: { p_kind: 'times', p_times: 1, p_period: 'month' } },
 ] as const;
 
 const PERIOD_LABEL = { day: 'dia', week: 'semana', month: 'mês', year: 'ano' } as const;
@@ -107,6 +107,7 @@ export default function PersonalScreen() {
         .eq('household_id', household.id)
         .eq('scope', 'personal')
         .eq('is_active', true)
+        .is('deleted_at', null)
         .order('created_at'),
       supabase.from('time_entries').select('minutes').eq('kind', 'hour_bank'),
     ]);
@@ -126,15 +127,11 @@ export default function PersonalScreen() {
   const addTask = async () => {
     const name = title.trim();
     if (!name || !household || !me) return;
-    const fields = FREQUENCIES.find((f) => f.key === freq)!.fields;
-    const { error } = await supabase.from('tasks').insert({
-      household_id: household.id,
-      scope: 'personal',
-      owner_user_id: me,
-      title: name,
-      assignment: 'fixed',
-      fixed_assignee: me,
-      ...fields,
+    const { error } = await supabase.rpc('save_task', {
+      p_household: household.id,
+      p_title: name,
+      p_scope: 'personal',
+      ...FREQUENCIES.find((f) => f.key === freq)!.args,
     });
     if (error) {
       setToast('Não foi possível criar a tarefa.');
@@ -172,13 +169,13 @@ export default function PersonalScreen() {
   };
 
   const askDelete = (t: PersonalTask) =>
-    Alert.alert(`Apagar "${t.title}"?`, 'A tarefa e o seu histórico desaparecem.', [
+    Alert.alert(`Apagar "${t.title}"?`, 'A tarefa deixa de aparecer, mas o histórico fica guardado.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Apagar',
         style: 'destructive',
         onPress: async () => {
-          const { error } = await supabase.from('tasks').delete().eq('id', t.id);
+          const { error } = await supabase.rpc('delete_task', { p_task: t.id });
           if (error) setToast('Não foi possível apagar.');
           load();
         },

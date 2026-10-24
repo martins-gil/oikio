@@ -50,12 +50,23 @@ begin
   exception when others then v_err := 'negado'; end;
   insert into res values ('b_plants_in_a_name', v_err);
 
-  update tasks set title = 'Alterada por B' where id = ta;
-  get diagnostics n = row_count;
-  insert into res values ('b_updates_a', n::text);
-  delete from tasks where id = ta;
-  get diagnostics n = row_count;
-  insert into res values ('b_deletes_a', n::text);
+  begin
+    update tasks set title = 'Alterada por B' where id = ta;
+    get diagnostics n = row_count;
+    v_err := 'linhas:' || n;
+  exception when others then v_err := 'negado'; end;
+  insert into res values ('b_updates_a', v_err);
+  begin
+    delete from tasks where id = ta;
+    get diagnostics n = row_count;
+    v_err := 'linhas:' || n;
+  exception when others then v_err := 'negado'; end;
+  insert into res values ('b_deletes_a', v_err);
+  begin
+    perform delete_task(ta);
+    v_err := 'apagou';
+  exception when others then v_err := sqlerrm; end;
+  insert into res values ('b_soft_deletes_a', v_err);
 
   -- B tem a sua própria tarefa pessoal
   insert into tasks (household_id, scope, owner_user_id, title, recurrence, assignment, fixed_assignee)
@@ -67,8 +78,9 @@ begin
   perform pg_temp.assert_eq('P2 o parceiro não vê tarefas pessoais alheias', (select v from res where k = 'b_sees_personal'), '0');
   perform pg_temp.assert_eq('P3 nem pelo identificador', (select v from res where k = 'b_sees_by_id'), '0');
   perform pg_temp.assert_eq('P4 o parceiro não cria tarefas pessoais em nome de outro', (select v from res where k = 'b_plants_in_a_name'), 'negado');
-  perform pg_temp.assert_eq('P5 o parceiro não altera', (select v from res where k = 'b_updates_a'), '0');
-  perform pg_temp.assert_eq('P6 o parceiro não apaga', (select v from res where k = 'b_deletes_a'), '0');
+  perform pg_temp.assert_eq('P5 o parceiro não altera', (select v from res where k = 'b_updates_a'), 'negado');
+  perform pg_temp.assert_eq('P6 o parceiro não apaga', (select v from res where k = 'b_deletes_a'), 'negado');
+  perform pg_temp.assert_eq('P6b nem pela função de apagar', (select v from res where k = 'b_soft_deletes_a'), 'Tarefa inexistente');
   perform pg_temp.assert_eq('P7 a tarefa continua intacta', (select title from tasks where id = ta), 'Cabeleireiro');
 
   -- A não vê a de B
@@ -158,18 +170,23 @@ begin
   perform pg_temp.assert_eq('G6 tarefas pessoais feitas não entram nas contribuições do casal', (select v from res where k = 'weekly'), '0');
 end $$;
 
--- ===== O dono apaga =====
+-- ===== O dono apaga (fica guardada, com quem apagou) =====
 do $$
 declare
   A uuid := '00000000-0000-0000-0000-0000000000a1';
+  B uuid := '00000000-0000-0000-0000-0000000000b2';
   ta uuid := (select v::uuid from ids where k = 'ta');
 begin
   set local role authenticated;
   perform set_config('request.jwt.claim.sub', A::text, true);
-  delete from tasks where id = ta;
+  perform delete_task(ta);
+  insert into res values ('a_still_sees_deleted', (select count(*)::text from tasks where id = ta and deleted_at is not null and deleted_by = A));
+  perform set_config('request.jwt.claim.sub', B::text, true);
+  insert into res values ('b_sees_deleted', (select count(*)::text from tasks where id = ta));
   reset role;
-  perform pg_temp.assert_eq('D1 o dono apaga a sua tarefa pessoal', (select count(*)::text from tasks where id = ta), '0');
-  perform pg_temp.assert_eq('D2 as ocorrências vão com ela', (select count(*)::text from task_occurrences where task_id = ta), '0');
+  perform pg_temp.assert_eq('D1 o dono apaga a sua tarefa pessoal (fica guardada, com quem apagou)', (select v from res where k = 'a_still_sees_deleted'), '1');
+  perform pg_temp.assert_eq('D2 o histórico (ocorrências) fica', (select (count(*) > 0)::text from task_occurrences where task_id = ta), 'true');
+  perform pg_temp.assert_eq('D3 o parceiro continua sem ver a tarefa apagada', (select v from res where k = 'b_sees_deleted'), '0');
 end $$;
 
 rollback;

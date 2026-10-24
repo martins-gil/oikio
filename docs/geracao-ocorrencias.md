@@ -10,7 +10,16 @@ para notificações (M7) e IA (M8/M9).
   mínimo de dias-do-período ÷ N. 2×/semana → segunda e quinta. Máximo uma por dia.
 - `interval_since_last`: quando passaram N dias desde a última vez feita.
 - `once`: uma só vez.
-- `no_frequency` e `fixed_schedule` (RRULE): não geram nada por agora.
+- `fixed_schedule` (calendário): dias da semana (de 1 em 1 ou 2 em 2 semanas), todos os meses no dia N (ou no último)
+  e todos os anos em dia/mês. Subconjunto de RRULE validado na base de dados (`rrule_is_valid`):
+  `FREQ=WEEKLY;BYDAY=TU,FR[;INTERVAL=2]`, `FREQ=MONTHLY;BYMONTHDAY=8|-1`, `FREQ=YEARLY;BYMONTH=3;BYMONTHDAY=15`.
+  Se o agendador falhar, recupera até 2 dias para trás. `scheduled_for` guarda a data do calendário, por isso
+  mudar o dia de uma ocorrência não a faz reaparecer na data original.
+- `no_frequency`: não gera nada (só "feito agora" e "feito há N dias").
+- Gerir tarefas: `save_task()` (só admin/adulto na casa; cada pessoa nas suas pessoais), `set_task_active()` (pausar),
+  `delete_task()` / `restore_task()` (apagar **não remove**: guarda `deleted_at`/`deleted_by` e o histórico),
+  `skip_occurrence()` (saltar, fica "não feita") e `reschedule_occurrence()` (mudar o dia de uma tarefa minha).
+  A app já não altera `tasks` diretamente (só `last_done_at`).
 - Se a tarefa já tem uma ocorrência pendente, não gera outra: a pendente fica "em atraso".
 
 ## Quem faz

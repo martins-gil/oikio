@@ -1,36 +1,51 @@
-import { useFocusEffect } from 'expo-router';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
+import { describeAssignment, describeSchedule, TASK_COLUMNS, type TaskRow } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
 import { sinceText, urgencyColor, urgencyFill, type TaskStatus } from '@/lib/urgency';
 import { supabase } from '@/lib/supabase';
 
-// Estado da casa: cada tarefa partilhada, da mais atrasada (vermelho) à mais recente (verde)
+const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-PT');
+
+// Estado da casa: o indicador verde → vermelho de cada tarefa, e onde se gerem as tarefas
+// (criar, editar, pausar, apagar com histórico).
 export default function StatusScreen() {
+  const router = useRouter();
   const { session } = useSession();
   const { household, members } = useHousehold();
-  const [rows, setRows] = useState<TaskStatus[] | null>(null);
+  const me = session?.user.id;
+  const myRole = members.find((m) => m.user_id === me)?.role;
+  const canManage = myRole === 'admin' || myRole === 'adult';
+
+  const [tasks, setTasks] = useState<TaskRow[] | null>(null);
+  const [status, setStatus] = useState<Record<string, TaskStatus>>({});
+  const [showDeleted, setShowDeleted] = useState(false);
   const [error, setError] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       if (!household) return;
-      supabase.rpc('house_task_status', { p_household: household.id }).then(({ data, error: err }) => {
-        setError(!!err);
-        const list = ((data ?? []) as TaskStatus[]).map((r) => ({ ...r, urgency_ratio: r.urgency_ratio === null ? null : Number(r.urgency_ratio) }));
-        // mais urgentes primeiro; sem ratio no fim
-        list.sort((a, b) => (b.urgency_ratio ?? -1) - (a.urgency_ratio ?? -1) || a.title.localeCompare(b.title));
-        setRows(list);
+      Promise.all([
+        supabase.from('tasks').select(TASK_COLUMNS).eq('household_id', household.id).neq('scope', 'personal').order('title'),
+        supabase.rpc('house_task_status', { p_household: household.id }),
+      ]).then(([t, s]) => {
+        setError(!!t.error || !!s.error);
+        setTasks((t.data ?? []) as TaskRow[]);
+        const map: Record<string, TaskStatus> = {};
+        for (const r of (s.data ?? []) as TaskStatus[]) map[r.task_id] = { ...r, urgency_ratio: r.urgency_ratio === null ? null : Number(r.urgency_ratio) };
+        setStatus(map);
       });
     }, [household]),
   );
 
   const nameOf = (id: string | null) =>
-    id === null ? null : id === session?.user.id ? 'ti' : (members.find((m) => m.user_id === id)?.display_name ?? null);
+    id === null ? 'outra pessoa' : id === me ? 'ti' : (members.find((m) => m.user_id === id)?.display_name ?? 'outra pessoa');
 
-  if (rows === null) {
+  if (tasks === null || !household) {
     return (
       <View style={styles.center}>
         <ActivityIndicator />
@@ -38,27 +53,72 @@ export default function StatusScreen() {
     );
   }
 
+  const active = tasks
+    .filter((t) => t.is_active && !t.deleted_at)
+    .sort((a, b) => (status[b.id]?.urgency_ratio ?? -1) - (status[a.id]?.urgency_ratio ?? -1) || a.title.localeCompare(b.title));
+  const paused = tasks.filter((t) => !t.is_active && !t.deleted_at);
+  const deleted = tasks.filter((t) => t.deleted_at).sort((a, b) => (b.deleted_at ?? '').localeCompare(a.deleted_at ?? ''));
+  const open = (id: string) => router.push({ pathname: '/task/[id]', params: { id } });
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Stack.Screen options={{ title: 'Estado da casa' }} />
+      {canManage && <Button title="+ Nova tarefa" onPress={() => router.push('/task/edit')} />}
       <Text style={styles.hint}>Verde: em dia · Amarelo: a chegar a altura · Vermelho: em atraso</Text>
-      {error && <Text style={styles.error}>Não foi possível carregar.</Text>}
-      {rows.length === 0 && !error && <Text style={styles.hint}>Ainda não há tarefas da casa.</Text>}
-      {rows.map((r) => {
-        const color = urgencyColor(r.urgency_ratio);
-        const who = nameOf(r.last_done_by);
+      {error && <Text style={styles.error}>Não foi possível carregar tudo.</Text>}
+      {active.length === 0 && !error && <Text style={styles.hint}>Ainda não há tarefas da casa.</Text>}
+
+      {active.map((t) => {
+        const st = status[t.id];
+        const color = urgencyColor(st?.urgency_ratio);
+        const who = st?.last_done_by ? nameOf(st.last_done_by) : null;
         return (
-          <View key={r.task_id} style={styles.card}>
-            <Text style={styles.title}>{r.title}</Text>
-            <View style={styles.track}>
-              <View style={[styles.fill, { width: `${urgencyFill(r.urgency_ratio) * 100}%`, backgroundColor: color }]} />
-            </View>
-            <Text style={[styles.line, r.urgency_ratio !== null && r.urgency_ratio > 1 && { color }]}>
-              {sinceText(r.days_since_last)}
-              {who && r.days_since_last !== null ? ` por ${who}` : ''}
+          <Pressable key={t.id} style={styles.card} onPress={() => open(t.id)}>
+            <Text style={styles.title}>{t.title}</Text>
+            <Text style={styles.sub}>
+              {describeSchedule(t)} · {describeAssignment(t, nameOf)}
             </Text>
-          </View>
+            <View style={styles.track}>
+              <View style={[styles.fill, { width: `${urgencyFill(st?.urgency_ratio) * 100}%`, backgroundColor: color }]} />
+            </View>
+            <Text style={[styles.line, st?.urgency_ratio != null && st.urgency_ratio > 1 && { color }]}>
+              {sinceText(st?.days_since_last ?? null)}
+              {who && st?.days_since_last != null ? ` por ${who}` : ''}
+            </Text>
+          </Pressable>
         );
       })}
+
+      {paused.length > 0 && (
+        <View style={styles.group}>
+          <Text style={styles.section}>Pausadas</Text>
+          {paused.map((t) => (
+            <Pressable key={t.id} style={[styles.card, styles.dim]} onPress={() => open(t.id)}>
+              <Text style={styles.title}>⏸ {t.title}</Text>
+              <Text style={styles.sub}>{describeSchedule(t)}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
+      {deleted.length > 0 && (
+        <View style={styles.group}>
+          <Pressable onPress={() => setShowDeleted(!showDeleted)}>
+            <Text style={styles.section}>
+              🗑 Apagadas ({deleted.length}) {showDeleted ? '▲' : '▼'}
+            </Text>
+          </Pressable>
+          {showDeleted &&
+            deleted.map((t) => (
+              <Pressable key={t.id} style={[styles.card, styles.dim]} onPress={() => open(t.id)}>
+                <Text style={styles.title}>{t.title}</Text>
+                <Text style={styles.sub}>
+                  apagada por {nameOf(t.deleted_by)} em {fmtDate(t.deleted_at!)}
+                </Text>
+              </Pressable>
+            ))}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -68,8 +128,12 @@ const styles = StyleSheet.create({
   container: { padding: 16, gap: 10, paddingBottom: 60 },
   hint: { color: '#666', fontSize: 13, textAlign: 'center' },
   error: { color: '#c0392b', textAlign: 'center' },
-  card: { gap: 8, padding: 14, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff' },
+  group: { gap: 10, marginTop: 8 },
+  section: { fontSize: 13, color: '#666', textTransform: 'uppercase' },
+  card: { gap: 6, padding: 14, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff' },
+  dim: { opacity: 0.65 },
   title: { fontSize: 17, fontWeight: '600' },
+  sub: { color: '#666', fontSize: 13 },
   track: { height: 10, borderRadius: 5, backgroundColor: '#eee', overflow: 'hidden' },
   fill: { height: 10, borderRadius: 5 },
   line: { color: '#666', fontSize: 14 },
