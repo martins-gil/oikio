@@ -18,13 +18,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-dev-client",
-      [
-        "expo-notifications",
-        {
-          "color": "#5C4DB1"
-        }
-      ],
       [
         "expo-splash-screen",
         {
