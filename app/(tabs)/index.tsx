@@ -451,6 +451,13 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
         {error && <Text style={styles.error}>{error}</Text>}
 
+        {session?.user.is_anonymous && (
+          <Pressable style={styles.protect} onPress={() => router.push('/account')}>
+            <Text style={styles.protectTitle}>⚠️ Protege a tua conta</Text>
+            <Text style={styles.protectText}>Sem e-mail, perdes o acesso se mudares de telemóvel. Toca para guardar.</Text>
+          </Pressable>
+        )}
+
         {/* ----- Saudação e progresso da semana ----- */}
         <View style={styles.hero}>
           <View style={styles.heroText}>
@@ -695,6 +702,9 @@ const styles = StyleSheet.create({
   check: { width: 30, height: 30, borderRadius: 15, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
   checkDone: { backgroundColor: colors.success, borderColor: colors.success },
   checkMark: { color: '#fff', fontSize: 16 },
+  protect: { gap: 2, padding: 14, borderRadius: radius.card, backgroundColor: colors.peach },
+  protectTitle: { fontSize: 15, color: colors.ink },
+  protectText: { fontSize: 13, color: colors.ink },
   hero: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   heroText: { flex: 1, gap: 4 },
   hello: { fontSize: 22, color: colors.ink },

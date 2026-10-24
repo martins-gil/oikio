@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
@@ -39,6 +39,14 @@ export default function JoinScreen() {
     }
     await reload();
     router.replace('/');
+    Alert.alert(
+      'Guarda a tua conta',
+      'Para não perderes o acesso a esta casa (por exemplo se mudares de telemóvel), protege a conta com e-mail e palavra-passe.',
+      [
+        { text: 'Agora não', style: 'cancel' },
+        { text: 'Guardar a conta', onPress: () => router.push('/account') },
+      ],
+    );
   };
 
   return (
