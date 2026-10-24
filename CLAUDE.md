@@ -57,6 +57,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Ocorrências: `generate_occurrences()` (SQL, `pg_cron` de hora a hora); regras em `docs/geracao-ocorrencias.md`.
 - Tarefas pessoais: só o dono as vê (RLS); geram só para ele; `complete_task_now()` regista "feito agora" nas sem frequência.
 - Despesas: partilhadas veem-se na casa, "só minhas" só o pagador; só o pagador altera/apaga. `time_entries` (banco de horas, consultas) só o dono.
+- Equilíbrio: `house_task_status()` (indicador verde→vermelho = tempo desde a última vez ÷ intervalo) e `weekly_summary()` (semana de Lisboa, sem tarefas pessoais). `households.gamification`: off / weekly_summary / competition; só o admin altera a casa (e nunca o `plan`).
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
 
 ## Forma de trabalhar comigo

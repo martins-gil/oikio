@@ -7,12 +7,14 @@ import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { formatQty } from '@/lib/stock';
+import { urgencyColor, type TaskStatus } from '@/lib/urgency';
 import { supabase } from '@/lib/supabase';
 
 type Consumption = { quantity: number; products: { name: string; base_unit: string } | null };
 
 type Occurrence = {
   id: string;
+  task_id: string;
   due_date: string;
   status: 'pending' | 'done' | 'skipped';
   assigned_to: string | null;
@@ -38,6 +40,7 @@ export default function TodayScreen() {
   const [occurrences, setOccurrences] = useState<Occurrence[] | null>(null);
   const [dateLabel, setDateLabel] = useState('');
   const [todayStr, setTodayStr] = useState('');
+  const [urgency, setUrgency] = useState<Record<string, number | null>>({});
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
@@ -55,7 +58,7 @@ export default function TodayScreen() {
     }
     const { data, error: err } = await supabase
       .from('task_occurrences')
-      .select('id, due_date, status, assigned_to, tasks!inner(title, scope, task_consumptions(quantity, products(name, base_unit)))')
+      .select('id, task_id, due_date, status, assigned_to, tasks!inner(title, scope, task_consumptions(quantity, products(name, base_unit)))')
       .eq('household_id', household.id)
       .neq('tasks.scope', 'personal') // as pessoais ficam só no separador Pessoal
       .lte('due_date', today)
@@ -69,6 +72,12 @@ export default function TodayScreen() {
       return;
     }
     setError(null);
+    // Indicador verde → vermelho de cada tarefa (se falhar, as bolinhas ficam a cinzento)
+    supabase.rpc('house_task_status', { p_household: household.id }).then(({ data: st }) => {
+      const map: Record<string, number | null> = {};
+      for (const r of (st ?? []) as TaskStatus[]) map[r.task_id] = r.urgency_ratio === null ? null : Number(r.urgency_ratio);
+      setUrgency(map);
+    });
     setTodayStr(today);
     setOccurrences((data ?? []) as unknown as Occurrence[]);
     setDateLabel(
@@ -159,7 +168,11 @@ export default function TodayScreen() {
       key={o.id}
       style={[styles.task, isDone && styles.taskDone]}
       onPress={() => (isDone ? askUndo(o) : markDone(o))}>
-      <Text style={styles.circle}>{isDone ? '✅' : '⚪'}</Text>
+      {isDone ? (
+        <Text style={styles.circle}>✅</Text>
+      ) : (
+        <View style={[styles.dot, { backgroundColor: urgencyColor(urgency[o.task_id]) }]} />
+      )}
       <View style={styles.taskText}>
         <Text style={[styles.taskTitle, isDone && styles.strike]}>{o.tasks?.title ?? 'Tarefa'}</Text>
         {!isDone && daysLate(todayStr, o.due_date) > 0 && (
@@ -208,6 +221,16 @@ export default function TodayScreen() {
             {done.map((o) => renderTask(o, true))}
           </View>
         )}
+        <View style={styles.links}>
+          <Pressable onPress={() => router.push('/status')}>
+            <Text style={styles.link}>🚦 Estado da casa ›</Text>
+          </Pressable>
+          {household.gamification !== 'off' && (
+            <Pressable onPress={() => router.push('/weekly')}>
+              <Text style={styles.link}>📊 Resumo da semana ›</Text>
+            </Pressable>
+          )}
+        </View>
       </ScrollView>
       <Toast message={toast} onHide={hideToast} />
     </View>
@@ -233,6 +256,9 @@ const styles = StyleSheet.create({
   },
   taskDone: { opacity: 0.55 },
   circle: { fontSize: 24 },
+  dot: { width: 22, height: 22, borderRadius: 11, margin: 1 },
+  links: { gap: 14, marginTop: 12, alignItems: 'center' },
+  link: { color: '#208AEF', fontSize: 16, fontWeight: '600' },
   taskText: { flex: 1, gap: 2 },
   taskTitle: { fontSize: 18 },
   strike: { textDecorationLine: 'line-through' },

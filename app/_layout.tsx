@@ -15,6 +15,8 @@ export default function RootLayout() {
           <Stack.Screen name="onboarding" options={{ title: 'Consumíveis' }} />
           <Stack.Screen name="product/[id]" options={{ title: 'Produto' }} />
           <Stack.Screen name="house" options={{ title: 'Casa' }} />
+          <Stack.Screen name="status" options={{ title: 'Estado da casa' }} />
+          <Stack.Screen name="weekly" options={{ title: 'Resumo da semana' }} />
           <Stack.Screen name="hours" options={{ title: 'Banco de horas' }} />
           <Stack.Screen name="join" options={{ title: 'Tenho um convite' }} />
           <Stack.Screen name="sign-in" options={{ title: 'Entrar' }} />

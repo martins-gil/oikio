@@ -3,7 +3,8 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { useSession } from './session';
 import { supabase } from './supabase';
 
-export type Household = { id: string; name: string };
+export type GamificationMode = 'off' | 'weekly_summary' | 'competition';
+export type Household = { id: string; name: string; gamification: GamificationMode };
 export type Member = {
   user_id: string;
   display_name: string;
@@ -40,11 +41,11 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const reload = useCallback(async () => {
     const { data, error: err } = await supabase
       .from('households')
-      .select('id, name')
+      .select('id, name, gamification')
       .limit(1)
       .maybeSingle();
     setError(err ? 'Não foi possível carregar a casa.' : null);
-    setHousehold(data);
+    setHousehold(data as Household | null);
     if (data) {
       const { data: rows } = await supabase.rpc('household_members_info', { p_household: data.id });
       setMembers((rows ?? []) as Member[]);
@@ -82,3 +83,9 @@ export const ROLE_LABEL: Record<Member['role'], string> = {
 // "K7M2XQ9P4T" → "K7M2-XQ9P-4T"
 export const formatInviteCode = (code: string) =>
   [code.slice(0, 4), code.slice(4, 8), code.slice(8)].filter(Boolean).join('-');
+
+export const GAMIFICATION_LABEL: Record<GamificationMode, string> = {
+  off: 'Desligado',
+  weekly_summary: 'Resumo semanal',
+  competition: 'Competição amigável',
+};

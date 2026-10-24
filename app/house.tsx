@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
-import { formatInviteCode, ROLE_LABEL, useHousehold } from '@/lib/household';
+import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type GamificationMode } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 
@@ -59,6 +59,13 @@ export default function HouseScreen() {
         `Entra na nossa casa na App da Casa! Abre a app, toca em "Tenho um convite" e escreve o código:\n\n` +
         `${formatInviteCode(invite.token)}\n\n(válido até ${until})`,
     });
+  };
+
+  const setMode = async (mode: GamificationMode) => {
+    if (!household || household.gamification === mode) return;
+    const { error } = await supabase.from('households').update({ gamification: mode }).eq('id', household.id);
+    setToast(error ? 'Não foi possível guardar.' : 'Guardado');
+    if (!error) reload();
   };
 
   const signOut = () =>
@@ -116,6 +123,24 @@ export default function HouseScreen() {
           </>
         )}
 
+        <Text style={styles.section}>Resumo e pontos</Text>
+        <View style={styles.modes}>
+          {(Object.keys(GAMIFICATION_LABEL) as GamificationMode[]).map((m) => {
+            const on = household.gamification === m;
+            return (
+              <Pressable key={m} disabled={!isAdmin} style={[styles.mode, on && styles.modeOn, !isAdmin && !on && styles.modeOff]} onPress={() => setMode(m)}>
+                <Text style={[styles.modeText, on && styles.modeTextOn]}>{GAMIFICATION_LABEL[m]}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={styles.cardLine}>
+          {household.gamification === 'off' && 'Sem pontos, agradecimentos nem resumo semanal.'}
+          {household.gamification === 'weekly_summary' && 'Resumo semanal e agradecimentos, sem ranking.'}
+          {household.gamification === 'competition' && 'Resumo semanal com pontos e 🏆 para quem fez mais.'}
+          {!isAdmin && ' Só o administrador altera.'}
+        </Text>
+
         <Text style={styles.section}>A tua conta</Text>
         {anonymous ? (
           <View style={styles.warn}>
@@ -152,4 +177,10 @@ const styles = StyleSheet.create({
   warn: { gap: 10, backgroundColor: '#fff4e5', borderRadius: 12, padding: 16 },
   warnText: { color: '#8a5a00' },
   group: { gap: 10 },
+  modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mode: { borderWidth: 1, borderColor: '#208AEF', borderRadius: 16, paddingVertical: 8, paddingHorizontal: 14 },
+  modeOn: { backgroundColor: '#208AEF' },
+  modeOff: { opacity: 0.5 },
+  modeText: { color: '#208AEF', fontWeight: '600' },
+  modeTextOn: { color: '#fff' },
 });
