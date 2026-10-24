@@ -20,11 +20,6 @@
 -- =====================================================================
 
 
--- gen_random_bytes() (convites) vem do pgcrypto; no Supabase já está no schema extensions
-create schema if not exists extensions;
-create extension if not exists pgcrypto with schema extensions;
-
-
 -- =====================================================================
 -- 1. TIPOS
 -- =====================================================================
@@ -88,7 +83,7 @@ create table household_members (
 create table household_invites (
   id            uuid primary key default gen_random_uuid(),
   household_id  uuid not null references households(id) on delete cascade,
-  token         text not null unique default encode(gen_random_bytes(16), 'hex'),
+  token         text not null unique default replace(gen_random_uuid()::text, '-', ''),
   created_by    uuid not null references auth.users(id),
   expires_at    timestamptz not null default now() + interval '7 days',
   used_by       uuid references auth.users(id),
