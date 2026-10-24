@@ -93,5 +93,5 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [ ] M8 Talões por foto com IA (Edge Function + ecrã de confirmação)
 - [ ] M9 Sugestões de refeições com IA
 - [x] M10 Separador pessoal (privado)
-- [ ] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
+- [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas
