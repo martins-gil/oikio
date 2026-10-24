@@ -71,11 +71,28 @@ export default function HouseScreen() {
     if (!error) reload();
   };
 
+  const doSignOut = async () => {
+    await supabase.auth.signOut();
+    router.replace('/'); // volta ao início: sem casa, abre o ecrã de entrar / criar casa
+  };
+
+  // Conta protegida: basta lembrar que é preciso o e-mail para voltar.
+  // Conta sem e-mail: sair perde o acesso à casa, por isso avisa e oferece proteger primeiro.
   const signOut = () =>
-    Alert.alert('Terminar sessão?', 'Para voltares a entrar, vais precisar do e-mail e da palavra-passe.', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Terminar sessão', style: 'destructive', onPress: () => supabase.auth.signOut() },
-    ]);
+    anonymous
+      ? Alert.alert(
+          'Esta conta não está protegida',
+          'Se terminares a sessão sem e-mail e palavra-passe, perdes o acesso a esta casa para sempre. Protege a conta primeiro.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Proteger a conta', onPress: () => router.push('/account') },
+            { text: 'Sair mesmo assim', style: 'destructive', onPress: doSignOut },
+          ],
+        )
+      : Alert.alert('Terminar sessão?', 'Para voltares a entrar, vais precisar do e-mail e da palavra-passe.', [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Terminar sessão', style: 'destructive', onPress: doSignOut },
+        ]);
 
   if (!household) return null;
 
@@ -154,6 +171,7 @@ export default function HouseScreen() {
               A tua conta ainda não está protegida. Se perderes o telemóvel, perdes a casa.
             </Text>
             <Button title="Proteger a minha conta" onPress={() => router.push('/account')} />
+            <Button title="Terminar sessão" variant="secondary" onPress={signOut} />
           </View>
         ) : (
           <View style={styles.group}>
