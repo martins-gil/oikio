@@ -1,32 +1,27 @@
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
+import { RESET_REDIRECT } from '@/lib/authLink';
 import { supabase } from '@/lib/supabase';
 import { colors, radius } from '@/lib/theme';
 
-type Stage = 'email' | 'code';
-
-// Esqueci a palavra-passe: 1) pede o e-mail e recebe um código  2) escreve o código e escolhe uma palavra-passe nova.
-// Não revela se o e-mail existe (o Supabase responde sempre o mesmo).
+// Esqueci a palavra-passe: pede o e-mail e recebe uma ligação. Ao tocar nela (neste telemóvel) a app abre
+// no ecrã "Nova palavra-passe". Não revela se o e-mail existe (o Supabase responde sempre o mesmo).
 export default function ForgotPasswordScreen() {
-  const router = useRouter();
-  const [stage, setStage] = useState<Stage>('email');
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [password, setPassword] = useState('');
+  const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const sendCode = async () => {
+  const send = async () => {
     const value = email.trim();
     if (!value.includes('@') || busy) return;
     setBusy(true);
     setMessage(null);
-    const { error } = await supabase.auth.resetPasswordForEmail(value);
+    const { error } = await supabase.auth.resetPasswordForEmail(value, { redirectTo: RESET_REDIRECT });
     setBusy(false);
     if (error) {
       setMessage(
@@ -36,41 +31,24 @@ export default function ForgotPasswordScreen() {
       );
       return;
     }
-    setStage('code');
-  };
-
-  const ready = code.replace(/\D/g, '').length >= 6 && password.length >= 8;
-
-  const reset = async () => {
-    if (!ready || busy) return;
-    setBusy(true);
-    setMessage(null);
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: code.replace(/\D/g, ''),
-      type: 'recovery',
-    });
-    if (verifyError) {
-      setBusy(false);
-      setMessage('Código errado ou expirado. Confirma o e-mail mais recente ou pede um novo código.');
-      return;
-    }
-    const { error: updateError } = await supabase.auth.updateUser({ password });
-    setBusy(false);
-    if (updateError) {
-      setMessage(`Não foi possível guardar a palavra-passe.\n\nDetalhe técnico: ${updateError.message}`);
-      return;
-    }
-    router.replace('/'); // já tem sessão: entra direto
+    setSent(true);
   };
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        {stage === 'email' ? (
+        <Text style={styles.title}>Esqueci a palavra-passe</Text>
+        {sent ? (
           <>
-            <Text style={styles.title}>Esqueci a palavra-passe</Text>
-            <Text style={styles.hint}>Escreve o e-mail da tua conta. Enviamos-te um código para escolheres uma nova palavra-passe.</Text>
+            <Text style={styles.hint}>
+              Se existir uma conta com {email.trim()}, enviámos um e-mail (vê também o spam).{'\n\n'}
+              Abre-o <Text style={styles.bold}>neste telemóvel</Text> e toca em «Reset password». A app abre e podes escolher a nova palavra-passe.
+            </Text>
+            <Button title={busy ? 'A enviar…' : 'Enviar outra vez'} variant="secondary" disabled={busy} onPress={send} />
+          </>
+        ) : (
+          <>
+            <Text style={styles.hint}>Escreve o e-mail da tua conta. Enviamos-te uma ligação para escolheres uma nova palavra-passe.</Text>
             <TextInput
               style={styles.input}
               value={email}
@@ -81,37 +59,9 @@ export default function ForgotPasswordScreen() {
               autoCorrect={false}
               autoComplete="email"
               returnKeyType="done"
-              onSubmitEditing={sendCode}
+              onSubmitEditing={send}
             />
-            <Button title={busy ? 'A enviar…' : 'Enviar código'} disabled={!email.includes('@') || busy} onPress={sendCode} />
-          </>
-        ) : (
-          <>
-            <Text style={styles.title}>Escreve o código</Text>
-            <Text style={styles.hint}>
-              Se existir uma conta com {email.trim()}, enviámos um e-mail com um código. Vê também o spam.
-            </Text>
-            <TextInput
-              style={[styles.input, styles.code]}
-              value={code}
-              onChangeText={setCode}
-              placeholder="Código"
-              keyboardType="number-pad"
-              maxLength={10}
-            />
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Nova palavra-passe (8 ou mais caracteres)"
-              secureTextEntry
-              autoCapitalize="none"
-              autoComplete="new-password"
-              returnKeyType="done"
-              onSubmitEditing={reset}
-            />
-            <Button title={busy ? 'A guardar…' : 'Guardar e entrar'} disabled={!ready || busy} onPress={reset} />
-            <Button title="Pedir outro código" variant="secondary" disabled={busy} onPress={sendCode} />
+            <Button title={busy ? 'A enviar…' : 'Enviar ligação'} disabled={!email.includes('@') || busy} onPress={send} />
           </>
         )}
         {message && <Text style={styles.error}>{message}</Text>}
@@ -125,7 +75,7 @@ const styles = StyleSheet.create({
   container: { padding: 24, gap: 12, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 22, textAlign: 'center', color: colors.ink },
   hint: { color: colors.muted, textAlign: 'center', marginBottom: 8 },
+  bold: { color: colors.ink },
   input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 14, fontSize: 17 },
-  code: { textAlign: 'center', fontSize: 24, letterSpacing: 4 },
   error: { color: colors.pink, textAlign: 'center' },
 });
