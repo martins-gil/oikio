@@ -22,3 +22,27 @@ export function parseAuthLink(url: string): Record<string, string> {
 
 // Endereço para onde o e-mail de recuperação devolve a pessoa à app (tem de estar nos "Redirect URLs" do Supabase)
 export const RESET_REDIRECT = 'nestkeep://reset-password';
+
+// ----- Guarda a última ligação de recuperação recebida -----
+// A ligação chega à app antes de o ecrã "Nova palavra-passe" existir; por isso é apanhada logo no arranque (app/_layout)
+// e guardada aqui para o ecrã a ler quando abrir.
+let latest: string | null = null;
+const listeners = new Set<() => void>();
+
+export function rememberAuthUrl(url: string | null | undefined) {
+  if (!url) return;
+  const p = parseAuthLink(url);
+  if (!(p.access_token || p.code || p.error || p.error_code)) return; // ignora outras ligações (ex.: a do servidor de desenvolvimento)
+  latest = url;
+  listeners.forEach((f) => f());
+}
+export const subscribeAuthUrl = (f: () => void) => {
+  listeners.add(f);
+  return () => {
+    listeners.delete(f);
+  };
+};
+export const getAuthUrl = () => latest;
+export function clearAuthUrl() {
+  latest = null;
+}

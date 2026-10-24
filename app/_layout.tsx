@@ -1,10 +1,12 @@
 import { useFonts } from 'expo-font';
+import * as Linking from 'expo-linking';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { HouseholdProvider } from '@/lib/household';
+import { rememberAuthUrl } from '@/lib/authLink';
 import { getNotifications, setupNotificationHandler } from '@/lib/notifications';
 import { SessionProvider } from '@/lib/session';
 import { colors, fonts } from '@/lib/theme';
@@ -22,6 +24,13 @@ export default function RootLayout() {
   });
 
   const router = useRouter();
+
+  // Ligação do e-mail de recuperação da palavra-passe: apanha-a logo, antes de o ecrã existir
+  useEffect(() => {
+    Linking.getInitialURL().then(rememberAuthUrl);
+    const sub = Linking.addEventListener('url', (e) => rememberAuthUrl(e.url));
+    return () => sub.remove();
+  }, []);
 
   // Mostra os lembretes com a app aberta e abre o Resumo ao tocar neles (só na versão real da app)
   useEffect(() => {
