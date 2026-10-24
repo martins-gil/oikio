@@ -74,7 +74,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M2 Onboarding progressivo: escolher 2–3 consumíveis críticos + nível atual
 - [x] M3 Ecrã "Hoje": listar ocorrências, marcar como feita com 1 toque
 - [x] M4 Geração diária de ocorrências + atribuição (função SQL agendada com pg_cron)
-- [ ] M5 Stock e lista de compras (níveis, +/−, riscar)
+- [x] M5 Stock e lista de compras (níveis, +/−, riscar)
 - [ ] M6 Convidar o parceiro por link; associar conta Apple/Google
 - [ ] M7 Resumo diário por notificação
 - [ ] M8 Talões por foto com IA (Edge Function + ecrã de confirmação)
