@@ -46,3 +46,18 @@ export function localDate(d = new Date()): string {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
+
+// AAAA-MM-DD + n dias
+export function addDaysIso(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return localDate(d);
+}
+
+// Segunda-feira (AAAA-MM-DD) da semana de hoje, com deslocamento em semanas (-1 = a anterior)
+export function mondayOf(offsetWeeks = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + offsetWeeks * 7);
+  return localDate(d);
+}
+

@@ -46,7 +46,7 @@ Qualquer ação diária em ≤ 2 toques. Nenhum campo obrigatório além do nome
 
 ## Modelo de dados (resumo)
 Esquema completo na primeira migração: `supabase/migrations/<data>_initial_schema.sql`.
-- `tasks` = a regra; `task_occurrences` = cada vez concreta (ecrã "Hoje").
+- `tasks` = a regra; `task_occurrences` = cada vez concreta (página inicial "Resumo da semana": Estado da casa, resumo, tarefas a fazer e feitas com quem as fez).
 - Periodicidade: `times_per_period`, `interval_since_last`, `fixed_schedule` (RRULE), `no_frequency`, `once`.
 - Atribuição: `fixed`, `rotation`, `balanced` (por defeito), `free`.
 - Stock em lotes (`stock_lots`) com consumo FEFO via `consume_product()`.

@@ -41,7 +41,7 @@ export default function TabsLayout() {
       }}>
       <Tabs.Screen
         name="index"
-        options={{ title: 'Hoje', tabBarIcon: () => <Text style={styles.icon}>✅</Text> }}
+        options={{ title: 'Resumo', headerTitle: 'Resumo da semana', tabBarIcon: () => <Text style={styles.icon}>📊</Text> }}
       />
       <Tabs.Screen
         name="shopping"
