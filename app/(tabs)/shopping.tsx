@@ -1,10 +1,11 @@
 import { Screen } from '@/components/Screen';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
+import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { formatQty, type ShopItem } from '@/lib/stock';
@@ -21,6 +22,7 @@ function itemDetail(i: ShopItem): string | null {
 }
 
 export default function ShoppingScreen() {
+  const router = useRouter();
   const { household } = useHousehold();
   const [items, setItems] = useState<ShopItem[] | null>(null);
   const [text, setText] = useState('');
@@ -108,6 +110,7 @@ export default function ShoppingScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
+        <Button title="🧾 Registar compra" variant="secondary" onPress={() => router.push('/receipt')} />
         {open.length === 0 && <Text style={styles.empty}>Nada por comprar 🎉</Text>}
         {open.map((i) => (
           <View key={i.id} style={styles.row}>
