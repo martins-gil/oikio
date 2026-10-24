@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: '600' },
   chips: { flexDirection: 'row', gap: 8 },
   chip: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
-  chipOn: { backgroundColor: '#5C4DB1' },
+  chipOn: { backgroundColor: '#DC4F89', borderColor: '#DC4F89' },
   chipText: { color: '#5C4DB1', fontSize: 18, fontWeight: '600' },
   chipTextOn: { color: '#fff' },
   input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16, backgroundColor: '#fff' },

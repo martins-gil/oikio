@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   block: { gap: 10, padding: 12, borderRadius: 10, backgroundColor: '#F4F3FF' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 16, paddingVertical: 7, paddingHorizontal: 12, backgroundColor: '#fff' },
-  chipOn: { backgroundColor: '#5C4DB1' },
+  chipOn: { backgroundColor: '#DC4F89', borderColor: '#DC4F89' },
   chipText: { color: '#5C4DB1', fontWeight: '600' },
   chipTextOn: { color: '#fff' },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },

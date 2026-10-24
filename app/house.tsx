@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   group: { gap: 10 },
   modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   mode: { borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 16, paddingVertical: 8, paddingHorizontal: 14 },
-  modeOn: { backgroundColor: '#5C4DB1' },
+  modeOn: { backgroundColor: '#DC4F89', borderColor: '#DC4F89' },
   modeOff: { opacity: 0.5 },
   modeText: { color: '#5C4DB1', fontWeight: '600' },
   modeTextOn: { color: '#fff' },

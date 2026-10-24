@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 
 import { localDate } from '@/lib/money';
+import { colors, radius } from '@/lib/theme';
+import { colors, radius } from '@/lib/theme';
 
 type Props = {
   value: string | null; // AAAA-MM-DD
@@ -109,22 +111,22 @@ export function DatePicker({ value, onChange, min, max }: Props) {
 }
 
 const styles = StyleSheet.create({
-  box: { gap: 10 },
+  box: { gap: 12, backgroundColor: colors.primary, borderRadius: radius.card, padding: 14 },
   quick: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 16, paddingVertical: 6, paddingHorizontal: 12 },
-  chipOn: { backgroundColor: '#5C4DB1' },
-  chipText: { color: '#5C4DB1' },
+  chip: { borderWidth: 1, borderColor: colors.lavender, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
+  chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
+  chipText: { color: colors.lavender },
   chipTextOn: { color: '#fff' },
   monthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 },
-  arrow: { fontSize: 18, color: '#5C4DB1' },
+  arrow: { fontSize: 18, color: colors.accent },
   off: { opacity: 0.25 },
-  month: { fontSize: 16, fontWeight: '600', textTransform: 'capitalize' },
+  month: { fontSize: 18, color: '#fff', textTransform: 'capitalize' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  weekday: { width: `${100 / 7}%`, textAlign: 'center', color: '#888', fontSize: 12, marginBottom: 4 },
+  weekday: { width: `${100 / 7}%`, textAlign: 'center', color: colors.lavender, fontSize: 12, marginBottom: 4 },
   cell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 2 },
   day: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  daySelected: { backgroundColor: '#5C4DB1' },
-  dayToday: { borderWidth: 1, borderColor: '#5C4DB1' },
-  dayText: { fontSize: 15 },
-  dayTextSelected: { color: '#fff', fontWeight: '700' },
+  daySelected: { backgroundColor: colors.accent },
+  dayToday: { borderWidth: 1, borderColor: colors.accent },
+  dayText: { fontSize: 15, color: '#fff' },
+  dayTextSelected: { color: colors.ink },
 });

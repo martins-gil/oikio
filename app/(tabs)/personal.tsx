@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 16, paddingVertical: 6, paddingHorizontal: 12 },
-  chipOn: { backgroundColor: '#5C4DB1' },
+  chipOn: { backgroundColor: '#DC4F89', borderColor: '#DC4F89' },
   chipText: { color: '#5C4DB1' },
   chipTextOn: { color: '#fff' },
 });
