@@ -1,4 +1,4 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { Toast } from '@/components/Toast';
+import { formatMinutes } from '@/lib/money';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
@@ -67,6 +68,7 @@ const daysLate = (today: string, due: string) =>
   Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${due}T12:00:00Z`)) / 86400000);
 
 export default function PersonalScreen() {
+  const router = useRouter();
   const { session } = useSession();
   const { household } = useHousehold();
   const me = session?.user.id;
@@ -74,6 +76,7 @@ export default function PersonalScreen() {
   const [tasks, setTasks] = useState<PersonalTask[] | null>(null);
   const [occurrences, setOccurrences] = useState<PersonalOccurrence[]>([]);
   const [todayStr, setTodayStr] = useState('');
+  const [hourBank, setHourBank] = useState<number | null>(null);
   const [title, setTitle] = useState('');
   const [freq, setFreq] = useState<(typeof FREQUENCIES)[number]['key']>('none');
   const [toast, setToast] = useState<string | null>(null);
@@ -88,7 +91,7 @@ export default function PersonalScreen() {
       return;
     }
     const startOfToday = new Date(`${today}T00:00:00`).toISOString();
-    const [occ, list] = await Promise.all([
+    const [occ, list, hours] = await Promise.all([
       supabase
         .from('task_occurrences')
         .select('id, due_date, status, tasks!inner(title, scope)')
@@ -105,7 +108,9 @@ export default function PersonalScreen() {
         .eq('scope', 'personal')
         .eq('is_active', true)
         .order('created_at'),
+      supabase.from('time_entries').select('minutes').eq('kind', 'hour_bank'),
     ]);
+    setHourBank((hours.data ?? []).reduce((sum: number, r: { minutes: number }) => sum + r.minutes, 0));
     if (occ.error || list.error) setToast('Não foi possível carregar.');
     setTodayStr(today as string);
     setOccurrences((occ.data ?? []) as unknown as PersonalOccurrence[]);
@@ -196,6 +201,13 @@ export default function PersonalScreen() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.privacy}>🔒 Só tu vês isto</Text>
 
+        <Pressable style={styles.hoursCard} onPress={() => router.push('/hours')}>
+          <Text style={styles.hoursTitle}>⏱ Banco de horas e consultas</Text>
+          <Text style={styles.hoursValue}>
+            {hourBank === null ? '' : `${hourBank > 0 ? '+' : ''}${formatMinutes(hourBank)} ›`}
+          </Text>
+        </Pressable>
+
         {(pending.length > 0 || done.length > 0) && (
           <View style={styles.group}>
             <Text style={styles.section}>Hoje</Text>
@@ -279,6 +291,18 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 20, gap: 16, paddingBottom: 80 },
   privacy: { color: '#555', fontSize: 15 },
+  hoursCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#208AEF',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+  },
+  hoursTitle: { fontSize: 16, fontWeight: '600' },
+  hoursValue: { fontSize: 16, color: '#208AEF', fontWeight: '600' },
   group: { gap: 8 },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase' },
   hint: { color: '#666' },
