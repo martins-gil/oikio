@@ -5,7 +5,6 @@ import { Text } from '@/components/Text';
 
 import { localDate } from '@/lib/money';
 import { colors, radius } from '@/lib/theme';
-import { colors, radius } from '@/lib/theme';
 
 type Props = {
   value: string | null; // AAAA-MM-DD
