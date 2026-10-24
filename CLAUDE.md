@@ -90,7 +90,8 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M5 Stock e lista de compras (níveis, +/−, riscar)
 - [x] M6 Convidar o parceiro por código; guardar a conta com e-mail (Apple/Google na fase das lojas)
 - [ ] M7 Resumo diário por notificação
-- [ ] M8 Talões por foto com IA (Edge Function + ecrã de confirmação)
+- [x] M8 Talões: registo da compra à mão + `confirm_receipt()` (stock, lista de compras, despesa) e ecrã de confirmação
+- [ ] M8b Ler o talão por foto com IA (Edge Function + chave da Claude API nos secrets; preenche as linhas do ecrã do M8)
 - [ ] M9 Sugestões de refeições com IA
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
