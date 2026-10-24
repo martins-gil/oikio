@@ -15,6 +15,7 @@ import {
   type StockLevel,
   type StockRow,
 } from '@/lib/stock';
+import { saveErrorText } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 
@@ -37,6 +38,7 @@ export default function ProductScreen() {
       supabase.from('products').select('is_essential').eq('id', id).maybeSingle(),
     ]);
     setEssential(!!ess.data?.is_essential);
+    if (ess.error) setToast(saveErrorText(ess.error.message));
     const p = (stock.data ?? null) as StockRow | null;
     setProduct(p);
     setListItemId((list.data?.id as string | undefined) ?? null);
@@ -83,7 +85,9 @@ export default function ProductScreen() {
     const { error } = await supabase.from('products').update({ is_essential: value }).eq('id', id);
     if (error) {
       setEssential(!value);
-      setToast('Não foi possível guardar.');
+      setToast(saveErrorText(error.message));
+    } else {
+      setToast(value ? 'Marcado como essencial' : 'Já não é essencial');
     }
   };
   const addToList = () =>

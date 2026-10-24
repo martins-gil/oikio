@@ -62,6 +62,13 @@ export const STATUS_TEXT: Record<PushStatus, string> = {
   error: 'Não foi possível ativar os lembretes. Tenta outra vez.',
 };
 
+// Texto para quando falha uma gravação; se a base de dados ainda não tem a migração dos lembretes, diz como a aplicar
+export function saveErrorText(message: string): string {
+  return /does not exist|schema cache|could not find|is_essential|notification_prefs/i.test(message)
+    ? 'Falta aplicar a migração dos lembretes: no PowerShell corre "npx supabase db push".'
+    : 'Não foi possível guardar. Tenta outra vez.';
+}
+
 export async function loadPrefs(userId: string): Promise<Prefs> {
   const { data } = await supabase
     .from('notification_prefs')

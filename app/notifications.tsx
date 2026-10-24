@@ -9,12 +9,14 @@ import {
   DEFAULT_PREFS,
   loadPrefs,
   registerForPush,
+  saveErrorText,
   savePrefs,
   STATUS_TEXT,
   type Prefs,
   type PushStatus,
 } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
+import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
 const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
@@ -44,6 +46,10 @@ export default function NotificationsScreen() {
   useEffect(() => {
     if (!me) return;
     loadPrefs(me).then(setPrefs);
+    supabase
+      .from('notification_prefs')
+      .select('user_id', { head: true, count: 'exact' })
+      .then(({ error }) => error && setToast(saveErrorText(error.message)));
     registerForPush(false).then(setStatus);
   }, [me]);
 
@@ -52,7 +58,12 @@ export default function NotificationsScreen() {
     const next = { ...prefs, ...change };
     setPrefs(next);
     const { error } = await savePrefs(me, next);
-    if (error) setToast('Não foi possível guardar. Tenta outra vez.');
+    if (error) {
+      setPrefs(prefs);
+      setToast(saveErrorText(error.message));
+    } else {
+      setToast('Guardado');
+    }
   };
 
   const activate = async () => setStatus(await registerForPush(true));
