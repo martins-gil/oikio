@@ -16,7 +16,10 @@ para notificações (M7) e IA (M8/M9).
 ## Quem faz
 - `balanced`: quem tem menos esforço (feito nos últimos 14 dias + pendente); empate → quem entrou primeiro.
 - `fixed`: `fixed_assignee` (ou o dono). `rotation`: o seguinte em `task_rotation`. `free`: sem dono.
-- Membros `child` não recebem tarefas automáticas. Tarefas pessoais nunca são geradas aqui.
+- Membros `child` não recebem tarefas automáticas.
+- Tarefas pessoais (`scope = 'personal'`) geram só para o dono. O esforço delas **não conta** no equilíbrio das
+  partilhadas (senão alterava quem recebe o quê e revelava que existem). A RLS esconde-as de todos os outros;
+  `supabase/tests/personal_privacy.sql` prova-o.
 
 ## Pontos em aberto
 - Saltar uma tarefa (estado `skipped`) ainda não tem botão na app.

@@ -55,6 +55,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Convites: `get_or_create_invite()` (só admin) dá um código de 10 caracteres; `accept_invite(código, nome)` entra na casa.
 - Onboarding: `onboard_from_template()` cria produto + tarefa + consumo num passo.
 - Ocorrências: `generate_occurrences()` (SQL, `pg_cron` de hora a hora); regras em `docs/geracao-ocorrencias.md`.
+- Tarefas pessoais: só o dono as vê (RLS); geram só para ele; `complete_task_now()` regista "feito agora" nas sem frequência.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
 
 ## Forma de trabalhar comigo

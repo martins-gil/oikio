@@ -79,15 +79,16 @@ begin
   for i in 30..33 loop perform pg_temp.day(h1, base + i, A); end loop;
   perform pg_temp.assert_eq('S4 pontual uma só vez', pg_temp.due_days(t, base), '30');
 
-  -- S5: sem frequência e tarefas pessoais não geram nada
+  -- S5: sem frequência não gera nada; a tarefa pessoal gera só para o dono (ver também personal_privacy.sql)
   insert into tasks(household_id, title, recurrence) values (h1, 'S5 sem frequência', 'no_frequency') returning id into t;
   insert into tasks(household_id, title, scope, owner_user_id, recurrence, assignment, fixed_assignee, times_per_period, period)
     values (h1, 'S5 pessoal', 'personal', A, 'times_per_period', 'fixed', A, 1, 'day') returning id into t;
   perform pg_temp.day(h1, base + 40, A);
-  perform pg_temp.assert_eq('S5 sem frequência e pessoal não geram', (select count(*)::text from task_occurrences where task_id in (select id from tasks where title in ('S5 sem frequência', 'S5 pessoal'))), '0');
+  perform pg_temp.assert_eq('S5 sem frequência não gera', (select count(*)::text from task_occurrences where task_id = (select id from tasks where title = 'S5 sem frequência')), '0');
+  perform pg_temp.assert_eq('S5 pessoal gera para o dono', pg_temp.who(t, base), 'A');
 
   -- S6: repetir no mesmo dia não duplica
-  perform pg_temp.assert_eq('S6 idempotente (1ª)', generate_occurrences(h1, base + 50)::text, '3');  -- S1, S2 e S3 (esta foi feita no ciclo do S4)
+  perform pg_temp.assert_eq('S6 idempotente (1ª)', generate_occurrences(h1, base + 50)::text, '4');  -- S1, S2, S3 (feita no ciclo do S4) e a pessoal diária
   perform pg_temp.assert_eq('S6 idempotente (2ª)', generate_occurrences(h1, base + 50)::text, '0');
 
   -- S7: mês — 1x por mês só uma vez no mês

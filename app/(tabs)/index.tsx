@@ -55,8 +55,9 @@ export default function TodayScreen() {
     }
     const { data, error: err } = await supabase
       .from('task_occurrences')
-      .select('id, due_date, status, assigned_to, tasks(title, task_consumptions(quantity, products(name, base_unit)))')
+      .select('id, due_date, status, assigned_to, tasks!inner(title, scope, task_consumptions(quantity, products(name, base_unit)))')
       .eq('household_id', household.id)
+      .neq('tasks.scope', 'personal') // as pessoais ficam só no separador Pessoal
       .lte('due_date', today)
       // pendentes (incluindo as em atraso) e o que foi feito hoje
       .or(`status.eq.pending,due_date.eq.${today},completed_at.gte.${new Date(`${today}T00:00:00`).toISOString()}`)
