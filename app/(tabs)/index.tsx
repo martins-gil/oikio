@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { KudosForm } from '@/components/KudosForm';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
@@ -18,7 +19,24 @@ type Occurrence = {
   due_date: string;
   status: 'pending' | 'done' | 'skipped';
   assigned_to: string | null;
+  completed_by: string | null;
   tasks: { title: string; task_consumptions: Consumption[] } | null;
+};
+
+type Swap = {
+  id: string;
+  occurrence_id: string;
+  from_user: string;
+  to_user: string;
+  task_occurrences: { status: string; assigned_to: string | null; tasks: { title: string } | null } | null;
+};
+
+type Kudos = {
+  id: string;
+  from_user: string;
+  points: number;
+  message: string | null;
+  task_occurrences: { tasks: { title: string } | null } | null;
 };
 
 // Dias de atraso entre duas datas AAAA-MM-DD
@@ -41,6 +59,10 @@ export default function TodayScreen() {
   const [dateLabel, setDateLabel] = useState('');
   const [todayStr, setTodayStr] = useState('');
   const [urgency, setUrgency] = useState<Record<string, number | null>>({});
+  const [swaps, setSwaps] = useState<Swap[]>([]);
+  const [thanked, setThanked] = useState<Set<string>>(new Set());
+  const [unseen, setUnseen] = useState<Kudos[]>([]);
+  const [thanking, setThanking] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
@@ -58,7 +80,7 @@ export default function TodayScreen() {
     }
     const { data, error: err } = await supabase
       .from('task_occurrences')
-      .select('id, task_id, due_date, status, assigned_to, tasks!inner(title, scope, task_consumptions(quantity, products(name, base_unit)))')
+      .select('id, task_id, due_date, status, assigned_to, completed_by, tasks!inner(title, scope, task_consumptions(quantity, products(name, base_unit)))')
       .eq('household_id', household.id)
       .neq('tasks.scope', 'personal') // as pessoais ficam só no separador Pessoal
       .lte('due_date', today)
@@ -78,6 +100,30 @@ export default function TodayScreen() {
       for (const r of (st ?? []) as TaskStatus[]) map[r.task_id] = r.urgency_ratio === null ? null : Number(r.urgency_ratio);
       setUrgency(map);
     });
+    // Trocas pendentes (as minhas e as que me pedem) e agradecimentos
+    supabase
+      .from('task_swap_requests')
+      .select('id, occurrence_id, from_user, to_user, task_occurrences(status, assigned_to, tasks(title))')
+      .eq('status', 'pending')
+      .then(({ data: sw }) => setSwaps((sw ?? []) as unknown as Swap[]));
+    if (household.gamification !== 'off') {
+      supabase
+        .from('kudos')
+        .select('occurrence_id')
+        .eq('from_user', me!)
+        .then(({ data: k }) => setThanked(new Set((k ?? []).map((r: { occurrence_id: string }) => r.occurrence_id))));
+      supabase
+        .from('kudos')
+        .select('id, from_user, points, message, task_occurrences(tasks(title))')
+        .eq('to_user', me!)
+        .is('seen_at', null)
+        .order('created_at', { ascending: false })
+        .limit(5)
+        .then(({ data: k }) => setUnseen((k ?? []) as unknown as Kudos[]));
+    } else {
+      setThanked(new Set());
+      setUnseen([]);
+    }
     setTodayStr(today);
     setOccurrences((data ?? []) as unknown as Occurrence[]);
     setDateLabel(
@@ -87,7 +133,7 @@ export default function TodayScreen() {
         month: 'long',
       }),
     );
-  }, [household]);
+  }, [household, me]);
 
   useFocusEffect(
     useCallback(() => {
@@ -144,6 +190,74 @@ export default function TodayScreen() {
       },
     ]);
 
+  const nameOf = (id: string | null) => members.find((m) => m.user_id === id)?.display_name ?? 'outra pessoa';
+
+  // ----- trocas -----
+  const answerSwap = async (sw: Swap, accept: boolean) => {
+    const { data: result, error: err } = await supabase.rpc('answer_swap', { p_swap: sw.id, p_accept: accept });
+    setToast(
+      err
+        ? 'Não foi possível responder.'
+        : result === 'accepted'
+          ? 'Troca aceite: a tarefa é tua'
+          : result === 'declined'
+            ? 'Pedido recusado'
+            : 'Já não era possível: a tarefa mudou entretanto',
+    );
+    load();
+  };
+
+  // Toque longo numa tarefa minha: passar a outra pessoa (ou cancelar o pedido já feito)
+  const swapMenu = (o: Occurrence) => {
+    const title = o.tasks?.title ?? 'Tarefa';
+    const outgoing = swaps.find((s) => s.occurrence_id === o.id && s.from_user === me);
+    if (outgoing) {
+      Alert.alert(`Pedido enviado a ${nameOf(outgoing.to_user)}`, `Queres cancelar o pedido para passar "${title}"?`, [
+        { text: 'Manter', style: 'cancel' },
+        {
+          text: 'Cancelar pedido',
+          style: 'destructive',
+          onPress: async () => {
+            const { error: err } = await supabase.rpc('cancel_swap', { p_swap: outgoing.id });
+            setToast(err ? 'Não foi possível cancelar.' : 'Pedido cancelado');
+            load();
+          },
+        },
+      ]);
+      return;
+    }
+    const candidates = members.filter((m) => m.user_id !== me).slice(0, 2);
+    if (candidates.length === 0) return;
+    Alert.alert(`Passar "${title}"?`, 'A pessoa recebe um pedido e decide se aceita.', [
+      { text: 'Cancelar', style: 'cancel' },
+      ...candidates.map((m) => ({
+        text: `Passar a ${m.display_name}`,
+        onPress: async () => {
+          const { error: err } = await supabase.rpc('request_swap', { p_occurrence: o.id, p_to: m.user_id });
+          setToast(err ? 'Não foi possível pedir a troca.' : `Pedido enviado a ${m.display_name}`);
+          load();
+        },
+      })),
+    ]);
+  };
+
+  // ----- agradecimentos -----
+  const sendKudos = async (o: Occurrence, points: number, message: string) => {
+    const { error: err } = await supabase.rpc('give_kudos', {
+      p_occurrence: o.id,
+      p_points: points,
+      p_message: message.trim() || null,
+    });
+    setThanking(null);
+    setToast(err ? 'Não foi possível agradecer.' : '👏 Agradecimento enviado');
+    load();
+  };
+
+  const dismissKudos = async () => {
+    setUnseen([]);
+    await supabase.rpc('mark_kudos_seen');
+  };
+
   if (!household || occurrences === null) {
     return (
       <View style={styles.center}>
@@ -154,7 +268,6 @@ export default function TodayScreen() {
 
   const pending = occurrences.filter((o) => o.status === 'pending');
   const done = occurrences.filter((o) => o.status === 'done');
-  const nameOf = (id: string | null) => members.find((m) => m.user_id === id)?.display_name ?? 'outra pessoa';
   const others = pending.filter((o) => o.assigned_to !== null && o.assigned_to !== me);
   const otherIds = [...new Set(others.map((o) => o.assigned_to as string))];
   const groups = [
@@ -163,11 +276,19 @@ export default function TodayScreen() {
     ...otherIds.map((id) => ({ title: `De ${nameOf(id)}`, items: others.filter((o) => o.assigned_to === id) })),
   ];
 
+  const social = household.gamification !== 'off';
+  const hasPartner = members.some((m) => m.user_id !== me);
+  const incoming = swaps.filter(
+    (s) => s.to_user === me && s.task_occurrences?.status === 'pending' && s.task_occurrences.assigned_to === s.from_user,
+  );
+  const outgoingTo = new Map(swaps.filter((s) => s.from_user === me).map((s) => [s.occurrence_id, s.to_user]));
+
   const renderTask = (o: Occurrence, isDone: boolean) => (
     <Pressable
       key={o.id}
       style={[styles.task, isDone && styles.taskDone]}
-      onPress={() => (isDone ? askUndo(o) : markDone(o))}>
+      onPress={() => (isDone ? askUndo(o) : markDone(o))}
+      onLongPress={!isDone && o.assigned_to === me && hasPartner ? () => swapMenu(o) : undefined}>
       {isDone ? (
         <Text style={styles.circle}>✅</Text>
       ) : (
@@ -181,16 +302,72 @@ export default function TodayScreen() {
           </Text>
         )}
         {consumptionText(o) && <Text style={styles.taskLine}>{consumptionText(o)}</Text>}
+        {!isDone && outgoingTo.has(o.id) && (
+          <Text style={styles.taskLine}>🔄 pedido enviado a {nameOf(outgoingTo.get(o.id)!)}</Text>
+        )}
         {isDone && <Text style={styles.taskLine}>toca para desfazer</Text>}
       </View>
     </Pressable>
   );
+
+  const renderDone = (o: Occurrence) => {
+    const canThank = social && o.completed_by !== null && o.completed_by !== me;
+    return (
+      <View key={o.id} style={styles.doneWrap}>
+        {renderTask(o, true)}
+        {canThank &&
+          (thanked.has(o.id) ? (
+            <Text style={styles.thanked}>👏 agradecido</Text>
+          ) : thanking === o.id ? (
+            <KudosForm
+              name={nameOf(o.completed_by)}
+              onSend={(points, message) => sendKudos(o, points, message)}
+              onCancel={() => setThanking(null)}
+            />
+          ) : (
+            <Pressable onPress={() => setThanking(o.id)}>
+              <Text style={styles.link}>👏 Agradecer a {nameOf(o.completed_by)}</Text>
+            </Pressable>
+          ))}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.date}>{dateLabel}</Text>
         {error && <Text style={styles.error}>{error}</Text>}
+
+        {incoming.map((sw) => (
+          <View key={sw.id} style={styles.banner}>
+            <Text style={styles.bannerText}>
+              🔄 {nameOf(sw.from_user)} quer passar-te «{sw.task_occurrences?.tasks?.title ?? 'uma tarefa'}»
+            </Text>
+            <View style={styles.bannerButtons}>
+              <View style={styles.flex}>
+                <Button title="Recusar" variant="secondary" onPress={() => answerSwap(sw, false)} />
+              </View>
+              <View style={styles.flex}>
+                <Button title="Aceitar" onPress={() => answerSwap(sw, true)} />
+              </View>
+            </View>
+          </View>
+        ))}
+
+        {social &&
+          unseen.length > 0 && (
+            <View style={styles.banner}>
+              {unseen.map((k) => (
+                <Text key={k.id} style={styles.bannerText}>
+                  👏 {nameOf(k.from_user)} agradeceu-te
+                  {k.task_occurrences?.tasks?.title ? ` por «${k.task_occurrences.tasks.title}»` : ''} (+{k.points})
+                  {k.message ? `\n“${k.message}”` : ''}
+                </Text>
+              ))}
+              <Button title="OK" variant="secondary" onPress={dismissKudos} />
+            </View>
+          )}
 
         {occurrences.length === 0 && !error && (
           <View style={styles.empty}>
@@ -210,6 +387,9 @@ export default function TodayScreen() {
             g.items.length > 0 && (
               <View key={g.title} style={styles.group}>
                 <Text style={styles.section}>{g.title}</Text>
+                {g.title === 'As minhas' && hasPartner && (
+                  <Text style={styles.tip}>mantém premida uma tarefa para a passar a outra pessoa</Text>
+                )}
                 {g.items.map((o) => renderTask(o, false))}
               </View>
             ),
@@ -218,7 +398,7 @@ export default function TodayScreen() {
         {done.length > 0 && (
           <View style={styles.group}>
             <Text style={styles.section}>Feitas hoje</Text>
-            {done.map((o) => renderTask(o, true))}
+            {done.map((o) => renderDone(o))}
           </View>
         )}
         <View style={styles.links}>
@@ -256,6 +436,12 @@ const styles = StyleSheet.create({
   },
   taskDone: { opacity: 0.55 },
   circle: { fontSize: 24 },
+  doneWrap: { gap: 8 },
+  thanked: { color: '#666', fontSize: 14, paddingLeft: 4 },
+  tip: { color: '#888', fontSize: 12, marginBottom: 2 },
+  banner: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: '#eaf3ff', borderWidth: 1, borderColor: '#208AEF' },
+  bannerText: { fontSize: 16 },
+  bannerButtons: { flexDirection: 'row', gap: 10 },
   dot: { width: 22, height: 22, borderRadius: 11, margin: 1 },
   links: { gap: 14, marginTop: 12, alignItems: 'center' },
   link: { color: '#208AEF', fontSize: 16, fontWeight: '600' },
