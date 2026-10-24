@@ -20,10 +20,11 @@ export type TaskRow = {
   deleted_by: string | null;
   last_done_at: string | null;
   scope: string;
+  schedule_start: string;
 };
 
 export const TASK_COLUMNS =
-  'id, title, recurrence, times_per_period, period, interval_days, rrule, assignment, fixed_assignee, effort_points, is_active, deleted_at, deleted_by, last_done_at, scope';
+  'id, title, recurrence, times_per_period, period, interval_days, rrule, assignment, fixed_assignee, effort_points, is_active, deleted_at, deleted_by, last_done_at, scope, schedule_start';
 
 export const WEEKDAYS = [
   { code: 'MO', short: 'Seg', plural: 'segundas' },
@@ -120,7 +121,8 @@ export type TaskForm = {
   everyTwoWeeks: boolean;
   monthDay: number; // 1..31 ou -1 (último dia)
   month: number; // 1..12
-  firstDate: string | null;
+  firstDate: string | null; // só para "uma vez"
+  startDate: string | null; // dia de início escolhido (null = começa hoje / mantém o atual)
   assignment: Assignment;
   assignee: string | null;
   effort: number;
@@ -137,6 +139,7 @@ export const EMPTY_FORM: TaskForm = {
   monthDay: 1,
   month: 1,
   firstDate: null,
+  startDate: null,
   assignment: 'balanced',
   assignee: null,
   effort: 1,
@@ -186,6 +189,7 @@ export function formToArgs(householdId: string, f: TaskForm, taskId?: string) {
     p_month_day: f.kind === 'monthly' || f.kind === 'yearly' ? f.monthDay : null,
     p_month: f.kind === 'yearly' ? f.month : null,
     p_first_date: f.kind === 'once' ? f.firstDate : null,
+    p_start_date: f.kind !== 'once' ? f.startDate : null,
     p_assignment: f.assignment,
     p_assignee: f.assignment === 'fixed' ? f.assignee : null,
     p_effort: f.effort,
@@ -229,7 +233,7 @@ export function friendlyTaskError(message: string): string {
     'Falta o nome da tarefa', 'O nome é demasiado grande', 'Escolhe pelo menos um dia da semana',
     'Escolhe quem faz a tarefa', 'Escolhe uma data a partir de hoje', 'Escolhe o dia do mês', 'Escolhe o dia e o mês',
     'Só administradores e adultos gerem as tarefas da casa', 'Calendário inválido', 'Frequência inválida',
-    'Já existe uma ocorrência desta tarefa nesse dia',
+    'Já existe uma ocorrência desta tarefa nesse dia', 'Escolhe um dia de início a partir de hoje',
     'Escolhe uma data a partir de hoje e até daqui a um ano',
     'Só administradores, adultos ou quem tem a tarefa podem mudar a data',
     'Só podes mudar a data de tarefas que são tuas', 'Só podes saltar tarefas que são tuas',

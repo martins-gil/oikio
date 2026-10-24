@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/Button';
-import { DatePicker } from '@/components/DatePicker';
+import { DateSheet } from '@/components/DateSheet';
 import { useHousehold } from '@/lib/household';
 import { localDate } from '@/lib/money';
 import {
@@ -73,6 +73,8 @@ export default function TaskEditScreen() {
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showStart, setShowStart] = useState(false);
+  const [currentStart, setCurrentStart] = useState<string | null>(null); // início atual (ao editar)
   const set = (patch: Partial<TaskForm>) => setForm((f) => ({ ...f, ...patch }));
 
   useEffect(() => {
@@ -83,7 +85,10 @@ export default function TaskEditScreen() {
       .eq('id', id)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setForm(formFromTask(data as TaskRow));
+        if (data) {
+          setForm(formFromTask(data as TaskRow));
+          setCurrentStart((data as TaskRow).schedule_start);
+        }
         setLoading(false);
       });
   }, [id]);
@@ -133,6 +138,29 @@ export default function TaskEditScreen() {
   }
 
   const who = form.assignment === 'fixed' ? `fixed:${form.assignee}` : form.assignment;
+
+  const longDate = (iso: string) =>
+    new Date(`${iso}T12:00:00`).toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' });
+  const startLabel =
+    form.kind === 'once'
+      ? form.firstDate
+        ? longDate(form.firstDate)
+        : 'Escolhe o dia'
+      : form.startDate
+        ? longDate(form.startDate)
+        : id && currentStart
+          ? `desde ${longDate(currentStart)}`
+          : form.kind === 'none'
+            ? 'Sem dia marcado'
+            : 'Hoje';
+  const startHint =
+    form.kind === 'once'
+      ? 'A tarefa fica marcada para este dia.'
+      : form.kind === 'none'
+        ? 'Opcional: se escolheres um dia, a tarefa fica agendada para esse dia.'
+        : form.kind === 'times' || form.kind === 'interval'
+          ? 'A tarefa aparece pela primeira vez neste dia.'
+          : 'O calendário começa a contar neste dia.';
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -222,12 +250,26 @@ export default function TaskEditScreen() {
           </View>
         )}
 
-        {form.kind === 'once' && (
-          <View style={styles.block}>
-            <Text style={styles.sub}>Quando?</Text>
-            <DatePicker value={form.firstDate} onChange={(firstDate) => set({ firstDate })} />
-          </View>
+        <Text style={styles.label}>{form.kind === 'once' ? 'Quando' : 'Começa em'}</Text>
+        <Pressable style={styles.dateRow} onPress={() => setShowStart(true)}>
+          <Text style={styles.dateIcon}>📅</Text>
+          <Text style={styles.dateText}>{startLabel}</Text>
+          <Text style={styles.dateChange}>escolher ›</Text>
+        </Pressable>
+        <Text style={styles.hint}>{startHint}</Text>
+        {form.kind !== 'once' && form.startDate && (
+          <Pressable onPress={() => set({ startDate: null })}>
+            <Text style={styles.link}>{id ? 'Manter o dia de início atual' : 'Voltar a começar hoje'}</Text>
+          </Pressable>
         )}
+        <DateSheet
+          visible={showStart}
+          title={form.kind === 'once' ? 'Quando é?' : 'Quando começa?'}
+          initial={form.kind === 'once' ? form.firstDate : form.startDate}
+          confirmPrefix={form.kind === 'once' ? 'Marcar para' : 'Começar a'}
+          onClose={() => setShowStart(false)}
+          onConfirm={(date) => set(form.kind === 'once' ? { firstDate: date } : { startDate: date })}
+        />
 
         <Text style={styles.label}>Quem faz</Text>
         <View style={styles.chips}>
@@ -280,4 +322,9 @@ const styles = StyleSheet.create({
   stepValue: { fontSize: 20, fontWeight: '700', minWidth: 140, textAlign: 'center' },
   off: { opacity: 0.3 },
   error: { color: '#c0392b', textAlign: 'center' },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderWidth: 1, borderColor: '#208AEF', borderRadius: 10, backgroundColor: '#fff' },
+  dateIcon: { fontSize: 20 },
+  dateText: { flex: 1, fontSize: 16, textTransform: 'capitalize' },
+  dateChange: { color: '#208AEF', fontWeight: '600' },
+  link: { color: '#208AEF', fontWeight: '600' },
 });

@@ -44,3 +44,12 @@ para notificações (M7) e IA (M8/M9).
   o dono nas pessoais. De hoje até daqui a um ano, nunca em dia que já tenha uma desta tarefa.
 - `next_free_slot()` / `task_next_date()`: a próxima data do calendário que ainda não está coberta por nenhuma ocorrência.
 
+## Dia de início
+- Ao criar (ou editar) uma tarefa escolhe-se o dia em que começa (`p_start_date` → `tasks.schedule_start`), com um calendário.
+  Sem escolha, começa hoje. Não há ocorrências antes desse dia, seja qual for a frequência.
+- Tarefas com calendário: é o dia a partir do qual o calendário conta (e a âncora das de 2 em 2 semanas).
+- X por período e de N em N dias: é o primeiro dia em que a tarefa aparece.
+- "Quando for preciso": se se escolher um dia, fica uma ocorrência agendada nesse dia (senão não gera nada).
+- "Uma vez": continua a usar o seu dia (`p_first_date`).
+- Editar: com um dia novo, muda o início; sem o tocar, mantém-no (e recomeça hoje se o calendário mudar).
+

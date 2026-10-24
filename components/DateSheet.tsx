@@ -8,6 +8,7 @@ type Props = {
   visible: boolean;
   title: string;
   initial?: string | null;
+  confirmPrefix?: string; // ex.: "Passar para", "Começar a"
   onConfirm: (date: string) => void;
   onClose: () => void;
 };
@@ -16,7 +17,7 @@ const longDate = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' });
 
 // Escolher um dia num calendário que sobe do fundo do ecrã
-export function DateSheet({ visible, title, initial, onConfirm, onClose }: Props) {
+export function DateSheet({ visible, title, initial, confirmPrefix = 'Passar para', onConfirm, onClose }: Props) {
   const [picked, setPicked] = useState<string | null>(initial ?? null);
   useEffect(() => {
     if (visible) setPicked(initial ?? null);
@@ -31,7 +32,7 @@ export function DateSheet({ visible, title, initial, onConfirm, onClose }: Props
             <DatePicker value={picked} onChange={setPicked} />
             <View style={styles.buttons}>
               <Button
-                title={picked ? `Passar para ${longDate(picked)}` : 'Escolhe um dia'}
+                title={picked ? `${confirmPrefix} ${longDate(picked)}` : 'Escolhe um dia'}
                 disabled={!picked}
                 onPress={() => {
                   if (picked) {

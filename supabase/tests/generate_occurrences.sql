@@ -4,6 +4,9 @@
 -- Cria utilizadores falsos em auth.users e faz ROLLBACK no fim. Falha com erro se algo estiver mal.
 begin;
 
+-- As tarefas deste teste simulam dias desde o início da semana: começam "há muito tempo" (revertido no ROLLBACK)
+alter table tasks alter column schedule_start set default date '2000-01-01';
+
 create function pg_temp.assert_eq(p_name text, p_got text, p_want text) returns void language plpgsql as $$
 begin
   if p_got is distinct from p_want then
