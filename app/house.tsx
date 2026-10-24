@@ -9,6 +9,7 @@ import { Toast } from '@/components/Toast';
 import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type GamificationMode } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, shadow } from '@/lib/theme';
 
 type Invite = { token: string; expires_at: string };
 
@@ -168,12 +169,12 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { padding: 20, gap: 12, paddingBottom: 80 },
   title: { fontSize: 24, fontWeight: '600' },
-  section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 12 },
-  card: { borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, padding: 14, backgroundColor: '#fff', gap: 2 },
+  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 12 },
+  card: { borderRadius: radius.card, ...shadow, padding: 14, backgroundColor: '#fff', gap: 2 },
   cardTitle: { fontSize: 17, fontWeight: '600' },
-  cardLine: { color: '#666' },
+  cardLine: { color: colors.muted },
   row: { flexDirection: 'row' },
-  input: { flex: 1, borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 17 },
+  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 12, fontSize: 17 },
   inviteBox: { gap: 10, borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 12, padding: 16, alignItems: 'center' },
   code: { fontSize: 30, fontWeight: '700', letterSpacing: 3 },
   warn: { gap: 10, backgroundColor: '#fff4e5', borderRadius: 12, padding: 16 },

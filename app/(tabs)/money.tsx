@@ -52,6 +52,7 @@ export default function MoneyScreen() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [editing, setEditing] = useState<string | null>(null); // categoria do orçamento em edição
   const [budgetText, setBudgetText] = useState('');
+  const [savingBudget, setSavingBudget] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
 
   const [amount, setAmount] = useState('');
@@ -76,6 +77,7 @@ export default function MoneyScreen() {
     if (error) setToast('Não foi possível carregar as despesas.');
     setExpenses((data ?? []) as Expense[]);
     const b = await supabase.from('expense_budgets').select('category, monthly_cents').eq('household_id', household.id);
+    if (b.error) setToast(budgetError(b.error.message));
     setBudgets((b.data ?? []) as Budget[]);
   }, [household, year, month]);
 
@@ -145,16 +147,27 @@ export default function MoneyScreen() {
     setBudgetText(current ? String(current.monthly_cents / 100).replace('.', ',') : '');
   };
 
+  const budgetError = (message: string) =>
+    /does not exist|schema cache|expense_budgets/i.test(message)
+      ? 'Falta aplicar a migração dos orçamentos: corre "npx supabase db push".'
+      : `Não foi possível guardar o orçamento (${message}).`;
+
   const saveBudget = async () => {
     const value = parseEuros(budgetText);
-    if (!editing || value === null || !household || !me) return;
+    if (!editing || value === null || !household || !me || savingBudget) return;
+    setSavingBudget(true);
     const { error } = await supabase
       .from('expense_budgets')
-      .upsert({ household_id: household.id, category: editing, monthly_cents: value, updated_by: me, updated_at: new Date().toISOString() });
+      .upsert(
+        { household_id: household.id, category: editing, monthly_cents: value, updated_by: me, updated_at: new Date().toISOString() },
+        { onConflict: 'household_id,category' },
+      );
+    setSavingBudget(false);
     if (error) {
-      setToast('Não foi possível guardar o orçamento.');
+      setToast(budgetError(error.message));
       return;
     }
+    setToast(`Orçamento de ${editing}: ${formatEuros(value)} por mês`);
     setEditing(null);
     load();
   };
@@ -162,7 +175,7 @@ export default function MoneyScreen() {
   const removeBudget = async () => {
     if (!editing || !household) return;
     const { error } = await supabase.from('expense_budgets').delete().eq('household_id', household.id).eq('category', editing);
-    if (error) setToast('Não foi possível remover o orçamento.');
+    if (error) setToast(budgetError(error.message));
     setEditing(null);
     load();
   };
@@ -187,8 +200,6 @@ export default function MoneyScreen() {
     const c = e.category ?? 'Outros';
     spentBy.set(c, (spentBy.get(c) ?? 0) + e.amount_cents);
   }
-  const budgeted = CATEGORIES.filter((c) => budgets.some((b) => b.category === c));
-  const unbudgeted = CATEGORIES.filter((c) => !budgets.some((b) => b.category === c));
   const shown = filter ? list.filter((e) => (e.category ?? 'Outros') === filter) : list;
   const monthLabel = new Date(year, month, 1).toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
 
@@ -241,74 +252,66 @@ export default function MoneyScreen() {
         ) : (
           <>
             <View style={styles.card}>
-              <View style={styles.headRow}>
-                <Text style={styles.title}>Orçamentos</Text>
-                {unbudgeted.length > 0 && editing === null && (
-                  <Pressable style={styles.addBtn} onPress={() => openBudget(unbudgeted[0])}>
-                    <Text style={styles.addBtnText}>+ Adicionar</Text>
-                  </Pressable>
-                )}
-              </View>
-              {budgeted.length === 0 && editing === null && (
-                <Text style={styles.hint}>Define quanto queres gastar por mês em cada categoria.</Text>
-              )}
-              {editing !== null && (
-                <View style={styles.editor}>
-                  <View style={styles.chips}>
-                    {CATEGORIES.map((c) => (
-                      <Pressable key={c} style={[styles.chip, editing === c && styles.chipOn]} onPress={() => openBudget(c)}>
-                        <Text style={[styles.chipText, editing === c && styles.chipTextOn]}>
-                          {CATEGORY_ICON[c]} {c}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                  <TextInput
-                    style={styles.input}
-                    value={budgetText}
-                    onChangeText={setBudgetText}
-                    placeholder="Orçamento por mês, ex. 300"
-                    keyboardType="decimal-pad"
-                  />
-                  <View style={styles.editorBtns}>
-                    <View style={styles.flex}>
-                      <Button title="Guardar" disabled={parseEuros(budgetText) === null} onPress={saveBudget} />
-                    </View>
-                    {budgets.some((b) => b.category === editing) && (
-                      <Pressable hitSlop={8} onPress={removeBudget}>
-                        <Text style={styles.removeText}>Remover</Text>
-                      </Pressable>
-                    )}
-                    <Pressable hitSlop={8} onPress={() => setEditing(null)}>
-                      <Text style={styles.cancelText}>Cancelar</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              )}
-              {budgeted.map((c) => {
-                const budget = budgets.find((b) => b.category === c)!.monthly_cents;
+              <Text style={styles.title}>Orçamentos</Text>
+              <Text style={styles.small}>Toca numa categoria para definir quanto queres gastar por mês. Contam as despesas partilhadas.</Text>
+              {CATEGORIES.map((c) => {
+                const budget = budgets.find((b) => b.category === c)?.monthly_cents ?? null;
                 const spent = spentBy.get(c) ?? 0;
-                const pct = Math.round((spent / budget) * 100);
+                const pct = budget ? Math.round((spent / budget) * 100) : 0;
                 return (
-                  <Pressable key={c} style={styles.budgetRow} onPress={() => openBudget(c)}>
-                    <View style={styles.tile}>
-                      <Text style={styles.tileIcon}>{CATEGORY_ICON[c]}</Text>
-                    </View>
-                    <View style={styles.flex}>
-                      <View style={styles.headRow}>
-                        <Text style={styles.budgetName}>{c}</Text>
-                        <Text style={styles.budgetAmounts}>
-                          <Text style={styles.budgetSpent}>{formatEuros(spent)}</Text> / {formatEuros(budget)}
+                  <View key={c} style={styles.budgetBlock}>
+                    <Pressable style={styles.budgetRow} onPress={() => openBudget(c)}>
+                      <View style={styles.tile}>
+                        <Text style={styles.tileIcon}>{CATEGORY_ICON[c]}</Text>
+                      </View>
+                      <View style={styles.flex}>
+                        <View style={styles.headRow}>
+                          <Text style={styles.budgetName}>{c}</Text>
+                          <Text style={styles.budgetAmounts}>
+                            <Text style={styles.budgetSpent}>{formatEuros(spent)}</Text>
+                            {budget !== null ? ` / ${formatEuros(budget)}` : ''}
+                          </Text>
+                        </View>
+                        <View style={styles.track}>
+                          {budget !== null && (
+                            <View style={[styles.fill, { width: `${Math.min(pct, 100)}%`, backgroundColor: barColor(pct) }]} />
+                          )}
+                        </View>
+                        <Text style={[styles.small, budget !== null && spent > budget && { color: colors.pink }]}>
+                          {budget === null
+                            ? 'Sem orçamento · toca para definir'
+                            : spent > budget
+                              ? `Excedeu em ${formatEuros(spent - budget)}`
+                              : `Ainda tens ${formatEuros(budget - spent)}`}
                         </Text>
                       </View>
-                      <View style={styles.track}>
-                        <View style={[styles.fill, { width: `${Math.min(pct, 100)}%`, backgroundColor: barColor(pct) }]} />
+                    </Pressable>
+                    {editing === c && (
+                      <View style={styles.editor}>
+                        <TextInput
+                          style={styles.input}
+                          value={budgetText}
+                          onChangeText={setBudgetText}
+                          placeholder="Valor por mês, ex. 400"
+                          keyboardType="decimal-pad"
+                          autoFocus
+                        />
+                        <View style={styles.editorBtns}>
+                          <View style={styles.flex}>
+                            <Button title={savingBudget ? 'A guardar…' : 'Guardar'} disabled={parseEuros(budgetText) === null || savingBudget} onPress={saveBudget} />
+                          </View>
+                          {budget !== null && (
+                            <Pressable hitSlop={8} onPress={removeBudget}>
+                              <Text style={styles.removeText}>Remover</Text>
+                            </Pressable>
+                          )}
+                          <Pressable hitSlop={8} onPress={() => setEditing(null)}>
+                            <Text style={styles.cancelText}>Cancelar</Text>
+                          </Pressable>
+                        </View>
                       </View>
-                      <Text style={[styles.small, spent > budget && { color: colors.pink }]}>
-                        {spent > budget ? `Excedeu em ${formatEuros(spent - budget)}` : `Ainda tens ${formatEuros(budget - spent)}`}
-                      </Text>
-                    </View>
-                  </Pressable>
+                    )}
+                  </View>
                 );
               })}
             </View>
@@ -392,6 +395,7 @@ const styles = StyleSheet.create({
   editorBtns: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   removeText: { color: colors.pink },
   cancelText: { color: colors.muted },
+  budgetBlock: { gap: 8 },
   budgetRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   tile: { width: 46, height: 46, borderRadius: 12, backgroundColor: colors.lavender, alignItems: 'center', justifyContent: 'center' },
   tileIcon: { fontSize: 22 },

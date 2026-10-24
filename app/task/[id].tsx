@@ -13,6 +13,7 @@ import { describeAssignment, describeSchedule, friendlyTaskError, TASK_COLUMNS, 
 import { markTaskDoneNow } from '@/lib/taskActions';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, shadow } from '@/lib/theme';
 
 type Occurrence = {
   id: string;
@@ -271,15 +272,15 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   container: { padding: 16, gap: 12, paddingBottom: 80 },
-  hint: { color: '#666', textAlign: 'center' },
-  card: { gap: 6, padding: 16, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
+  hint: { color: colors.muted, textAlign: 'center' },
+  card: { gap: 6, padding: 16, borderRadius: radius.card, ...shadow, backgroundColor: '#fff' },
   title: { fontSize: 22, fontWeight: '700' },
   line: { fontSize: 15, color: '#444' },
   actions: { gap: 10 },
   picker: { gap: 10, padding: 14, borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 12, backgroundColor: '#F4F3FF' },
   deleted: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: '#fdecea' },
   deletedText: { color: '#8a2c22' },
-  section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 8 },
+  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 8 },
   summary: { fontSize: 16, fontWeight: '600' },
   row: { flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eee' },
   icon: { fontSize: 18 },

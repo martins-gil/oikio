@@ -7,6 +7,7 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
+import { colors, radius } from '@/lib/theme';
 
 type Stage = 'email' | 'waiting' | 'password' | 'done';
 
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { padding: 24, gap: 14, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '600', textAlign: 'center' },
-  hint: { color: '#555', textAlign: 'center', lineHeight: 22 },
-  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 14, fontSize: 17 },
+  hint: { color: colors.muted, textAlign: 'center', lineHeight: 22 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 14, fontSize: 17 },
   error: { color: '#DC4F89', textAlign: 'center' },
 });

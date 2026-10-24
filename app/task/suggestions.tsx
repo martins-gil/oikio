@@ -9,6 +9,7 @@ import { useHousehold } from '@/lib/household';
 import { describeForm, formToArgs } from '@/lib/schedule';
 import { normalizeTitle, SUGGESTION_GROUPS, SUGGESTIONS } from '@/lib/taskSuggestions';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, shadow } from '@/lib/theme';
 
 // Sugestões de tarefas comuns de manutenção da casa: escolhe várias e adiciona de uma vez
 export default function SuggestionsScreen() {
@@ -108,16 +109,16 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16, gap: 12, paddingBottom: 24 },
-  hint: { color: '#666', fontSize: 14 },
+  hint: { color: colors.muted, fontSize: 14 },
   group: { gap: 8 },
-  section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 10, backgroundColor: '#fff' },
+  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.card, ...shadow, backgroundColor: '#fff' },
   rowOn: { borderColor: '#5C4DB1', backgroundColor: '#ECEBFF' },
   dim: { opacity: 0.5 },
   check: { fontSize: 22, width: 28, textAlign: 'center', color: '#5C4DB1' },
   rowText: { flex: 1, gap: 2 },
   title: { fontSize: 16 },
-  sub: { color: '#777', fontSize: 13 },
+  sub: { color: colors.muted, fontSize: 13 },
   error: { color: '#DC4F89', textAlign: 'center' },
   footer: { padding: 16, borderTopWidth: 1, borderTopColor: '#eee', backgroundColor: '#fff' },
 });

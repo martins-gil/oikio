@@ -7,6 +7,7 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
+import { colors, radius } from '@/lib/theme';
 
 // Mensagens da base de dados → texto para quem usa a app
 function friendly(message: string): string {
@@ -74,8 +75,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { padding: 24, gap: 12, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '600', textAlign: 'center', marginBottom: 8 },
-  label: { fontSize: 14, color: '#666', textTransform: 'uppercase' },
-  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 14, fontSize: 17 },
+  label: { fontSize: 14, color: colors.muted, textTransform: 'uppercase' },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 14, fontSize: 17 },
   code: { fontSize: 22, letterSpacing: 2, textAlign: 'center' },
   error: { color: '#DC4F89', textAlign: 'center' },
 });

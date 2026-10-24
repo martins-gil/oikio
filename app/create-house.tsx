@@ -7,6 +7,7 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 
 export default function CreateHouseScreen() {
   const router = useRouter();
@@ -65,12 +66,13 @@ const styles = StyleSheet.create({
   input: {
     alignSelf: 'stretch',
     borderWidth: 1,
-    borderColor: '#C9C5EC',
-    borderRadius: 8,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: '#fff',
     padding: 12,
     fontSize: 16,
   },
   error: { color: '#DC4F89', textAlign: 'center' },
   or: { alignItems: 'center' },
-  orText: { color: '#666' },
+  orText: { color: colors.muted },
 });

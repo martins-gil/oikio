@@ -24,6 +24,7 @@ import {
 import { markTaskDoneNow } from '@/lib/taskActions';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, shadow } from '@/lib/theme';
 
 const KINDS: { kind: Kind; label: string }[] = [
   { kind: 'none', label: 'Quando for preciso' },
@@ -303,12 +304,12 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16, gap: 10, paddingBottom: 80 },
-  label: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 10 },
+  label: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 10 },
   sub: { fontSize: 15, fontWeight: '600' },
-  hint: { color: '#777', fontSize: 13 },
-  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 17, backgroundColor: '#fff' },
+  hint: { color: colors.muted, fontSize: 13 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, padding: 12, fontSize: 17, backgroundColor: '#fff' },
   options: { gap: 6 },
-  option: { padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 10, backgroundColor: '#fff' },
+  option: { padding: 12, borderRadius: radius.card, ...shadow, backgroundColor: '#fff' },
   optionOn: { borderColor: '#5C4DB1', backgroundColor: '#ECEBFF' },
   optionText: { fontSize: 16 },
   optionTextOn: { fontWeight: '600', color: '#5C4DB1' },

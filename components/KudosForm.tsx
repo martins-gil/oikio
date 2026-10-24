@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
+import { colors, radius } from '@/lib/theme';
 
 type Props = {
   name: string;
@@ -55,6 +56,6 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: '#DC4F89', borderColor: '#DC4F89' },
   chipText: { color: '#5C4DB1', fontSize: 18, fontWeight: '600' },
   chipTextOn: { color: '#fff' },
-  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16, backgroundColor: '#fff' },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, padding: 12, fontSize: 16, backgroundColor: '#fff' },
   buttons: { flexDirection: 'row', gap: 10 },
 });

@@ -15,6 +15,7 @@ import {
   type StockRow,
 } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 
 const MAX_CHOICES = 3;
 
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 24, gap: 14, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '600', textAlign: 'center' },
-  hint: { textAlign: 'center', color: '#666' },
+  hint: { textAlign: 'center', color: colors.muted },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -230,6 +231,6 @@ const styles = StyleSheet.create({
   levelText: { fontSize: 20, fontWeight: '600' },
   card: { borderWidth: 1, borderColor: '#DCD9F5', borderRadius: 10, padding: 14, gap: 4 },
   cardTitle: { fontSize: 17, fontWeight: '600' },
-  cardLine: { color: '#555' },
+  cardLine: { color: colors.muted },
   error: { color: '#DC4F89', textAlign: 'center' },
 });

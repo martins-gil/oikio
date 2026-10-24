@@ -10,6 +10,7 @@ import { describeAssignment, describeSchedule, TASK_COLUMNS, type TaskRow } from
 import { useSession } from '@/lib/session';
 import { sinceText, urgencyColor, urgencyFill, type TaskStatus } from '@/lib/urgency';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, shadow } from '@/lib/theme';
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-PT');
 
@@ -139,15 +140,15 @@ const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16, gap: 10, paddingBottom: 60 },
-  hint: { color: '#666', fontSize: 13, textAlign: 'center' },
+  hint: { color: colors.muted, fontSize: 13, textAlign: 'center' },
   error: { color: '#DC4F89', textAlign: 'center' },
   group: { gap: 10, marginTop: 8 },
-  section: { fontSize: 13, color: '#666', textTransform: 'uppercase' },
-  card: { gap: 6, padding: 14, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
+  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase' },
+  card: { gap: 6, padding: 14, borderRadius: radius.card, ...shadow, backgroundColor: '#fff' },
   dim: { opacity: 0.65 },
   title: { fontSize: 17, fontWeight: '600' },
-  sub: { color: '#666', fontSize: 13 },
+  sub: { color: colors.muted, fontSize: 13 },
   track: { height: 10, borderRadius: 5, backgroundColor: '#eee', overflow: 'hidden' },
   fill: { height: 10, borderRadius: 5 },
-  line: { color: '#666', fontSize: 14 },
+  line: { color: colors.muted, fontSize: 14 },
 });

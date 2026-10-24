@@ -15,6 +15,7 @@ import {
   type StockRow,
 } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, shadow } from '@/lib/theme';
 
 export default function StockScreen() {
   const router = useRouter();
@@ -111,20 +112,18 @@ export default function StockScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 10 },
   addRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: '#5C4DB1', borderRadius: 10, width: 48, alignItems: 'center', justifyContent: 'center' },
+  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 12, fontSize: 16 },
+  addButton: { backgroundColor: '#5C4DB1', borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
   addText: { color: '#fff', fontSize: 26, fontWeight: '600' },
   disabled: { opacity: 0.4 },
-  hint: { color: '#666' },
+  hint: { color: colors.muted },
   error: { color: '#DC4F89' },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7E5F7',
-    borderRadius: 12,
+    borderRadius: radius.card, ...shadow,
     backgroundColor: '#fff',
   },
   itemName: { fontSize: 17, flexShrink: 1 },

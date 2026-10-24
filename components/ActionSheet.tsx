@@ -1,6 +1,7 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
+import { colors } from '@/lib/theme';
 
 export type SheetOption = { label: string; onPress: () => void; destructive?: boolean };
 
@@ -46,7 +47,7 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, paddingBottom: 28, gap: 8 },
   title: { fontSize: 18, fontWeight: '700' },
-  subtitle: { color: '#666', fontSize: 14 },
+  subtitle: { color: colors.muted, fontSize: 14 },
   options: { gap: 2, marginTop: 4 },
   option: { paddingVertical: 14, paddingHorizontal: 8, borderRadius: 10 },
   optionText: { fontSize: 17 },

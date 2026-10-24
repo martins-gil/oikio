@@ -11,6 +11,7 @@ import { friendlyTaskError } from '@/lib/schedule';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, shadow } from '@/lib/theme';
 
 type PersonalTask = {
   id: string;
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 20, gap: 16, paddingBottom: 80 },
-  privacy: { color: '#555', fontSize: 15 },
+  privacy: { color: colors.muted, fontSize: 15 },
   hoursCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -298,16 +299,14 @@ const styles = StyleSheet.create({
   hoursTitle: { fontSize: 16, fontWeight: '600' },
   hoursValue: { fontSize: 16, color: '#5C4DB1', fontWeight: '600' },
   group: { gap: 8 },
-  section: { fontSize: 13, color: '#666', textTransform: 'uppercase' },
-  hint: { color: '#666' },
+  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase' },
+  hint: { color: colors.muted },
   task: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7E5F7',
-    borderRadius: 12,
+    borderRadius: radius.card, ...shadow,
     backgroundColor: '#fff',
   },
   taskDone: { opacity: 0.55 },
@@ -315,25 +314,23 @@ const styles = StyleSheet.create({
   taskText: { flex: 1, gap: 2 },
   taskTitle: { fontSize: 18 },
   strike: { textDecorationLine: 'line-through' },
-  line: { color: '#666', fontSize: 14 },
+  line: { color: colors.muted, fontSize: 14 },
   late: { color: '#DC4F89', fontSize: 14, fontWeight: '600' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#E7E5F7',
-    borderRadius: 12,
+    borderRadius: radius.card, ...shadow,
     backgroundColor: '#fff',
   },
   cardMain: { flex: 1, gap: 2 },
   doneNow: { backgroundColor: '#5C4DB1', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
   doneNowText: { color: '#fff', fontWeight: '600' },
-  remove: { fontSize: 18, color: '#C9C5EC' },
+  remove: { fontSize: 18, color: colors.faint },
   addRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: '#5C4DB1', borderRadius: 10, width: 48, alignItems: 'center', justifyContent: 'center' },
+  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 12, fontSize: 16 },
+  addButton: { backgroundColor: '#5C4DB1', borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
   addText: { color: '#fff', fontSize: 26, fontWeight: '600' },
   disabled: { opacity: 0.4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

@@ -9,6 +9,7 @@ import { Toast } from '@/components/Toast';
 import { formatMinutes, localDate, parseDuration } from '@/lib/money';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, shadow } from '@/lib/theme';
 
 type Kind = 'hour_bank' | 'appointment';
 type Entry = { id: string; kind: Kind; label: string | null; entry_date: string; minutes: number };
@@ -164,7 +165,7 @@ export default function HoursScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { padding: 16, gap: 14, paddingBottom: 80 },
-  privacy: { color: '#555', fontSize: 15 },
+  privacy: { color: colors.muted, fontSize: 15 },
   tabs: { flexDirection: 'row', borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 10, overflow: 'hidden' },
   tab: { flex: 1, padding: 10, alignItems: 'center' },
   tabOn: { backgroundColor: '#5C4DB1' },
@@ -172,24 +173,22 @@ const styles = StyleSheet.create({
   tabTextOn: { color: '#fff' },
   summary: { alignItems: 'center', gap: 2, paddingVertical: 6 },
   total: { fontSize: 36, fontWeight: '700' },
-  line: { color: '#555', fontSize: 14 },
-  small: { color: '#888', fontSize: 12 },
-  card: { gap: 10, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 14, padding: 14, backgroundColor: '#fff' },
-  input: { borderWidth: 1, borderColor: '#C9C5EC', borderRadius: 10, padding: 12, fontSize: 16 },
+  line: { color: colors.muted, fontSize: 14 },
+  small: { color: colors.faint, fontSize: 12 },
+  card: { gap: 10, borderRadius: radius.card, ...shadow, padding: 14, backgroundColor: '#fff' },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 12, fontSize: 16 },
   big: { fontSize: 22, textAlign: 'center' },
   buttons: { flexDirection: 'row', gap: 10 },
-  hint: { color: '#666', textAlign: 'center' },
+  hint: { color: colors.muted, textAlign: 'center' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#E7E5F7',
-    borderRadius: 12,
+    borderRadius: radius.card, ...shadow,
     backgroundColor: '#fff',
   },
   rowMain: { flex: 1, gap: 2 },
   rowTitle: { fontSize: 18, fontWeight: '600' },
-  remove: { fontSize: 18, color: '#C9C5EC' },
+  remove: { fontSize: 18, color: colors.faint },
 });

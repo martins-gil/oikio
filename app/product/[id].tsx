@@ -16,6 +16,7 @@ import {
   type StockRow,
 } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 
 const LEVELS: StockLevel[] = ['full', 'half', 'low', 'empty'];
 
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 20, gap: 12, paddingBottom: 80 },
-  label: { fontSize: 14, color: '#666', textTransform: 'uppercase', marginTop: 4 },
+  label: { fontSize: 14, color: colors.muted, textTransform: 'uppercase', marginTop: 4 },
   levelButton: { borderWidth: 2, borderRadius: 12, padding: 18, alignItems: 'center' },
   levelText: { fontSize: 19, fontWeight: '600' },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
   stepButtonSmall: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
   stepText: { color: '#fff', fontSize: 32, fontWeight: '600', lineHeight: 36 },
   big: { fontSize: 44, fontWeight: '700' },
-  unit: { fontSize: 20, fontWeight: '400', color: '#666' },
+  unit: { fontSize: 20, fontWeight: '400', color: colors.muted },
   mid: { fontSize: 20, fontWeight: '600' },
   disabled: { opacity: 0.35 },
   spacer: { height: 16 },
