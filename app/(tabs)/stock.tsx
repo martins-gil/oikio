@@ -1,7 +1,7 @@
 import { Screen } from '@/components/Screen';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
@@ -24,18 +24,37 @@ export default function StockScreen() {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const load = useCallback(async () => {
+    if (!household) return;
+    const { data } = await supabase.from('v_stock').select(STOCK_COLUMNS).eq('household_id', household.id).order('name');
+    setStock((data ?? []) as StockRow[]);
+  }, [household]);
+
   // Recarrega sempre que o ecrã volta a ficar visível (ex.: depois do onboarding ou de uma tarefa)
   useFocusEffect(
     useCallback(() => {
-      if (!household) return;
-      supabase
-        .from('v_stock')
-        .select(STOCK_COLUMNS)
-        .eq('household_id', household.id)
-        .order('name')
-        .then(({ data }) => setStock((data ?? []) as StockRow[]));
-    }, [household]),
+      load();
+    }, [load]),
   );
+
+  // Apagar um consumível: some o stock, o item da lista de compras e a ligação às tarefas (as tarefas ficam)
+  const askDelete = (p: StockRow) =>
+    Alert.alert(
+      `Apagar «${p.name}»?`,
+      'Deixa de existir nos consumíveis e na lista de compras, e as tarefas deixam de o gastar. As tarefas ficam.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Apagar',
+          style: 'destructive',
+          onPress: async () => {
+            const { error: err } = await supabase.from('products').delete().eq('id', p.product_id);
+            if (err) setError('Não foi possível apagar o produto.');
+            load();
+          },
+        },
+      ],
+    );
 
   const open = (id: string) => router.push({ pathname: '/product/[id]', params: { id } });
 
@@ -100,6 +119,9 @@ export default function StockScreen() {
                 : `${formatQty(p.total)} ${p.base_unit}`}
               {p.below_min ? '  🛒' : ''}
             </Text>
+            <Pressable hitSlop={12} onPress={() => askDelete(p)}>
+              <Text style={styles.remove}>✕</Text>
+            </Pressable>
           </Pressable>
         ))
       )}
@@ -126,6 +148,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.card, ...shadow,
     backgroundColor: '#fff',
   },
-  itemName: { fontSize: 17, flexShrink: 1 },
+  itemName: { fontSize: 17, flexShrink: 1, flex: 1 },
+  remove: { fontSize: 18, color: colors.faint, paddingLeft: 12 },
   itemValue: { fontSize: 15, fontWeight: '600' },
 });

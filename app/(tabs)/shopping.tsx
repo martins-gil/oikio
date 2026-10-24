@@ -136,6 +136,9 @@ export default function ShoppingScreen() {
                   <Text style={styles.circle}>✅</Text>
                   <Text style={[styles.name, styles.strike]}>{itemName(i)}</Text>
                 </View>
+                <Pressable hitSlop={12} onPress={() => remove(i)}>
+                  <Text style={styles.remove}>✕</Text>
+                </Pressable>
               </View>
             ))}
           </View>
