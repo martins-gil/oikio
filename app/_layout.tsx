@@ -65,6 +65,7 @@ export default function RootLayout() {
           <Stack.Screen name="notifications" options={{ title: 'Lembretes' }} />
           <Stack.Screen name="join" options={{ title: 'Tenho um convite' }} />
           <Stack.Screen name="sign-in" options={{ title: 'Entrar' }} />
+          <Stack.Screen name="forgot-password" options={{ title: 'Recuperar a conta' }} />
           <Stack.Screen name="account" options={{ title: 'Proteger a conta' }} />
           <Stack.Screen name="invite/[code]" options={{ headerShown: false }} />
         </Stack>

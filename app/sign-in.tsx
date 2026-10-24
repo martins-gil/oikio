@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
@@ -59,6 +59,9 @@ export default function SignInScreen() {
         />
         {error && <Text style={styles.error}>{error}</Text>}
         <Button title={busy ? 'A entrar…' : 'Entrar'} disabled={!ready || busy} onPress={signIn} />
+        <Pressable hitSlop={12} onPress={() => router.push('/forgot-password')}>
+          <Text style={styles.link}>Esqueci a palavra-passe</Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -71,4 +74,5 @@ const styles = StyleSheet.create({
   hint: { color: colors.muted, textAlign: 'center', marginBottom: 8 },
   input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 14, fontSize: 17 },
   error: { color: '#DC4F89', textAlign: 'center' },
+  link: { color: colors.primary, textAlign: 'center', fontSize: 16, marginTop: 4 },
 });
