@@ -69,7 +69,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 
 ## Roteiro (atualizar à medida que avança)
 - [x] M1 Esqueleto: Expo + Supabase ligados, sessão anónima, criar casa
-- [ ] M2 Onboarding progressivo: escolher 2–3 consumíveis críticos + nível atual
+- [x] M2 Onboarding progressivo: escolher 2–3 consumíveis críticos + nível atual
 - [ ] M3 Ecrã "Hoje": listar ocorrências, marcar como feita com 1 toque
 - [ ] M4 Geração diária de ocorrências + atribuição (Edge Function agendada)
 - [ ] M5 Stock e lista de compras (níveis, +/−, riscar)
