@@ -68,7 +68,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - `npx supabase functions deploy <nome>` — publicar uma Edge Function
 
 ## Roteiro (atualizar à medida que avança)
-- [ ] M1 Esqueleto: Expo + Supabase ligados, sessão anónima, criar casa
+- [x] M1 Esqueleto: Expo + Supabase ligados, sessão anónima, criar casa
 - [ ] M2 Onboarding progressivo: escolher 2–3 consumíveis críticos + nível atual
 - [ ] M3 Ecrã "Hoje": listar ocorrências, marcar como feita com 1 toque
 - [ ] M4 Geração diária de ocorrências + atribuição (Edge Function agendada)
