@@ -88,7 +88,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M3 Ecrã "Hoje": listar ocorrências, marcar como feita com 1 toque
 - [x] M4 Geração diária de ocorrências + atribuição (função SQL agendada com pg_cron)
 - [x] M5 Stock e lista de compras (níveis, +/−, riscar)
-- [ ] M6 Convidar o parceiro por código; guardar a conta com e-mail (Apple/Google na fase das lojas)
+- [x] M6 Convidar o parceiro por código; guardar a conta com e-mail (Apple/Google na fase das lojas)
 - [ ] M7 Resumo diário por notificação
 - [ ] M8 Talões por foto com IA (Edge Function + ecrã de confirmação)
 - [ ] M9 Sugestões de refeições com IA
