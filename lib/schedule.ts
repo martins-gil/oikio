@@ -239,6 +239,8 @@ export function friendlyTaskError(message: string): string {
     'Só podes mudar a data de tarefas que são tuas', 'Só podes saltar tarefas que são tuas',
     'A tarefa está pausada', 'Já registaste esta tarefa hoje', 'A tarefa pontual já foi feita',
     'A tarefa já não está pendente', 'Tarefa inexistente',
+    'Só podes passar tarefas que são tuas', 'Escolhe outra pessoa', 'Essa pessoa não é da casa',
+    'Já existe um pedido de troca para esta tarefa', 'Pedido inexistente',
   ];
   return known.find((k) => message.includes(k)) ?? 'Não foi possível guardar. Tenta outra vez.';
 }

@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
 
@@ -70,7 +70,7 @@ function consumptionText(o: Occurrence): string | null {
 export default function HomeScreen() {
   const router = useRouter();
   const { session } = useSession();
-  const { household, members } = useHousehold();
+  const { household, members, reload: reloadHousehold } = useHousehold();
   const me = session?.user.id;
   const myRole = members.find((m) => m.user_id === me)?.role;
   const canManage = myRole === 'admin' || myRole === 'adult';
@@ -186,11 +186,22 @@ export default function HomeScreen() {
       .then(({ data: sc }) => setScheduled((sc ?? []) as unknown as Occurrence[]));
   }, [household, me, weekStart]);
 
+  // Atualiza ao entrar no ecrã e de 15 em 15 segundos (para ver pedidos de troca e agradecimentos do parceiro)
   useFocusEffect(
     useCallback(() => {
+      reloadHousehold();
       load();
-    }, [load]),
+      const timer = setInterval(load, 15000);
+      return () => clearInterval(timer);
+    }, [load, reloadHousehold]),
   );
+
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    await Promise.all([reloadHousehold(), load()]);
+    setRefreshing(false);
+  };
 
   // Produtos que estão na lista de compras por falta de stock (para avisar quando uma tarefa os faz entrar)
   const shoppingProducts = async (): Promise<Map<string, string>> => {
@@ -272,7 +283,9 @@ export default function HomeScreen() {
     const outgoing = swaps.find((s) => s.occurrence_id === o.id && s.from_user === me);
     const options: SheetOption[] = [{ label: '📅 Mudar a data', onPress: () => setDateFor(o) }];
     if (o.assigned_to === me) {
-      if (outgoing) {
+      if (members.length < 2) {
+        options.push({ label: 'ℹ️ Não há mais ninguém na casa', onPress: () => setToast('Convida o parceiro em ⚙️ para poderes passar tarefas.') });
+      } else if (outgoing) {
         options.push({
           label: `↩ Cancelar o pedido a ${nameOf(outgoing.to_user)}`,
           onPress: () => act(supabase.rpc('cancel_swap', { p_swap: outgoing.id }), 'Pedido cancelado'),
@@ -285,6 +298,9 @@ export default function HomeScreen() {
           });
         }
       }
+    }
+    if (o.assigned_to !== me) {
+      options.push({ label: 'ℹ️ Passar a outra pessoa', onPress: () => setToast('Só podes passar tarefas que estão atribuídas a ti.') });
     }
     options.push({
       label: '⏭ Saltar desta vez',
@@ -432,7 +448,7 @@ export default function HomeScreen() {
   return (
     <Screen title="Resumo" logo>
     <View style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
         {error && <Text style={styles.error}>{error}</Text>}
 
         {/* ----- Saudação e progresso da semana ----- */}
