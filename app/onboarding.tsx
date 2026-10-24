@@ -86,7 +86,7 @@ export default function OnboardingScreen() {
 
     const { data: rows } = await supabase
       .from('v_stock')
-      .select('product_id, name, level, below_min')
+      .select('product_id, name, base_unit, tracking_mode, total, min_stock, level, below_min')
       .in('product_id', Object.values(done));
     setSummary((rows ?? []) as StockRow[]);
     setSaving(false);

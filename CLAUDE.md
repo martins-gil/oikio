@@ -51,6 +51,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Atribuição: `fixed`, `rotation`, `balanced` (por defeito), `free`.
 - Stock em lotes (`stock_lots`) com consumo FEFO via `consume_product()`.
 - Produtos em modo `level` (Cheio/Meio/Quase a acabar) usam `set_stock_level()`.
+- Lista de compras: `add_to_shopping_list()`; riscar = `buy_shopping_item()` (repõe o stock); `undo_occurrence()` desfaz uma tarefa feita.
 - Onboarding: `onboard_from_template()` cria produto + tarefa + consumo num passo.
 - Ocorrências: `generate_occurrences()` (SQL, `pg_cron` de hora a hora); regras em `docs/geracao-ocorrencias.md`.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.

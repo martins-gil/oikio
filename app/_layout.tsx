@@ -13,6 +13,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="create-house" options={{ title: 'App da Casa' }} />
           <Stack.Screen name="onboarding" options={{ title: 'Consumíveis' }} />
+          <Stack.Screen name="product/[id]" options={{ title: 'Produto' }} />
         </Stack>
       </HouseholdProvider>
     </SessionProvider>

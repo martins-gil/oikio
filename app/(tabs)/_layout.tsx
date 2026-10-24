@@ -34,6 +34,10 @@ export default function TabsLayout() {
         options={{ title: 'Hoje', tabBarIcon: () => <Text style={styles.icon}>✅</Text> }}
       />
       <Tabs.Screen
+        name="shopping"
+        options={{ title: 'Compras', tabBarIcon: () => <Text style={styles.icon}>🛒</Text> }}
+      />
+      <Tabs.Screen
         name="stock"
         options={{ title: 'Consumíveis', tabBarIcon: () => <Text style={styles.icon}>🧺</Text> }}
       />

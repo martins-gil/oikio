@@ -1,11 +1,12 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
+import { formatQty } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 
 type Consumption = { quantity: number; products: { name: string; base_unit: string } | null };
@@ -21,8 +22,6 @@ type Occurrence = {
 // Dias de atraso entre duas datas AAAA-MM-DD
 const daysLate = (today: string, due: string) =>
   Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${due}T12:00:00Z`)) / 86400000);
-
-const formatQty = (n: number) => String(Number(n)).replace('.', ',');
 
 function consumptionText(o: Occurrence): string | null {
   const items = (o.tasks?.task_consumptions ?? []).filter((c) => c.products);
@@ -121,6 +120,20 @@ export default function TodayScreen() {
     if (added.length > 0) setToast(`🛒 ${added.join(', ')} entrou na lista de compras`);
   };
 
+  // Tocar numa tarefa já feita pergunta se quer desfazer (repõe o stock que gastou)
+  const askUndo = (o: Occurrence) =>
+    Alert.alert('Desfazer esta tarefa?', 'Volta a ficar pendente e o stock que gastou é reposto.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Desfazer',
+        onPress: async () => {
+          const { error: err } = await supabase.rpc('undo_occurrence', { p_occurrence: o.id });
+          setToast(err ? 'Não foi possível desfazer.' : 'Tarefa desfeita');
+          load();
+        },
+      },
+    ]);
+
   if (!household || occurrences === null) {
     return (
       <View style={styles.center}>
@@ -141,8 +154,7 @@ export default function TodayScreen() {
     <Pressable
       key={o.id}
       style={[styles.task, isDone && styles.taskDone]}
-      disabled={isDone}
-      onPress={() => markDone(o)}>
+      onPress={() => (isDone ? askUndo(o) : markDone(o))}>
       <Text style={styles.circle}>{isDone ? '✅' : '⚪'}</Text>
       <View style={styles.taskText}>
         <Text style={[styles.taskTitle, isDone && styles.strike]}>{o.tasks?.title ?? 'Tarefa'}</Text>
@@ -152,6 +164,7 @@ export default function TodayScreen() {
           </Text>
         )}
         {consumptionText(o) && <Text style={styles.taskLine}>{consumptionText(o)}</Text>}
+        {isDone && <Text style={styles.taskLine}>toca para desfazer</Text>}
       </View>
     </Pressable>
   );

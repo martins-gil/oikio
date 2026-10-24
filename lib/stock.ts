@@ -29,9 +29,28 @@ export type ProductTemplate = {
 export type StockRow = {
   product_id: string;
   name: string;
+  base_unit: string;
+  tracking_mode: 'exact' | 'level';
+  total: number;
+  min_stock: number;
   level: StockLevel | null;
   below_min: boolean;
 };
+
+export type ShopItem = {
+  id: string;
+  product_id: string | null;
+  free_text: string | null;
+  quantity: number | null;
+  reason: 'manual' | 'min_stock' | 'recipe';
+  checked_at: string | null;
+  products: { name: string; base_unit: string } | null;
+};
+
+export const STOCK_COLUMNS = 'product_id, name, base_unit, tracking_mode, total, min_stock, level, below_min';
+
+// 1.5 → "1,5" (PT-PT)
+export const formatQty = (n: number) => String(Number(n)).replace('.', ',');
 
 const PERIOD_LABEL = { day: 'dia', week: 'semana', month: 'mês', year: 'ano' } as const;
 
