@@ -105,7 +105,12 @@ begin
   insert into res values ('b_completes_a', v_err);
   perform set_config('request.jwt.claim.sub', A::text, true);
   occ := complete_task_now(ta);
-  perform complete_task_now(ta);   -- repetir no mesmo dia não duplica
+  begin
+    perform complete_task_now(ta);   -- repetir no mesmo dia é recusado (e não duplica)
+    insert into res values ('a_twice', 'aceitou');
+  exception when others then
+    insert into res values ('a_twice', sqlerrm);
+  end;
   insert into res values ('a_occ_count', (select count(*)::text from task_occurrences where task_id = ta));
   insert into res values ('a_done', (select (status = 'done' and completed_by = A and assigned_to = A)::text from task_occurrences where id = occ));
   insert into res values ('a_last_done', (select (last_done_at is not null)::text from tasks where id = ta));
@@ -115,6 +120,7 @@ begin
   reset role;
   perform pg_temp.assert_eq('N1 o parceiro não completa tarefas pessoais alheias', (select v from res where k = 'b_completes_a'), 'Tarefa inexistente');
   perform pg_temp.assert_eq('N2 "feito agora" cria uma só ocorrência', (select v from res where k = 'a_occ_count'), '1');
+  perform pg_temp.assert_eq('N2b repetir no mesmo dia é recusado', (select v from res where k = 'a_twice'), 'Já registaste esta tarefa hoje');
   perform pg_temp.assert_eq('N3 ocorrência feita pelo dono', (select v from res where k = 'a_done'), 'true');
   perform pg_temp.assert_eq('N4 last_done_at atualizado', (select v from res where k = 'a_last_done'), 'true');
   perform pg_temp.assert_eq('N5 o parceiro não vê a ocorrência', (select v from res where k = 'b_sees_occ'), '0');

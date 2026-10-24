@@ -192,6 +192,37 @@ export function formToArgs(householdId: string, f: TaskForm, taskId?: string) {
   };
 }
 
+const KIND_RECURRENCE: Record<Kind, Recurrence> = {
+  none: 'no_frequency',
+  times: 'times_per_period',
+  interval: 'interval_since_last',
+  weekdays: 'fixed_schedule',
+  monthly: 'fixed_schedule',
+  yearly: 'fixed_schedule',
+  once: 'once',
+};
+
+export function formRrule(f: TaskForm): string | null {
+  if (f.kind === 'weekdays') {
+    const codes = WEEKDAYS.map((d) => d.code).filter((c) => f.weekdays.includes(c));
+    return `FREQ=WEEKLY;BYDAY=${codes.join(',')}${f.everyTwoWeeks ? ';INTERVAL=2' : ''}`;
+  }
+  if (f.kind === 'monthly') return `FREQ=MONTHLY;BYMONTHDAY=${f.monthDay}`;
+  if (f.kind === 'yearly') return `FREQ=YEARLY;BYMONTH=${f.month};BYMONTHDAY=${f.monthDay}`;
+  return null;
+}
+
+// "às terças e sextas", "todos os meses, no dia 8"… para um formulário (ainda por guardar)
+export function describeForm(f: TaskForm): string {
+  return describeSchedule({
+    recurrence: KIND_RECURRENCE[f.kind],
+    times_per_period: f.kind === 'times' ? f.times : null,
+    period: f.kind === 'times' ? f.period : null,
+    interval_days: f.kind === 'interval' ? f.intervalDays : null,
+    rrule: formRrule(f),
+  });
+}
+
 // Mensagens da base de dados que o utilizador pode ver tal como estão
 export function friendlyTaskError(message: string): string {
   const known = [
@@ -199,6 +230,11 @@ export function friendlyTaskError(message: string): string {
     'Escolhe quem faz a tarefa', 'Escolhe uma data a partir de hoje', 'Escolhe o dia do mês', 'Escolhe o dia e o mês',
     'Só administradores e adultos gerem as tarefas da casa', 'Calendário inválido', 'Frequência inválida',
     'Já existe uma ocorrência desta tarefa nesse dia',
+    'Escolhe uma data a partir de hoje e até daqui a um ano',
+    'Só administradores, adultos ou quem tem a tarefa podem mudar a data',
+    'Só podes mudar a data de tarefas que são tuas', 'Só podes saltar tarefas que são tuas',
+    'A tarefa está pausada', 'Já registaste esta tarefa hoje', 'A tarefa pontual já foi feita',
+    'A tarefa já não está pendente', 'Tarefa inexistente',
   ];
   return known.find((k) => message.includes(k)) ?? 'Não foi possível guardar. Tenta outra vez.';
 }

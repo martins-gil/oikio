@@ -19,6 +19,7 @@ import {
   type TaskForm,
   type TaskRow,
 } from '@/lib/schedule';
+import { markTaskDoneNow } from '@/lib/taskActions';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 
@@ -108,6 +109,21 @@ export default function TaskEditScreen() {
     router.back();
   };
 
+  const doneNow = async () => {
+    if (!id || saving) return;
+    setSaving(true);
+    setError(null);
+    const result = await markTaskDoneNow(id, form.title || 'tarefa');
+    setSaving(false);
+    if (result.status === 'cancelled') return;
+    if (result.status === 'error') {
+      setError(result.message ?? 'Não foi possível guardar.');
+      return;
+    }
+    if (household) await supabase.rpc('ensure_today_occurrences', { p_household: household.id });
+    router.back();
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -122,6 +138,13 @@ export default function TaskEditScreen() {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: id ? 'Editar tarefa' : 'Nova tarefa' }} />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {id && (
+          <>
+            <Button title="✅ Feito agora" variant="secondary" disabled={saving} onPress={doneNow} />
+            <Text style={styles.hint}>Marca a tarefa como feita já, mesmo antes da altura.</Text>
+          </>
+        )}
+
         <Text style={styles.label}>Nome</Text>
         <TextInput
           style={styles.input}

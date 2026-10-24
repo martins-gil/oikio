@@ -3,11 +3,14 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { ActionSheet, type SheetOption } from '@/components/ActionSheet';
+import { DateSheet } from '@/components/DateSheet';
 import { KudosForm } from '@/components/KudosForm';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { formatQty } from '@/lib/stock';
+import { friendlyTaskError } from '@/lib/schedule';
 import { urgencyColor, type TaskStatus } from '@/lib/urgency';
 import { supabase } from '@/lib/supabase';
 
@@ -63,6 +66,10 @@ export default function TodayScreen() {
   const [thanked, setThanked] = useState<Set<string>>(new Set());
   const [unseen, setUnseen] = useState<Kudos[]>([]);
   const [thanking, setThanking] = useState<string | null>(null);
+  const [scheduled, setScheduled] = useState<Occurrence[]>([]);
+  const [showScheduled, setShowScheduled] = useState(false);
+  const [menuFor, setMenuFor] = useState<Occurrence | null>(null);
+  const [dateFor, setDateFor] = useState<Occurrence | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
@@ -124,6 +131,20 @@ export default function TodayScreen() {
       setThanked(new Set());
       setUnseen([]);
     }
+    // Tarefas já agendadas para os próximos dias (pendentes, depois de hoje)
+    const horizon = new Date(`${today}T12:00:00`);
+    horizon.setDate(horizon.getDate() + 90);
+    supabase
+      .from('task_occurrences')
+      .select('id, task_id, due_date, status, assigned_to, completed_by, tasks!inner(title, scope, task_consumptions(quantity, products(name, base_unit)))')
+      .eq('household_id', household.id)
+      .neq('tasks.scope', 'personal')
+      .eq('status', 'pending')
+      .gt('due_date', today)
+      .lte('due_date', horizon.toISOString().slice(0, 10))
+      .order('due_date')
+      .limit(30)
+      .then(({ data: sc }) => setScheduled((sc ?? []) as unknown as Occurrence[]));
     setTodayStr(today);
     setOccurrences((data ?? []) as unknown as Occurrence[]);
     setDateLabel(
@@ -207,38 +228,42 @@ export default function TodayScreen() {
     load();
   };
 
-  // Toque longo numa tarefa minha: passar a outra pessoa (ou cancelar o pedido já feito)
-  const swapMenu = (o: Occurrence) => {
+  // Toque longo numa tarefa pendente (minha ou de ninguém): mudar a data, passar a outra pessoa ou saltar
+  const act = async (call: PromiseLike<{ error: { message: string } | null }>, ok: string) => {
+    const { error: err } = await call;
+    setToast(err ? friendlyTaskError(err.message) : ok);
+    load();
+  };
+
+  const menuOptions = (o: Occurrence): SheetOption[] => {
     const title = o.tasks?.title ?? 'Tarefa';
     const outgoing = swaps.find((s) => s.occurrence_id === o.id && s.from_user === me);
-    if (outgoing) {
-      Alert.alert(`Pedido enviado a ${nameOf(outgoing.to_user)}`, `Queres cancelar o pedido para passar "${title}"?`, [
-        { text: 'Manter', style: 'cancel' },
-        {
-          text: 'Cancelar pedido',
-          style: 'destructive',
-          onPress: async () => {
-            const { error: err } = await supabase.rpc('cancel_swap', { p_swap: outgoing.id });
-            setToast(err ? 'Não foi possível cancelar.' : 'Pedido cancelado');
-            load();
-          },
-        },
-      ]);
-      return;
+    const options: SheetOption[] = [{ label: '📅 Mudar a data', onPress: () => setDateFor(o) }];
+    if (o.assigned_to === me) {
+      if (outgoing) {
+        options.push({
+          label: `↩ Cancelar o pedido a ${nameOf(outgoing.to_user)}`,
+          onPress: () => act(supabase.rpc('cancel_swap', { p_swap: outgoing.id }), 'Pedido cancelado'),
+        });
+      } else {
+        for (const m of members.filter((x) => x.user_id !== me)) {
+          options.push({
+            label: `🔄 Passar a ${m.display_name}`,
+            onPress: () => act(supabase.rpc('request_swap', { p_occurrence: o.id, p_to: m.user_id }), `Pedido enviado a ${m.display_name}`),
+          });
+        }
+      }
     }
-    const candidates = members.filter((m) => m.user_id !== me).slice(0, 2);
-    if (candidates.length === 0) return;
-    Alert.alert(`Passar "${title}"?`, 'A pessoa recebe um pedido e decide se aceita.', [
-      { text: 'Cancelar', style: 'cancel' },
-      ...candidates.map((m) => ({
-        text: `Passar a ${m.display_name}`,
-        onPress: async () => {
-          const { error: err } = await supabase.rpc('request_swap', { p_occurrence: o.id, p_to: m.user_id });
-          setToast(err ? 'Não foi possível pedir a troca.' : `Pedido enviado a ${m.display_name}`);
-          load();
-        },
-      })),
-    ]);
+    options.push({
+      label: '⏭ Saltar desta vez',
+      destructive: true,
+      onPress: () =>
+        Alert.alert(`Saltar "${title}" desta vez?`, 'Fica registada como não feita e a seguinte pode aparecer.', [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Saltar', style: 'destructive', onPress: () => act(supabase.rpc('skip_occurrence', { p_occurrence: o.id }), 'Tarefa saltada') },
+        ]),
+    });
+    return options;
   };
 
   // ----- agradecimentos -----
@@ -288,7 +313,7 @@ export default function TodayScreen() {
       key={o.id}
       style={[styles.task, isDone && styles.taskDone]}
       onPress={() => (isDone ? askUndo(o) : markDone(o))}
-      onLongPress={!isDone && o.assigned_to === me && hasPartner ? () => swapMenu(o) : undefined}>
+      onLongPress={!isDone && (o.assigned_to === me || o.assigned_to === null) ? () => setMenuFor(o) : undefined}>
       {isDone ? (
         <Text style={styles.circle}>✅</Text>
       ) : (
@@ -299,6 +324,12 @@ export default function TodayScreen() {
         {!isDone && daysLate(todayStr, o.due_date) > 0 && (
           <Text style={styles.late}>
             em atraso há {daysLate(todayStr, o.due_date)} {daysLate(todayStr, o.due_date) === 1 ? 'dia' : 'dias'}
+          </Text>
+        )}
+        {!isDone && o.due_date > todayStr && (
+          <Text style={styles.taskLine}>
+            📅 {new Date(`${o.due_date}T12:00:00`).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })}
+            {o.assigned_to && o.assigned_to !== me ? ` · ${nameOf(o.assigned_to)}` : ''}
           </Text>
         )}
         {consumptionText(o) && <Text style={styles.taskLine}>{consumptionText(o)}</Text>}
@@ -387,9 +418,7 @@ export default function TodayScreen() {
             g.items.length > 0 && (
               <View key={g.title} style={styles.group}>
                 <Text style={styles.section}>{g.title}</Text>
-                {g.title === 'As minhas' && hasPartner && (
-                  <Text style={styles.tip}>mantém premida uma tarefa para a passar a outra pessoa</Text>
-                )}
+                {g.title === 'As minhas' && <Text style={styles.tip}>mantém premida uma tarefa para mudar a data, passá-la ou saltá-la</Text>}
                 {g.items.map((o) => renderTask(o, false))}
               </View>
             ),
@@ -401,6 +430,17 @@ export default function TodayScreen() {
             {done.map((o) => renderDone(o))}
           </View>
         )}
+        {scheduled.length > 0 && (
+          <View style={styles.group}>
+            <Pressable onPress={() => setShowScheduled(!showScheduled)}>
+              <Text style={styles.section}>
+                📅 Agendadas ({scheduled.length}) {showScheduled ? '▲' : '▼'}
+              </Text>
+            </Pressable>
+            {showScheduled && scheduled.map((o) => renderTask(o, false))}
+          </View>
+        )}
+
         <View style={styles.links}>
           <Pressable onPress={() => router.push('/status')}>
             <Text style={styles.link}>🚦 Estado da casa ›</Text>
@@ -412,6 +452,22 @@ export default function TodayScreen() {
           )}
         </View>
       </ScrollView>
+      <ActionSheet
+        visible={menuFor !== null}
+        title={menuFor?.tasks?.title ?? ''}
+        options={menuFor ? menuOptions(menuFor) : []}
+        onClose={() => setMenuFor(null)}
+      />
+      <DateSheet
+        visible={dateFor !== null}
+        title={`Mudar a data de "${dateFor?.tasks?.title ?? ''}"`}
+        initial={dateFor?.due_date && dateFor.due_date >= todayStr ? dateFor.due_date : null}
+        onClose={() => setDateFor(null)}
+        onConfirm={(date) => {
+          const o = dateFor;
+          if (o) act(supabase.rpc('reschedule_occurrence', { p_occurrence: o.id, p_date: date }), '📅 Data mudada');
+        }}
+      />
       <Toast message={toast} onHide={hideToast} />
     </View>
   );

@@ -3,10 +3,12 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { DatePicker } from '@/components/DatePicker';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { localDate } from '@/lib/money';
-import { describeAssignment, describeSchedule, TASK_COLUMNS, type TaskRow } from '@/lib/schedule';
+import { describeAssignment, describeSchedule, friendlyTaskError, TASK_COLUMNS, type TaskRow } from '@/lib/schedule';
+import { markTaskDoneNow } from '@/lib/taskActions';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 
@@ -17,6 +19,7 @@ type Occurrence = {
   status: 'pending' | 'done' | 'skipped';
   completed_at: string | null;
   completed_by: string | null;
+  assigned_to: string | null;
 };
 
 const dm = (iso: string) => iso.split('-').reverse().slice(0, 2).join('/');
@@ -36,6 +39,8 @@ export default function TaskDetailScreen() {
   const [history, setHistory] = useState<Occurrence[]>([]);
   const [next, setNext] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
 
@@ -44,7 +49,7 @@ export default function TaskDetailScreen() {
       supabase.from('tasks').select(TASK_COLUMNS).eq('id', id).maybeSingle(),
       supabase
         .from('task_occurrences')
-        .select('id, due_date, scheduled_for, status, completed_at, completed_by')
+        .select('id, due_date, scheduled_for, status, completed_at, completed_by, assigned_to')
         .eq('task_id', id)
         .order('due_date', { ascending: false })
         .limit(100),
@@ -74,6 +79,36 @@ export default function TaskDetailScreen() {
     await load();
   };
 
+  const doneNow = async (t: TaskRow) => {
+    if (busy) return;
+    setBusy(true);
+    const result = await markTaskDoneNow(t.id, t.title);
+    setBusy(false);
+    if (result.status === 'cancelled') return;
+    if (result.status === 'error') {
+      setToast(result.message ?? 'Não foi possível guardar.');
+      return;
+    }
+    setToast(result.skipped ? `✅ Feita. A data de ${longDate(result.skipped)} fica saltada` : '✅ Feita');
+    if (household) await supabase.rpc('ensure_today_occurrences', { p_household: household.id });
+    await load();
+  };
+
+  const scheduleNext = async (t: TaskRow) => {
+    if (!picked || busy) return;
+    setBusy(true);
+    const { error } = await supabase.rpc('set_next_date', { p_task: t.id, p_date: picked });
+    setBusy(false);
+    if (error) {
+      setToast(friendlyTaskError(error.message));
+      return;
+    }
+    setToast(`📅 Programada para ${longDate(picked)}`);
+    setPicking(false);
+    setPicked(null);
+    await load();
+  };
+
   if (task === undefined) {
     return (
       <View style={styles.center}>
@@ -93,6 +128,8 @@ export default function TaskDetailScreen() {
   const canManage = personal ? true : myRole === 'admin' || myRole === 'adult';
   const deleted = !!task.deleted_at;
   const today = localDate();
+  const pendingOcc = history.filter((o) => o.status === 'pending').sort((a, b) => a.due_date.localeCompare(b.due_date))[0];
+  const canSchedule = personal || canManage || (!!pendingOcc && (pendingOcc.assigned_to === null || pendingOcc.assigned_to === me));
   const done = history.filter((o) => o.status === 'done').length;
   const skipped = history.filter((o) => o.status === 'skipped').length;
 
@@ -135,8 +172,43 @@ export default function TaskDetailScreen() {
           {!personal && <Text style={styles.line}>👤 {describeAssignment(task, nameOf)}</Text>}
           <Text style={styles.line}>💪 esforço {task.effort_points}</Text>
           {!task.is_active && !deleted && <Text style={styles.line}>⏸ pausada</Text>}
-          {next && !deleted && task.is_active && <Text style={styles.line}>📅 próxima data do calendário: {longDate(next)}</Text>}
+          {!deleted && task.is_active && pendingOcc && (
+            <Text style={styles.line}>
+              📅 por fazer {pendingOcc.due_date < today ? `(em atraso desde ${dm(pendingOcc.due_date)})` : `em ${longDate(pendingOcc.due_date)}`}
+            </Text>
+          )}
+          {!deleted && task.is_active && !pendingOcc && next && <Text style={styles.line}>📅 próxima: {longDate(next)}</Text>}
         </View>
+
+        {!deleted && task.is_active && (
+          <View style={styles.actions}>
+            <Button title="✅ Feito agora" disabled={busy} onPress={() => doneNow(task)} />
+            {canSchedule && !picking && (
+              <Button
+                title="📅 Escolher próxima data"
+                variant="secondary"
+                disabled={busy}
+                onPress={() => {
+                  setPicked(pendingOcc?.due_date ?? null);
+                  setPicking(true);
+                }}
+              />
+            )}
+          </View>
+        )}
+
+        {picking && (
+          <View style={styles.picker}>
+            <Text style={styles.section}>Próxima data</Text>
+            <DatePicker value={picked} onChange={setPicked} />
+            <Button
+              title={picked ? `Programar para ${longDate(picked)}` : 'Escolhe um dia'}
+              disabled={!picked || busy}
+              onPress={() => scheduleNext(task)}
+            />
+            <Button title="Cancelar" variant="secondary" onPress={() => setPicking(false)} />
+          </View>
+        )}
 
         {canManage && !deleted && (
           <View style={styles.actions}>
@@ -202,6 +274,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700' },
   line: { fontSize: 15, color: '#444' },
   actions: { gap: 10 },
+  picker: { gap: 10, padding: 14, borderWidth: 1, borderColor: '#208AEF', borderRadius: 12, backgroundColor: '#f6f9ff' },
   deleted: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: '#fdecea' },
   deletedText: { color: '#8a2c22' },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 8 },

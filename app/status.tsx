@@ -63,7 +63,16 @@ export default function StatusScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Stack.Screen options={{ title: 'Estado da casa' }} />
-      {canManage && <Button title="+ Nova tarefa" onPress={() => router.push('/task/edit')} />}
+      {canManage && (
+        <View style={styles.buttons}>
+          <View style={styles.flex}>
+            <Button title="+ Nova tarefa" onPress={() => router.push('/task/edit')} />
+          </View>
+          <View style={styles.flex}>
+            <Button title="💡 Sugestões" variant="secondary" onPress={() => router.push('/task/suggestions')} />
+          </View>
+        </View>
+      )}
       <Text style={styles.hint}>Verde: em dia · Amarelo: a chegar a altura · Vermelho: em atraso</Text>
       {error && <Text style={styles.error}>Não foi possível carregar tudo.</Text>}
       {active.length === 0 && !error && <Text style={styles.hint}>Ainda não há tarefas da casa.</Text>}
@@ -124,6 +133,8 @@ export default function StatusScreen() {
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  buttons: { flexDirection: 'row', gap: 10 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16, gap: 10, paddingBottom: 60 },
   hint: { color: '#666', fontSize: 13, textAlign: 'center' },

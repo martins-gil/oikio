@@ -33,3 +33,14 @@ para notificações (M7) e IA (M8/M9).
 ## Pontos em aberto
 - Saltar uma tarefa (estado `skipped`) ainda não tem botão na app.
 - `fixed_schedule` precisa de interpretar RRULE (provavelmente numa Edge Function).
+
+## "Feito" antes da altura e escolher a próxima data
+- `complete_task_now(tarefa)`: marca como feita agora. Se há uma ocorrência pendente (atrasada ou agendada), é essa;
+  senão cria uma de hoje já feita. Numa tarefa com calendário, essa ocorrência cobre a PRÓXIMA data do calendário
+  (`scheduled_for`), que por isso é saltada: mensal no dia 8, feita a 3 → salta o dia 8, a seguinte é a de 8 do mês seguinte.
+  Nas restantes conta para o período / recomeça a contagem. Duas vezes no mesmo dia é recusado.
+- `set_next_date(tarefa, data)`: move a ocorrência pendente para a data escolhida; se não há, cria a próxima nessa data
+  (cobrindo a data do calendário, para não duplicar). Administradores e adultos em qualquer tarefa; quem tem a tarefa na sua;
+  o dono nas pessoais. De hoje até daqui a um ano, nunca em dia que já tenha uma desta tarefa.
+- `next_free_slot()` / `task_next_date()`: a próxima data do calendário que ainda não está coberta por nenhuma ocorrência.
+

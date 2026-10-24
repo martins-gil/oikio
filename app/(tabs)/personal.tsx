@@ -13,6 +13,7 @@ import {
 
 import { Toast } from '@/components/Toast';
 import { formatMinutes } from '@/lib/money';
+import { friendlyTaskError } from '@/lib/schedule';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
@@ -164,7 +165,7 @@ export default function PersonalScreen() {
 
   const doneNow = async (t: PersonalTask) => {
     const { error } = await supabase.rpc('complete_task_now', { p_task: t.id });
-    setToast(error ? 'Não foi possível registar.' : `✅ ${t.title}`);
+    setToast(error ? friendlyTaskError(error.message) : `✅ ${t.title}`);
     load();
   };
 

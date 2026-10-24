@@ -56,6 +56,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Onboarding: `onboard_from_template()` cria produto + tarefa + consumo num passo.
 - Ocorrências: `generate_occurrences()` (SQL, `pg_cron` de hora a hora); regras em `docs/geracao-ocorrencias.md`.
 - Tarefas da casa: criar/editar só por `save_task()` (calendário em `docs/geracao-ocorrencias.md`); apagar é lógico (`deleted_by`, histórico guardado), nunca `delete` na tabela.
+- "Feito" antes da altura: `complete_task_now()` cobre a próxima data do calendário (a salta); `set_next_date()` escolhe a próxima data. Sugestões de tarefas em `lib/taskSuggestions.ts`.
 - Tarefas pessoais: só o dono as vê (RLS); geram só para ele; `complete_task_now()` regista "feito agora" nas sem frequência.
 - Despesas: partilhadas veem-se na casa, "só minhas" só o pagador; só o pagador altera/apaga. `time_entries` (banco de horas, consultas) só o dono.
 - Equilíbrio: `house_task_status()` (indicador verde→vermelho = tempo desde a última vez ÷ intervalo) e `weekly_summary()` (semana de Lisboa, sem tarefas pessoais). `households.gamification`: off / weekly_summary / competition; só o admin altera a casa (e nunca o `plan`).
