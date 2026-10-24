@@ -12,10 +12,15 @@ type Consumption = { quantity: number; products: { name: string; base_unit: stri
 
 type Occurrence = {
   id: string;
+  due_date: string;
   status: 'pending' | 'done' | 'skipped';
   assigned_to: string | null;
   tasks: { title: string; task_consumptions: Consumption[] } | null;
 };
+
+// Dias de atraso entre duas datas AAAA-MM-DD
+const daysLate = (today: string, due: string) =>
+  Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${due}T12:00:00Z`)) / 86400000);
 
 const formatQty = (n: number) => String(Number(n)).replace('.', ',');
 
@@ -33,13 +38,14 @@ export default function TodayScreen() {
 
   const [occurrences, setOccurrences] = useState<Occurrence[] | null>(null);
   const [dateLabel, setDateLabel] = useState('');
+  const [todayStr, setTodayStr] = useState('');
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
 
   const load = useCallback(async () => {
     if (!household) return;
-    // Provisório (M3): garante as ocorrências de hoje; no M4 passam a ser geradas por uma Edge Function
+    // Garante já as ocorrências de hoje (o agendador também as gera de hora a hora)
     const { data: today, error: genErr } = await supabase.rpc('ensure_today_occurrences', {
       p_household: household.id,
     });
@@ -50,9 +56,12 @@ export default function TodayScreen() {
     }
     const { data, error: err } = await supabase
       .from('task_occurrences')
-      .select('id, status, assigned_to, tasks(title, task_consumptions(quantity, products(name, base_unit)))')
+      .select('id, due_date, status, assigned_to, tasks(title, task_consumptions(quantity, products(name, base_unit)))')
       .eq('household_id', household.id)
-      .eq('due_date', today)
+      .lte('due_date', today)
+      // pendentes (incluindo as em atraso) e o que foi feito hoje
+      .or(`status.eq.pending,due_date.eq.${today},completed_at.gte.${new Date(`${today}T00:00:00`).toISOString()}`)
+      .order('due_date')
       .order('id');
     if (err) {
       setError('Não foi possível carregar as tarefas de hoje.');
@@ -60,6 +69,7 @@ export default function TodayScreen() {
       return;
     }
     setError(null);
+    setTodayStr(today);
     setOccurrences((data ?? []) as unknown as Occurrence[]);
     setDateLabel(
       new Date(`${today}T12:00:00`).toLocaleDateString('pt-PT', {
@@ -136,6 +146,11 @@ export default function TodayScreen() {
       <Text style={styles.circle}>{isDone ? '✅' : '⚪'}</Text>
       <View style={styles.taskText}>
         <Text style={[styles.taskTitle, isDone && styles.strike]}>{o.tasks?.title ?? 'Tarefa'}</Text>
+        {!isDone && daysLate(todayStr, o.due_date) > 0 && (
+          <Text style={styles.late}>
+            em atraso há {daysLate(todayStr, o.due_date)} {daysLate(todayStr, o.due_date) === 1 ? 'dia' : 'dias'}
+          </Text>
+        )}
         {consumptionText(o) && <Text style={styles.taskLine}>{consumptionText(o)}</Text>}
       </View>
     </Pressable>
@@ -150,7 +165,7 @@ export default function TodayScreen() {
         {occurrences.length === 0 && !error && (
           <View style={styles.empty}>
             <Text style={styles.hint}>
-              Ainda não tens tarefas. Escolhe consumíveis e as tarefas ligadas a eles aparecem aqui.
+              Hoje não há tarefas. Se ainda não escolheste consumíveis, as tarefas ligadas a eles aparecem aqui.
             </Text>
             <Button title="Escolher consumíveis" onPress={() => router.push('/onboarding')} />
           </View>
@@ -205,6 +220,7 @@ const styles = StyleSheet.create({
   taskTitle: { fontSize: 18 },
   strike: { textDecorationLine: 'line-through' },
   taskLine: { color: '#666', fontSize: 14 },
+  late: { color: '#d9534f', fontSize: 14, fontWeight: '600' },
   empty: { gap: 16, marginTop: 24 },
   hint: { color: '#666', textAlign: 'center' },
   allDone: { fontSize: 18, textAlign: 'center', marginTop: 24 },

@@ -22,7 +22,7 @@ Qualquer ação diária em ≤ 2 toques. Nenhum campo obrigatório além do nome
 - `components/` — componentes reutilizáveis
 - `lib/` — cliente Supabase, tipos gerados, utilitários
 - `supabase/migrations/` — alterações à base de dados (nunca editar uma migração já aplicada; criar uma nova)
-- `supabase/functions/` — Edge Functions (talões, sugestões de refeição, geração de ocorrências)
+- `supabase/functions/` — Edge Functions (notificações, talões, sugestões de refeição)
 - `docs/` — decisões de produto e desenho
 
 ## Convenções
@@ -52,6 +52,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Stock em lotes (`stock_lots`) com consumo FEFO via `consume_product()`.
 - Produtos em modo `level` (Cheio/Meio/Quase a acabar) usam `set_stock_level()`.
 - Onboarding: `onboard_from_template()` cria produto + tarefa + consumo num passo.
+- Ocorrências: `generate_occurrences()` (SQL, `pg_cron` de hora a hora); regras em `docs/geracao-ocorrencias.md`.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
 
 ## Forma de trabalhar comigo
@@ -71,7 +72,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M1 Esqueleto: Expo + Supabase ligados, sessão anónima, criar casa
 - [x] M2 Onboarding progressivo: escolher 2–3 consumíveis críticos + nível atual
 - [x] M3 Ecrã "Hoje": listar ocorrências, marcar como feita com 1 toque
-- [ ] M4 Geração diária de ocorrências + atribuição (Edge Function agendada)
+- [ ] M4 Geração diária de ocorrências + atribuição (função SQL agendada com pg_cron)
 - [ ] M5 Stock e lista de compras (níveis, +/−, riscar)
 - [ ] M6 Convidar o parceiro por link; associar conta Apple/Google
 - [ ] M7 Resumo diário por notificação
