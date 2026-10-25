@@ -61,13 +61,13 @@ const num = (v: unknown, min: number, max: number): number | null =>
   typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max ? v : null;
 const strList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
 
-export function cleanMeals(raw: unknown, ctx: Context): { meals: CleanMeal[]; dropped: number } {
+export function cleanMeals(raw: unknown, ctx: Context, max = 3): { meals: CleanMeal[]; dropped: number } {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const list = Array.isArray(r.meals) ? (r.meals as Record<string, unknown>[]) : [];
   const meals: CleanMeal[] = [];
   let dropped = 0;
 
-  for (const m of list.slice(0, 6)) {
+  for (const m of list.slice(0, max * 2)) {
     const title = str(m.title, 80);
     const steps = strList(m.steps).map((x) => x.trim().slice(0, 300)).filter(Boolean).slice(0, 10);
     if (!title || steps.length === 0) { dropped++; continue; }
@@ -126,7 +126,7 @@ export function cleanMeals(raw: unknown, ctx: Context): { meals: CleanMeal[]; dr
       est_missing_cost_cents: est,
       unpriced_count: unpriced,
     });
-    if (meals.length === 3) break;
+    if (meals.length === max) break;
   }
   return { meals, dropped };
 }
