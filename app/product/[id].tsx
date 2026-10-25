@@ -8,12 +8,13 @@ import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import {
-  formatQty,
+  formatAmount,
   LEVEL_COLOR,
   LEVEL_LABEL,
   PLACES,
   placeOf,
   STOCK_COLUMNS,
+  stepFor,
   type StockLevel,
   type StockRow,
 } from '@/lib/stock';
@@ -67,15 +68,15 @@ export default function ProductScreen() {
 
   const setLevel = (level: StockLevel) =>
     run(() => supabase.rpc('set_stock_level', { p_product: id, p_level: level }), 'Não foi possível mudar o nível.');
-  const plus = () => run(() => supabase.rpc('add_stock', { p_product: id, p_qty: 1 }), 'Não foi possível somar.');
+  const plus = () => run(() => supabase.rpc('add_stock', { p_product: id, p_qty: stepFor(product!.base_unit) }), 'Não foi possível somar.');
   const minus = () =>
     run(
-      () => supabase.rpc('consume_product', { p_product: id, p_qty: 1, p_reason: 'consumption' }),
+      () => supabase.rpc('consume_product', { p_product: id, p_qty: stepFor(product!.base_unit), p_reason: 'consumption' }),
       'Não foi possível tirar.',
     );
   const changeMin = async (delta: number) => {
     if (!product) return;
-    const next = Math.max(0, Number(product.min_stock) + delta);
+    const next = Math.max(0, Number(product.min_stock) + delta * stepFor(product.base_unit));
     await run(async () => {
       const upd = await supabase.from('products').update({ min_stock: next }).eq('id', id);
       if (upd.error) return upd;
@@ -154,7 +155,7 @@ export default function ProductScreen() {
                 <Text style={styles.stepText}>−</Text>
               </Pressable>
               <Text style={styles.big}>
-                {formatQty(product.total)} <Text style={styles.unit}>{product.base_unit}</Text>
+                {formatAmount(product.total, product.base_unit)}
               </Text>
               <Pressable style={[styles.stepButton, busy && styles.disabled]} disabled={busy} onPress={plus}>
                 <Text style={styles.stepText}>+</Text>
@@ -170,7 +171,7 @@ export default function ProductScreen() {
                 <Text style={styles.stepText}>−</Text>
               </Pressable>
               <Text style={styles.mid}>
-                {product.min_stock > 0 ? `${formatQty(product.min_stock)} ${product.base_unit}` : 'não avisar'}
+                {product.min_stock > 0 ? formatAmount(product.min_stock, product.base_unit) : 'não avisar'}
               </Text>
               <Pressable style={[styles.stepButtonSmall, busy && styles.disabled]} disabled={busy} onPress={() => changeMin(1)}>
                 <Text style={styles.stepText}>+</Text>

@@ -41,7 +41,7 @@ begin
   -- criar a partir de um modelo guarda o local e as quantidades
   leite := onboard_from_template(h, 9::smallint, 'full');
   perform pg_temp.assert_eq('T6 Leite fica no frigorífico', (select location::text from v_stock where product_id = leite), 'fridge');
-  perform pg_temp.assert_eq('T7 Leite cheio = 6', (select total::text from v_stock where product_id = leite), '6.00');
+  perform pg_temp.assert_eq('T7 Leite cheio = 6000 ml', (select total::text from v_stock where product_id = leite), '6000.00');
   pao := onboard_from_template(h, 22::smallint, 'half');
   perform pg_temp.assert_eq('T8 Pão congelado fica no congelador (apesar da categoria Pão e padaria)', (select location::text from v_stock where product_id = pao), 'freezer');
   pilhas := onboard_from_template(h, 45::smallint, 'full');

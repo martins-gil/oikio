@@ -8,7 +8,7 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
-import { formatQty, type ShopItem } from '@/lib/stock';
+import { formatAmount, type ShopItem } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
@@ -16,7 +16,7 @@ const itemName = (i: ShopItem) => i.products?.name ?? i.free_text ?? '';
 
 function itemDetail(i: ShopItem): string | null {
   const parts: string[] = [];
-  if (i.quantity && i.products) parts.push(`${formatQty(i.quantity)} ${i.products.base_unit}`);
+  if (i.quantity && i.products) parts.push(formatAmount(i.quantity, i.products.base_unit));
   if (i.reason === 'min_stock') parts.push('abaixo do mínimo');
   return parts.length > 0 ? parts.join(' · ') : null;
 }

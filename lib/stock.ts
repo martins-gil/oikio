@@ -76,6 +76,23 @@ export const STOCK_COLUMNS = 'product_id, name, base_unit, tracking_mode, total,
 // 1.5 → "1,5" (PT-PT)
 export const formatQty = (n: number) => String(Number(n)).replace('.', ',');
 
+// Quantidade com a unidade certa: o que se conta (ovos, latas, rolos…) em inteiros; gramas e ml passam a kg e l a partir de 1000.
+// 1800 g → "1,8 kg"; 750 ml → "750 ml"; 1,8 ovos (nível "Quase a acabar") → "2 un".
+export function formatAmount(qty: number, unit: string): string {
+  const n = Number(qty);
+  if (unit === 'g' || unit === 'ml') {
+    const big = n >= 1000;
+    const value = big ? Math.round(n / 10) / 100 : Math.round(n);
+    return `${String(value).replace('.', ',')} ${big ? (unit === 'g' ? 'kg' : 'l') : unit}`;
+  }
+  // unidades contáveis: sem frações (até 0,5 arredonda para cima só se sobrar algo)
+  const whole = n > 0 && n < 1 ? 1 : Math.round(n);
+  return `${whole} ${unit}`;
+}
+
+// Passo dos botões − e + de um produto por quantidade: 100 g ou 100 ml, ou 1 unidade
+export const stepFor = (unit: string) => (unit === 'g' || unit === 'ml' ? 100 : 1);
+
 const PERIOD_LABEL = { day: 'dia', week: 'semana', month: 'mês', year: 'ano' } as const;
 
 export function describeTask(t: ProductTemplate): string | null {

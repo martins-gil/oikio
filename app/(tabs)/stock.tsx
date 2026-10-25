@@ -8,7 +8,7 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
 import {
-  formatQty,
+  formatAmount,
   LEVEL_COLOR,
   LEVEL_LABEL,
   PLACES,
@@ -145,7 +145,7 @@ export default function StockScreen() {
                       styles.itemValue,
                       { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : '#1F1B4D' },
                     ]}>
-                    {p.tracking_mode === 'level' && p.level ? LEVEL_LABEL[p.level] : `${formatQty(p.total)} ${p.base_unit}`}
+                    {p.tracking_mode === 'level' && p.level ? LEVEL_LABEL[p.level] : formatAmount(p.total, p.base_unit)}
                     {p.below_min ? '  🛒' : ''}
                   </Text>
                   <Pressable hitSlop={12} onPress={() => askDelete(p)}>

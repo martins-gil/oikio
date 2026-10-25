@@ -15,7 +15,7 @@ import { useHousehold } from '@/lib/household';
 import { addDaysIso, localDate, mondayOf } from '@/lib/money';
 import { friendlyTaskError } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
-import { formatQty } from '@/lib/stock';
+import { formatAmount } from '@/lib/stock';
 import { colors, radius, shadow } from '@/lib/theme';
 import { sinceText, urgencyColor, urgencyFill, type TaskStatus } from '@/lib/urgency';
 import { supabase } from '@/lib/supabase';
@@ -63,7 +63,7 @@ const dm = (iso: string) => iso.split('-').reverse().slice(0, 2).join('/');
 function consumptionText(o: Occurrence): string | null {
   const items = (o.tasks?.task_consumptions ?? []).filter((c) => c.products);
   if (items.length === 0) return null;
-  return 'gasta ' + items.map((c) => `${formatQty(c.quantity)} ${c.products!.base_unit} de ${c.products!.name}`).join(', ');
+  return 'gasta ' + items.map((c) => `${formatAmount(c.quantity, c.products!.base_unit)} de ${c.products!.name}`).join(', ');
 }
 
 // Página inicial: Estado da casa, resumo da semana e as tarefas (a fazer e feitas, com quem as fez)
