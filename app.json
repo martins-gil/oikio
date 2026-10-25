@@ -33,6 +33,14 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 160
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "O NestKeep usa a câmara para ler os talões das tuas compras.",
+          "photosPermission": "O NestKeep usa as tuas fotos para ler talões.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {
