@@ -23,3 +23,6 @@ Todas as funções recusam quem não é membro da casa; as vistas são `security
 
 ## Mais tarde
 «Explica-me» com IA (só para redigir a explicação, nunca para calcular) e M15b: plano semanal de refeições com custos.
+
+## Apagar produtos guarda o histórico
+`delete_product()` (migração `20261116090000_soft_delete_products.sql`) não apaga a linha: marca `deleted_at`/`deleted_by`, deixa de vigiar o mínimo e de avisar, tira o produto da lista de compras e das tarefas (as tarefas ficam) e põe o stock a zero. Movimentos, desperdício, talões e preços ficam, por isso o desperdício continua a contar na análise. Um produto apagado deixa de aparecer em `v_stock`, nas subidas de preço e nas lojas mais baratas, e já não bloqueia criar outro com o mesmo nome.

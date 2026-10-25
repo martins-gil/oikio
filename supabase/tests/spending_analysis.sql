@@ -112,6 +112,23 @@ begin
   begin perform discard_product(leite, 1); v_err := 'mexeu'; exception when others then v_err := 'negado'; end;
   perform pg_temp.assert_eq('P4 estranho não deita fora produtos alheios', v_err, 'negado');
   perform pg_temp.assert_eq('P5 estranho não vê preços', (select count(*)::text from v_price_points), '0');
+
+  -- ===== apagar produto guarda o histórico =====
+  perform set_config('request.jwt.claim.sub', C::text, true);
+  begin perform delete_product(leite); v_err := 'apagou'; exception when others then v_err := 'negado'; end;
+  perform pg_temp.assert_eq('X1 estranho não apaga produtos alheios', v_err, 'negado');
+  perform set_config('request.jwt.claim.sub', A::text, true);
+  insert into shopping_list_items(household_id, product_id, quantity, reason) values (h, leite, 2, 'min_stock');
+  perform delete_product(leite);
+  perform pg_temp.assert_eq('X2 deixa de aparecer nos produtos', (select count(*)::text from v_stock where product_id = leite), '0');
+  perform pg_temp.assert_eq('X3 sai da lista de compras', (select count(*)::text from shopping_list_items where product_id = leite and checked_at is null), '0');
+  perform pg_temp.assert_eq('X4 o desperdício continua a contar', (select amount_cents::text from loss_insights(h, T) where kind = 'waste'), '1500');
+  perform pg_temp.assert_eq('X5 o histórico de movimentos fica', (select (count(*) > 0)::text from stock_movements where product_id = leite), 'true');
+  perform pg_temp.assert_eq('X6 já não há subida de preço de produto apagado', (select count(*)::text from loss_insights(h, T) where kind in ('price_increase', 'cheaper_store')), '0');
+  insert into products(household_id, name, base_unit) values (h, 'Leite', 'un');
+  perform pg_temp.assert_eq('X7 pode criar outro com o mesmo nome', (select count(*)::text from products where household_id = h and name = 'Leite' and deleted_at is null), '1');
+  begin perform delete_product(leite); v_err := 'apagou'; exception when others then v_err := 'recusou'; end;
+  perform pg_temp.assert_eq('X8 não se apaga duas vezes', v_err, 'recusou');
   reset role;
   begin set local role anon; perform spending_scores(h, 3, T); v_err := 'viu'; exception when others then v_err := 'negado'; end;
   perform pg_temp.assert_eq('P6 sem sessão não executa', v_err, 'negado');

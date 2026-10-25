@@ -41,18 +41,18 @@ export default function StockScreen() {
     }, [load]),
   );
 
-  // Apagar um produto: some o stock, o item da lista de compras e a ligação às tarefas (as tarefas ficam)
+  // Apagar um produto: some dos produtos, da lista de compras e das tarefas (as tarefas ficam); o histórico fica guardado
   const askDelete = (p: StockRow) =>
     Alert.alert(
       `Apagar «${p.name}»?`,
-      'Deixa de existir nos produtos e na lista de compras, e as tarefas deixam de o gastar. As tarefas ficam.',
+      'Deixa de aparecer nos produtos e na lista de compras, e as tarefas deixam de o gastar. As tarefas ficam e o histórico (compras, desperdício) fica guardado.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Apagar',
           style: 'destructive',
           onPress: async () => {
-            const { error: err } = await supabase.from('products').delete().eq('id', p.product_id);
+            const { error: err } = await supabase.rpc('delete_product', { p_product: p.product_id });
             if (err) setError('Não foi possível apagar o produto.');
             load();
           },

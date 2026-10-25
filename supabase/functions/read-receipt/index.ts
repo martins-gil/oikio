@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
     .from('products')
     .select('id, name, base_unit')
     .eq('household_id', receipt.household_id)
+    .is('deleted_at', null)
     .order('name')
     .limit(400);
   const productList = (products ?? []).map((p) => `${p.id} | ${p.name} | ${p.base_unit}`).join('\n') || '(ainda não há produtos)';

@@ -70,7 +70,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Trocas e agradecimentos só por funções (`request_swap`/`answer_swap`/`cancel_swap`, `give_kudos`/`mark_kudos_seen`); as tabelas são só de leitura para a app.
 - Perfil de cozinha por casa em `cooking_profiles` (escolhas validadas na base de dados; a IA das refeições lê-o, e as restrições são sempre respeitadas).
 - Refeições (M9): `suggest-meals` propõe 3 receitas; o servidor descarta as que contrariam restrições ou equipamento; `add_recipe_items_to_shopping_list()` e `cook_meal()` só correm com confirmação; preços só de `v_product_prices` (talões confirmados). Ver `docs/refeicoes.md`.
-- Análise (M15): `spending_scores()`, `budget_suggestions()`, `loss_insights()` (só despesas partilhadas, só membros) e `discard_product()` («Deitei fora» → movimento `waste`). Ver `docs/analise-de-despesas.md`.
+- Análise (M15): `spending_scores()`, `budget_suggestions()`, `loss_insights()` (só despesas partilhadas, só membros) `discard_product()` («Deitei fora» → movimento `waste`); produtos apagam-se só por `delete_product()` (apagar é lógico, `deleted_at`, nunca `delete` na tabela). Ver `docs/analise-de-despesas.md`.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
 
 ## Forma de trabalhar comigo

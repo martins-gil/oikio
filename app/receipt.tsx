@@ -94,7 +94,7 @@ export default function ReceiptScreen() {
   const loadProducts = useCallback(async () => {
     if (!household) return { list: [] as Product[], packList: [] as Pack[] };
     const [p, k] = await Promise.all([
-      supabase.from('products').select('id, name, base_unit').eq('household_id', household.id).order('name'),
+      supabase.from('products').select('id, name, base_unit').eq('household_id', household.id).is('deleted_at', null).order('name'),
       supabase.from('product_packages').select('id, product_id, name, units_per_package'),
     ]);
     const list = (p.data ?? []) as Product[];

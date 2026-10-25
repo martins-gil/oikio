@@ -54,7 +54,7 @@ export default function OnboardingScreen() {
           .from('product_templates')
           .select('id, name, emoji, task_title, task_times_per_period, task_period, location, product_categories(default_location)')
           .order('id'),
-        supabase.from('products').select('name').eq('household_id', household.id),
+        supabase.from('products').select('name').eq('household_id', household.id).is('deleted_at', null),
       ]);
       if (tpl.error || prod.error) {
         setError('Não foi possível carregar os modelos.');
