@@ -26,3 +26,11 @@ Todas as funções recusam quem não é membro da casa; as vistas são `security
 
 ## Apagar produtos guarda o histórico
 `delete_product()` (migração `20261116090000_soft_delete_products.sql`) não apaga a linha: marca `deleted_at`/`deleted_by`, deixa de vigiar o mínimo e de avisar, tira o produto da lista de compras e das tarefas (as tarefas ficam) e põe o stock a zero. Movimentos, desperdício, talões e preços ficam, por isso o desperdício continua a contar na análise. Um produto apagado deixa de aparecer em `v_stock`, nas subidas de preço e nas lojas mais baratas, e já não bloqueia criar outro com o mesmo nome.
+
+## «Explica-me» com IA (M17)
+- **Quem vê:** só quem ligar «Explicações com IA» (Casa → Preferências pessoais; desligada por defeito, só tua; `user_settings.show_ai_explain`).
+- **Como:** o botão «💬 Explica-me» na Análise chama a Edge Function `explain-spending` (modelo em `supabase/functions/_shared/ai.ts`, `AI_MODEL_EXPLAIN`). A função lê os números com a sessão de quem pede (`spending_scores`, `loss_insights`, `budget_suggestions`: só membros, só despesas **partilhadas**), formata-os («350,00 €») e pede à IA um resumo curto, até 3 pontos e uma sugestão.
+- **A IA não calcula:** a resposta é **recusada** se trouxer um número que não esteja nos dados (só os inteiros até 10, como «3 meses», são livres). As descrições livres das despesas nunca vão para a IA.
+- **Custo e limites:** cerca de 1 cêntimo por explicação; o mesmo pedido (mesmos números) reaproveita a explicação guardada durante 7 dias (`ai_explanations`, só leitura para a app); máximo de 8 explicações novas por casa em 24 horas.
+- **Publicar:** `npx supabase db push` e `npx supabase functions deploy explain-spending` (usa a mesma `ANTHROPIC_API_KEY`).
+- **Testes:** `supabase/tests/ai_explanations.sql` e `node --experimental-strip-types supabase/functions/explain-spending/explain.test.ts`.

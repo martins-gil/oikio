@@ -6,3 +6,7 @@ export const AI_MODEL = 'claude-opus-5-5';
 // Sugestões de refeições (M9): mais barato que o dos talões, porque escreve texto em vez de ler imagens.
 // Depois de mudar: npx supabase functions deploy suggest-meals
 export const AI_MODEL_MEALS = 'claude-sonnet-5-5';
+
+// «Explica-me» da análise de despesas (M17): só redige em linguagem simples números já calculados.
+// Depois de mudar: npx supabase functions deploy explain-spending
+export const AI_MODEL_EXPLAIN = 'claude-sonnet-5-5';

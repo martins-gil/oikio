@@ -7,6 +7,7 @@ import { Text } from '@/components/Text';
 import { Toast } from '@/components/Toast';
 import { insightText, monthShort, scoreColor, scoreWord, type Insight, type ScoreRow, type Suggestion } from '@/lib/analysis';
 import { useHousehold } from '@/lib/household';
+import { useShowAiExplain } from '@/lib/settings';
 import { formatEuros } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
@@ -17,6 +18,9 @@ const BAR_HEIGHT = 90;
 // Tudo calculado por algoritmo na base de dados (sem IA): as contas são sempre as mesmas e explicam-se.
 export default function AnalysisScreen() {
   const { household } = useHousehold();
+  const { showAiExplain } = useShowAiExplain();
+  const [explain, setExplain] = useState<{ summary: string; highlights: string[]; tip: string | null; created_at?: string } | null>(null);
+  const [explaining, setExplaining] = useState(false);
   const [scores, setScores] = useState<ScoreRow[] | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -36,6 +40,8 @@ export default function AnalysisScreen() {
       setScores([]);
       return;
     }
+    const last = await supabase.from('ai_explanations').select('result, created_at').eq('household_id', household.id).eq('kind', 'spending').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (last.data) setExplain({ ...(last.data.result as { summary: string; highlights: string[]; tip: string | null }), created_at: last.data.created_at as string });
     // do mais antigo para o mais recente
     setScores(((s.data ?? []) as ScoreRow[]).slice().reverse());
     setInsights((i.data ?? []) as Insight[]);
@@ -47,6 +53,24 @@ export default function AnalysisScreen() {
       load();
     }, [load]),
   );
+
+  // «Explica-me»: a IA redige os números já calculados (nunca calcula)
+  const askExplain = async () => {
+    if (!household || explaining) return;
+    setExplaining(true);
+    const { data, error } = await supabase.functions.invoke('explain-spending', { body: { household_id: household.id } });
+    let result = data as { ok?: boolean; error?: string; explanation?: { summary: string; highlights: string[]; tip: string | null }; created_at?: string } | null;
+    if (error && 'context' in error) {
+      try {
+        result = await (error as { context: Response }).context.json();
+      } catch {
+        result = null;
+      }
+    }
+    setExplaining(false);
+    if (!result?.ok || !result.explanation) return setToast(result?.error ?? 'Não foi possível explicar agora. Tenta outra vez.');
+    setExplain({ ...result.explanation, created_at: result.created_at });
+  };
 
   // Aplica o orçamento sugerido (só quando tocas)
   const apply = async (s: Suggestion) => {
@@ -88,6 +112,27 @@ export default function AnalysisScreen() {
           </View>
         ) : (
           <>
+            {showAiExplain && (
+              <View style={styles.card}>
+                <Text style={styles.title}>💬 Explica-me</Text>
+                {explain ? (
+                  <>
+                    <Text style={styles.bold}>{explain.summary}</Text>
+                    {explain.highlights.map((h, k) => (
+                      <Text key={k} style={styles.small}>• {h}</Text>
+                    ))}
+                    {explain.tip ? <Text style={styles.small}>💡 {explain.tip}</Text> : null}
+                    <Text style={styles.source}>Escrito por IA a partir dos números desta página (só despesas partilhadas). Confirma sempre.</Text>
+                  </>
+                ) : (
+                  <Text style={styles.small}>A IA explica, em poucas frases, como correu o mês e onde podes poupar. Só usa os números calculados aqui.</Text>
+                )}
+                <Pressable style={[styles.explainButton, explaining && styles.explainOff]} disabled={explaining} onPress={askExplain}>
+                  <Text style={styles.applyText}>{explaining ? 'A escrever…' : explain ? 'Explicar outra vez' : 'Explica-me'}</Text>
+                </Pressable>
+              </View>
+            )}
+
             <View style={styles.card}>
               <Text style={styles.title}>Nota do mês</Text>
               <View style={styles.scoreRow}>
@@ -208,4 +253,7 @@ const styles = StyleSheet.create({
   suggestion: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   apply: { borderRadius: radius.chip, backgroundColor: colors.primary, paddingVertical: 8, paddingHorizontal: 12 },
   applyText: { color: '#fff', fontSize: 14 },
+  source: { color: colors.faint, fontSize: 12 },
+  explainButton: { alignSelf: 'flex-start', borderRadius: radius.chip, backgroundColor: colors.primary, paddingVertical: 9, paddingHorizontal: 16 },
+  explainOff: { opacity: 0.5 },
 });
