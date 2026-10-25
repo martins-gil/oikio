@@ -24,3 +24,10 @@ Máximo de 12 pedidos à IA por plano em 24 h (gerar + trocar). Cerca de 10–15
 
 ## Testes
 `supabase/tests/meal_plans.sql` (28 verificações) e `node --experimental-strip-types supabase/functions/plan-week/plan.test.ts`.
+
+## M15c: semanas, favoritas, marmitas e «E se eu comprar…?»
+- **Semana:** no topo escolhes «Esta semana» (só o que resta, a partir de hoje) ou «Próxima semana» (inteira). Cada semana tem o seu plano. Ao domingo a app abre na próxima semana, porque «esta semana» só teria o jantar de hoje.
+- **⭐ Favoritas (da casa):** a estrela amarela (`#FFBF67`, a cor do logótipo) em cada refeição guarda-a em `favorite_meals` (`save_favorite()`), com a receita e os ingredientes. O ecrã «Favoritas» tem «🛒 Quero repetir», que junta à lista de compras só o que falta hoje (`add_favorite_to_shopping_list()`). Ao planear, escolhes as favoritas a incluir: a IA diz onde ficam, o servidor usa a receita guardada (sem a reescrever), reparte o stock e volta a validar restrições e equipamento (uma favorita que não serve a casa é descartada).
+- **🧊 Marmitas para congelar** (só na próxima semana): a IA propõe 1 a 3 receitas que aguentam a congelação, cozinhadas no domingo antes da semana. O stock e o custo ficam na preparação; nos dias úteis aparece «marmita do congelador». Não há prazos de congelação inventados: a app lembra de pôr a data e de confirmar numa fonte de segurança alimentar (regra n.º 5).
+- **🛒 E se eu comprar…?** Até 3 produtos que aceitas comprar: a IA usa-os à vontade e entram em «Falta comprar».
+- Testes: `supabase/tests/favorite_meals.sql` (24 verificações) e `plan.test.ts`.

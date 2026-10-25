@@ -11,6 +11,8 @@ import { EQUIPMENT, SCHEDULES } from '@/lib/kitchen';
 import { formatEuros } from '@/lib/money';
 import type { Meal, SuggestionRow } from '@/lib/meals';
 import { formatAmount } from '@/lib/stock';
+import { FavoriteStar } from '@/components/FavoriteStar';
+import { useFavorites } from '@/lib/favorites';
 import { useShowCosts } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
@@ -25,6 +27,7 @@ export default function MealsScreen() {
   const router = useRouter();
   const { household } = useHousehold();
   const { showCosts } = useShowCosts();
+  const fav = useFavorites();
 
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined); // undefined = a carregar, null = sem perfil
   const [meal, setMeal] = useState<'almoço' | 'jantar'>(new Date().getHours() < 15 ? 'almoço' : 'jantar');
@@ -174,6 +177,7 @@ export default function MealsScreen() {
           </View>
           <Button title={loading ? 'A pensar…' : '✨ Sugerir'} disabled={loading} onPress={suggest} />
           <Button title="📅 Plano da semana" variant="secondary" onPress={() => router.push('/plan')} />
+          <Button title="⭐ Favoritas" variant="secondary" onPress={() => router.push('/favorites')} />
           {loading && (
             <View style={styles.reading}>
               <ActivityIndicator color={colors.primary} />
@@ -186,7 +190,10 @@ export default function MealsScreen() {
           const isCooking = cooking === i;
           return (
             <View key={`${suggestionId}-${i}`} style={styles.card}>
-              <Text style={styles.mealTitle}>{m.title}</Text>
+              <View style={styles.titleRow}>
+                <Text style={[styles.mealTitle, styles.flex]}>{m.title}</Text>
+                <FavoriteStar on={!!fav.find(m.title)} onPress={async () => setToast((await fav.toggle(m)) ?? 'Não foi possível guardar.')} />
+              </View>
               {m.why && <Text style={styles.why}>{m.why}</Text>}
               <Text style={styles.small}>
                 {[m.time_minutes ? `⏱ ${m.time_minutes} min` : null, m.difficulty, `${m.servings} ${m.servings === 1 ? 'pessoa' : 'pessoas'}`, ...m.equipment.map(equipmentName)].filter(Boolean).join(' · ')}
@@ -307,6 +314,7 @@ const styles = StyleSheet.create({
   reading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   small: { color: colors.muted, fontSize: 13 },
   mealTitle: { fontSize: 20, color: colors.ink },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   why: { color: colors.muted },
   block: { gap: 4, padding: 12, borderRadius: 14, backgroundColor: colors.bg },
   blockTitle: { fontSize: 15, color: colors.ink },

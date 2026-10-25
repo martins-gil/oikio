@@ -2,7 +2,7 @@
 import type { Meal } from '@/lib/meals';
 import { supabase } from '@/lib/supabase';
 
-export type PlannedMeal = Meal & { date: string; slot: string; slot_index: number };
+export type PlannedMeal = Meal & { date: string; slot: string; slot_index: number; favorite_id?: string; is_prep?: boolean; serves?: number[]; from_freezer?: boolean };
 export type PlanSlot = { date: string; slot: string };
 export type PlanRow = {
   id: string;
@@ -13,7 +13,7 @@ export type PlanRow = {
 
 const DAYS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 export const dayLabel = (iso: string) => `${DAYS[new Date(`${iso}T12:00:00Z`).getUTCDay()]} ${iso.slice(8)}/${iso.slice(5, 7)}`;
-export const SLOT_EMOJI: Record<string, string> = { 'pequeno-almoço': '🥐', almoço: '🍝', jantar: '🌙' };
+export const SLOT_EMOJI: Record<string, string> = { 'pequeno-almoço': '🥐', almoço: '🍝', jantar: '🌙', preparação: '🧊' };
 
 // Pede à Edge Function `plan-week` (gerar a semana, ou trocar uma refeição). Devolve o id do plano ou o erro em texto.
 export async function callPlanWeek(body: Record<string, unknown>): Promise<{ planId: string | null; error: string | null; needsProfile?: boolean }> {

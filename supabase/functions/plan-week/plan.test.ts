@@ -1,7 +1,7 @@
 // Testes simples da lógica do plano: node --experimental-strip-types supabase/functions/plan-week/plan.test.ts
 import assert from 'node:assert/strict';
 
-import { allocate, mondayOf, planWeek, totals, weekSlots } from './plan.ts';
+import { allocate, favoriteMeal, freezerMeal, mondayOf, placeFavorites, planWeek, totals, weekSlots } from './plan.ts';
 
 assert.equal(mondayOf('2026-11-19'), '2026-11-16');
 assert.equal(mondayOf('2026-11-22'), '2026-11-16'); // domingo
@@ -45,4 +45,32 @@ assert.equal(next.monday, '2026-10-26');
 assert.equal(next.slots.length, 10);
 // o caso real: ao domingo, «esta semana» só tem o jantar de hoje (por isso a app oferece a semana seguinte)
 assert.equal(planWeek('dinners', '2026-10-25', 'this').slots.length, 1);
+// favorita: reparte o stock e calcula o que falta; o que não tem produto da casa vai sem custo
+const known = new Map([['arroz', { name: 'Arroz', unit: 'g' }]]);
+const rem2 = new Map([['arroz', 150]]);
+const fav = favoriteMeal(
+  { id: 'f1', title: 'Arroz de frango', meal: { steps: ['Cozer'], contains: ['meat'] }, ingredients: [
+    { product_id: 'arroz', name: 'Arroz', quantity: 200, unit: 'g' },
+    { product_id: null, name: 'Cebola', quantity: 2, unit: 'un' },
+  ] },
+  rem2, new Map([['arroz', 0.2]]), known);
+assert.equal(fav.uses_stock[0].quantity, 150);
+assert.equal(fav.missing[0].quantity, 50);
+assert.equal(fav.missing[0].est_cost_cents, 10);
+assert.equal(fav.missing[1].name, 'Cebola');
+assert.equal(fav.missing[1].est_cost_cents, null);
+assert.equal(fav.unpriced_count, 1);
+assert.equal(rem2.get('arroz'), 0);
+// favoritas: a IA escolhe a posição; o que vier inválido vai para a primeira livre
+const placed = placeFavorites([{ favorite_id: 'a', slot_index: 3 }, { favorite_id: 'a', slot_index: 4 }, { favorite_id: 'x', slot_index: 0 }, { favorite_id: 'b', slot_index: 99 }], ['a', 'b'], [0, 1, 2, 3, 4]);
+assert.equal(placed.get(3), 'a');
+assert.equal(placed.get(0), 'b'); // 'b' veio com posição inválida: primeira livre
+assert.equal(placed.size, 2);
+assert.equal(placeFavorites('lixo', ['a'], [5]).get(5), 'a');
+assert.equal(placeFavorites([], ['a', 'b'], [7]).size, 1); // mais favoritas do que posições: as que sobram ficam de fora
+// marmita do congelador: sem stock nem custo
+const fz = freezerMeal(base, { date: '2026-10-27', slot: 'almoço' }, 2);
+assert.equal(fz.from_freezer, true);
+assert.equal(fz.uses_stock.length + fz.missing.length, 0);
+assert.equal(fz.est_missing_cost_cents, 0);
 console.log('plan.test: tudo ok');

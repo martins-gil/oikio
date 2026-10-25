@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
@@ -10,6 +10,8 @@ import { useHousehold } from '@/lib/household';
 import { EQUIPMENT } from '@/lib/kitchen';
 import { addDays, budgetColor, callPlanWeek, dayLabel, lisbonToday, mondayOf, shortDate, SLOT_EMOJI, type PlanRow } from '@/lib/mealPlan';
 import { formatEuros } from '@/lib/money';
+import { FavoriteStar } from '@/components/FavoriteStar';
+import { useFavorites } from '@/lib/favorites';
 import { useShowCosts } from '@/lib/settings';
 import { formatAmount } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
@@ -24,6 +26,10 @@ export default function PlanScreen() {
   const router = useRouter();
   const { household } = useHousehold();
   const { showCosts } = useShowCosts();
+  const fav = useFavorites();
+  const [selectedFavs, setSelectedFavs] = useState<string[]>([]);
+  const [buyText, setBuyText] = useState('');
+  const [batch, setBatch] = useState(false);
 
   const today = lisbonToday();
   const thisMonday = mondayOf(today);
@@ -74,7 +80,8 @@ export default function PlanScreen() {
 
   const generate = () => {
     const cooked = plan?.cooked.length ?? 0;
-    const body = { week };
+    const buy = buyText.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean).slice(0, 3);
+    const body = { week, favorites: selectedFavs.filter((id) => fav.favorites.some((f) => f.id === id)), buy, batch: batch && week === 'next' };
     if (plan && cooked > 0) {
       Alert.alert('Refazer o plano?', `Já cozinhaste ${cooked} ${cooked === 1 ? 'refeição' : 'refeições'} deste plano. Um plano novo substitui o atual (o stock já descontado não volta).`, [
         { text: 'Cancelar', style: 'cancel' },
@@ -138,11 +145,12 @@ export default function PlanScreen() {
 
   const meals = plan?.response.meals ?? [];
   const slots = plan?.response.slots ?? [];
+  const order = slots.map((_, i) => i).sort((a, b) => slots[a].date.localeCompare(slots[b].date) || a - b);
   const posOf = (slotIndex: number) => meals.findIndex((m) => m.slot_index === slotIndex);
   const pending = meals.map((m, pos) => ({ m, pos })).filter(({ pos }) => !plan!.cooked.includes(pos));
   const total = pending.reduce((a, { m }) => a + m.est_missing_cost_cents, 0);
   const unpriced = pending.reduce((a, { m }) => a + m.unpriced_count, 0);
-  const priciest = pending.reduce<{ m: (typeof meals)[number]; pos: number } | null>((best, cur) => (!best || cur.m.est_missing_cost_cents > best.m.est_missing_cost_cents ? cur : best), null);
+  const priciest = pending.filter(({ m }) => !m.is_prep).reduce<{ m: (typeof meals)[number]; pos: number } | null>((best, cur) => (!best || cur.m.est_missing_cost_cents > best.m.est_missing_cost_cents ? cur : best), null);
   const over = budget !== null && budget > 0 ? total - budget : 0;
 
   return (
@@ -172,6 +180,34 @@ export default function PlanScreen() {
                 ? 'Prepara a semana toda com antecedência. A IA propõe; tu confirmas.'
                 : 'Planeia o que resta da semana (a partir de hoje) com o que tens em casa. A IA propõe; tu confirmas.'}
           </Text>
+          {fav.favorites.length > 0 && (
+            <View style={styles.block}>
+              <Text style={styles.blockTitle}>⭐ Incluir favoritas</Text>
+              <View style={styles.chips}>
+                {fav.favorites.map((f) => {
+                  const on = selectedFavs.includes(f.id);
+                  return (
+                    <Pressable key={f.id} style={[styles.chip, on && styles.chipOn]} onPress={() => setSelectedFavs(on ? selectedFavs.filter((x) => x !== f.id) : [...selectedFavs, f.id].slice(0, 7))}>
+                      <Text style={[styles.chipText, on && styles.chipTextOn]}>{f.title}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+          <View style={styles.block}>
+            <Text style={styles.blockTitle}>🛒 E se eu comprar…? (opcional)</Text>
+            <TextInput style={styles.input} value={buyText} onChangeText={setBuyText} placeholder="ex.: frango, natas (até 3 produtos)" />
+          </View>
+          {week === 'next' && (
+            <View style={styles.switchRow}>
+              <View style={styles.flex}>
+                <Text style={styles.blockTitle}>🧊 Preparar marmitas no domingo</Text>
+                <Text style={styles.small}>Cozinhas em quantidade antes da semana e congelas para os dias úteis.</Text>
+              </View>
+              <Switch value={batch} onValueChange={setBatch} />
+            </View>
+          )}
           <Button title={working === 'plan' ? 'A planear…' : plan ? '🔁 Refazer o plano' : week === 'next' ? '✨ Planear a próxima semana' : '✨ Planear o que resta da semana'} disabled={!!working} onPress={generate} />
           {working === 'plan' && (
             <View style={styles.reading}>
@@ -210,7 +246,8 @@ export default function PlanScreen() {
         )}
 
         {plan &&
-          slots.map((s, i) => {
+          order.map((i) => {
+            const s = slots[i];
             const pos = posOf(i);
             const m = pos >= 0 ? meals[pos] : null;
             const done = pos >= 0 && plan.cooked.includes(pos);
@@ -218,7 +255,7 @@ export default function PlanScreen() {
             return (
               <View key={`${plan.id}-${i}`} style={[styles.card, done && styles.cardDone]}>
                 <Text style={styles.slot}>
-                  {SLOT_EMOJI[s.slot] ?? '🍽️'} {dayLabel(s.date)} · {s.slot}
+                  {m?.from_freezer ? '🧊' : (SLOT_EMOJI[s.slot] ?? '🍽️')} {dayLabel(s.date)} · {m?.from_freezer ? `${s.slot} (do congelador)` : m?.is_prep ? 'preparação de marmitas (para congelar)' : s.slot}
                 </Text>
                 {!m ? (
                   <>
@@ -227,8 +264,16 @@ export default function PlanScreen() {
                   </>
                 ) : (
                   <>
-                    <Text style={styles.mealTitle}>{m.title}</Text>
+                    <View style={styles.titleRow}>
+                      <Text style={[styles.mealTitle, styles.flex]}>{m.title}</Text>
+                      <FavoriteStar on={!!fav.find(m.title)} onPress={async () => setToast((await fav.toggle(m)) ?? 'Não foi possível guardar.')} />
+                    </View>
                     {m.why && <Text style={styles.hint}>{m.why}</Text>}
+                    {m.is_prep && (
+                      <Text style={styles.small}>
+                        Dá para {m.serves?.length ?? 0} {m.serves?.length === 1 ? 'refeição' : 'refeições'} dos dias úteis. Arrefece depressa, põe a data na embalagem e confirma os prazos de congelação numa fonte de segurança alimentar.
+                      </Text>
+                    )}
                     <Text style={styles.small}>
                       {[m.time_minutes ? `⏱ ${m.time_minutes} min` : null, m.difficulty, ...m.equipment.map(equipmentName)].filter(Boolean).join(' · ')}
                     </Text>
@@ -284,13 +329,17 @@ export default function PlanScreen() {
                           </View>
                         </View>
                       </View>
+                    ) : m.from_freezer ? (
+                      <Text style={styles.small}>🧊 Tira do congelador na véspera. O custo está na preparação.</Text>
                     ) : done ? (
                       <Text style={styles.small}>✅ Cozinhada</Text>
                     ) : (
                       <View style={styles.row}>
-                        <View style={styles.flex}>
-                          <Button title={working === `swap-${i}` ? 'A pensar…' : '🔄 Trocar'} variant="secondary" disabled={!!working} onPress={() => run(`swap-${i}`, { plan_id: plan.id, slot_index: i })} />
-                        </View>
+                        {!m.is_prep && (
+                          <View style={styles.flex}>
+                            <Button title={working === `swap-${i}` ? 'A pensar…' : '🔄 Trocar'} variant="secondary" disabled={!!working} onPress={() => run(`swap-${i}`, { plan_id: plan.id, slot_index: i })} />
+                          </View>
+                        )}
                         <View style={styles.flex}>
                           <Button title="Cozinhei" disabled={busy || m.uses_stock.length === 0} onPress={() => startCooking(pos)} />
                         </View>
@@ -331,6 +380,7 @@ const styles = StyleSheet.create({
   small: { color: colors.muted, fontSize: 13 },
   slot: { fontSize: 14, color: colors.primary, textTransform: 'capitalize' },
   mealTitle: { fontSize: 20, color: colors.ink },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   block: { gap: 4, padding: 12, borderRadius: 14, backgroundColor: colors.bg },
   blockTitle: { fontSize: 15, color: colors.ink },
   line: { color: colors.ink, fontSize: 14 },
@@ -342,5 +392,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   qtyInput: { minWidth: 76, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 8, textAlign: 'center', fontSize: 16, color: colors.ink },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 10, fontSize: 15, color: colors.ink },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   disclaimer: { color: colors.muted, fontSize: 12, textAlign: 'center' },
 });

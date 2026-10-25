@@ -73,6 +73,7 @@ export default function RootLayout() {
           <Stack.Screen name="analysis" options={{ title: 'Análise das despesas' }} />
           <Stack.Screen name="receipt" options={{ title: 'Registar compra' }} />
           <Stack.Screen name="kitchen" options={{ title: 'Perfil de cozinha' }} />
+          <Stack.Screen name="favorites" options={{ title: 'Favoritas' }} />
           <Stack.Screen name="plan" options={{ title: 'Plano da semana' }} />
           <Stack.Screen name="meals" options={{ title: 'O que cozinhar' }} />
           <Stack.Screen name="notifications" options={{ title: 'Lembretes' }} />
