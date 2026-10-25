@@ -11,7 +11,10 @@ import {
   formatQty,
   LEVEL_COLOR,
   LEVEL_LABEL,
+  PLACES,
+  placeOf,
   STOCK_COLUMNS,
+  type Place,
   type StockRow,
 } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
@@ -23,6 +26,7 @@ export default function StockScreen() {
   const [stock, setStock] = useState<StockRow[] | null>(null);
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Place | null>(null); // null = tudo, por secções
 
   const load = useCallback(async () => {
     if (!household) return;
@@ -69,7 +73,7 @@ export default function StockScreen() {
     setError(null);
     const { data, error: err } = await supabase
       .from('products')
-      .insert({ household_id: household.id, name: trimmed })
+      .insert({ household_id: household.id, name: trimmed, location: filter ?? 'pantry' })
       .select('id')
       .single();
     if (err || !data) {
@@ -101,29 +105,57 @@ export default function StockScreen() {
       </View>
       {error && <Text style={styles.error}>{error}</Text>}
 
+      {stock !== null && stock.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
+          <Pressable style={[styles.chip, filter === null && styles.chipOn]} onPress={() => setFilter(null)}>
+            <Text style={[styles.chipText, filter === null && styles.chipTextOn]}>Tudo ({stock.length})</Text>
+          </Pressable>
+          {PLACES.map((pl) => {
+            const count = stock.filter((p) => placeOf(p.location) === pl.key).length;
+            return (
+              <Pressable key={pl.key} style={[styles.chip, filter === pl.key && styles.chipOn]} onPress={() => setFilter(pl.key)}>
+                <Text style={[styles.chipText, filter === pl.key && styles.chipTextOn]}>
+                  {pl.emoji} {pl.label} ({count})
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
+
       {stock === null ? (
         <ActivityIndicator />
       ) : stock.length === 0 ? (
         <Text style={styles.hint}>Ainda não tens consumíveis.</Text>
       ) : (
-        stock.map((p) => (
-          <Pressable key={p.product_id} style={styles.item} onPress={() => open(p.product_id)}>
-            <Text style={styles.itemName}>{p.name}</Text>
-            <Text
-              style={[
-                styles.itemValue,
-                { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : '#1F1B4D' },
-              ]}>
-              {p.tracking_mode === 'level' && p.level
-                ? LEVEL_LABEL[p.level]
-                : `${formatQty(p.total)} ${p.base_unit}`}
-              {p.below_min ? '  🛒' : ''}
-            </Text>
-            <Pressable hitSlop={12} onPress={() => askDelete(p)}>
-              <Text style={styles.remove}>✕</Text>
-            </Pressable>
-          </Pressable>
-        ))
+        PLACES.filter((pl) => filter === null || filter === pl.key).map((pl) => {
+          const items = stock.filter((p) => placeOf(p.location) === pl.key);
+          if (items.length === 0 && filter === null) return null;
+          return (
+            <View key={pl.key} style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                {pl.emoji} {pl.label}
+              </Text>
+              {items.length === 0 && <Text style={styles.hint}>Nada aqui. Escreve um produto em cima e fica nesta secção.</Text>}
+              {items.map((p) => (
+                <Pressable key={p.product_id} style={styles.item} onPress={() => open(p.product_id)}>
+                  <Text style={styles.itemName}>{p.name}</Text>
+                  <Text
+                    style={[
+                      styles.itemValue,
+                      { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : '#1F1B4D' },
+                    ]}>
+                    {p.tracking_mode === 'level' && p.level ? LEVEL_LABEL[p.level] : `${formatQty(p.total)} ${p.base_unit}`}
+                    {p.below_min ? '  🛒' : ''}
+                  </Text>
+                  <Pressable hitSlop={12} onPress={() => askDelete(p)}>
+                    <Text style={styles.remove}>✕</Text>
+                  </Pressable>
+                </Pressable>
+              ))}
+            </View>
+          );
+        })
       )}
       <Button title="Escolher dos sugeridos" variant="secondary" onPress={() => router.push('/onboarding')} />
     </ScrollView>
@@ -138,6 +170,13 @@ const styles = StyleSheet.create({
   addButton: { backgroundColor: '#5C4DB1', borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
   addText: { color: '#fff', fontSize: 26, fontWeight: '600' },
   disabled: { opacity: 0.4 },
+  filters: { gap: 8, paddingVertical: 2 },
+  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
+  chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
+  chipText: { color: colors.primary },
+  chipTextOn: { color: '#fff' },
+  section: { gap: 8, marginTop: 6 },
+  sectionTitle: { fontSize: 18, color: colors.ink },
   hint: { color: colors.muted },
   error: { color: '#DC4F89' },
   item: {

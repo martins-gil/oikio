@@ -35,7 +35,20 @@ export type StockRow = {
   min_stock: number;
   level: StockLevel | null;
   below_min: boolean;
+  location: string; // location_kind da base de dados
 };
+
+// Onde está cada produto: as secções do ecrã Consumíveis
+export type Place = 'pantry' | 'fridge' | 'freezer' | 'cleaning' | 'other';
+export const PLACES: { key: Place; label: string; emoji: string }[] = [
+  { key: 'pantry', label: 'Despensa', emoji: '🥫' },
+  { key: 'fridge', label: 'Frigorífico', emoji: '🧊' },
+  { key: 'freezer', label: 'Congelador', emoji: '❄️' },
+  { key: 'cleaning', label: 'Limpeza', emoji: '🧴' },
+  { key: 'other', label: 'Outros', emoji: '📦' },
+];
+// 'bathroom' (higiene) e qualquer outro valor juntam-se em "Outros"
+export const placeOf = (location: string): Place => (PLACES.some((p) => p.key === location) ? (location as Place) : 'other');
 
 export type ShopItem = {
   id: string;
@@ -47,7 +60,7 @@ export type ShopItem = {
   products: { name: string; base_unit: string } | null;
 };
 
-export const STOCK_COLUMNS = 'product_id, name, base_unit, tracking_mode, total, min_stock, level, below_min';
+export const STOCK_COLUMNS = 'product_id, name, base_unit, tracking_mode, total, min_stock, level, below_min, location';
 
 // 1.5 → "1,5" (PT-PT)
 export const formatQty = (n: number) => String(Number(n)).replace('.', ',');

@@ -11,6 +11,8 @@ import {
   formatQty,
   LEVEL_COLOR,
   LEVEL_LABEL,
+  PLACES,
+  placeOf,
   STOCK_COLUMNS,
   type StockLevel,
   type StockRow,
@@ -79,6 +81,12 @@ export default function ProductScreen() {
       if (upd.error) return upd;
       return supabase.rpc('refill_shopping_list', { p_product: id });
     }, 'Não foi possível guardar o mínimo.');
+  };
+  const moveTo = async (place: string) => {
+    if (!product || placeOf(product.location) === place) return;
+    const { error } = await supabase.from('products').update({ location: place }).eq('id', id);
+    setToast(error ? 'Não foi possível mudar o local.' : 'Local mudado');
+    load();
   };
   const toggleEssential = async (value: boolean) => {
     setEssential(value);
@@ -171,6 +179,20 @@ export default function ProductScreen() {
           </>
         )}
 
+        <Text style={styles.label}>Onde fica?</Text>
+        <View style={styles.places}>
+          {PLACES.map((pl) => {
+            const on = placeOf(product.location) === pl.key;
+            return (
+              <Pressable key={pl.key} style={[styles.place, on && styles.placeOn]} onPress={() => moveTo(pl.key)}>
+                <Text style={[styles.placeText, on && styles.placeTextOn]}>
+                  {pl.emoji} {pl.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <View style={styles.essentialRow}>
           <View style={styles.flex}>
             <Text style={styles.essentialTitle}>Essencial</Text>
@@ -195,6 +217,11 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 20, gap: 12, paddingBottom: 80 },
+  places: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  place: { borderWidth: 1, borderColor: colors.primary, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
+  placeOn: { backgroundColor: colors.pink, borderColor: colors.pink },
+  placeText: { color: colors.primary },
+  placeTextOn: { color: '#fff' },
   essentialRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   essentialTitle: { fontSize: 16, color: colors.ink },
   essentialHint: { fontSize: 13, color: colors.muted },
