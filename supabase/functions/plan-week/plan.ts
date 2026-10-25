@@ -189,30 +189,9 @@ export function totals(meals: { est_missing_cost_cents: number; unpriced_count: 
 
 // Esquema pedido à IA: cada refeição leva o índice da posição que ocupa no plano
 const itemSchema = (MEALS_SCHEMA.properties.meals.items as unknown) as { required: string[]; properties: Record<string, unknown> };
-export const PLAN_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['meals', 'favorite_slots', 'batch_cooks'],
-  properties: {
-    favorite_slots: {
-      type: 'array',
-      description: 'Onde fica cada favorita pedida (vazio se não houver favoritas)',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['favorite_id', 'slot_index'],
-        properties: { favorite_id: { type: 'string' }, slot_index: { type: 'integer' } },
-      },
-    },
-    batch_cooks: {
-      type: 'array',
-      description: 'Marmitas a cozinhar em quantidade na preparação (vazio se não foram pedidas)',
-      items: {
-        ...itemSchema,
-        required: ['serves_slots', ...itemSchema.required],
-        properties: { serves_slots: { type: 'array', items: { type: 'integer' }, description: 'Posições (dias úteis) servidas por estas marmitas' }, ...itemSchema.properties },
-      },
-    },
+// Só inclui no esquema o que o pedido usa (esquemas mais pequenos são mais fiáveis e mais rápidos)
+export function planSchema(opts: { favorites: boolean; batch: boolean }) {
+  const properties: Record<string, unknown> = {
     meals: {
       type: 'array',
       items: {
@@ -221,5 +200,32 @@ export const PLAN_SCHEMA = {
         properties: { slot_index: { type: 'integer', description: 'Posição da refeição na lista de refeições pedidas (0, 1, 2…)' }, ...itemSchema.properties },
       },
     },
-  },
-} as const;
+  };
+  const required = ['meals'];
+  if (opts.favorites) {
+    properties.favorite_slots = {
+      type: 'array',
+      description: 'Onde fica cada favorita pedida',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['favorite_id', 'slot_index'],
+        properties: { favorite_id: { type: 'string' }, slot_index: { type: 'integer' } },
+      },
+    };
+    required.push('favorite_slots');
+  }
+  if (opts.batch) {
+    properties.batch_cooks = {
+      type: 'array',
+      description: 'Marmitas a cozinhar em quantidade na preparação',
+      items: {
+        ...itemSchema,
+        required: ['serves_slots', ...itemSchema.required],
+        properties: { serves_slots: { type: 'array', items: { type: 'integer' }, description: 'Posições (dias úteis) servidas por estas marmitas' }, ...itemSchema.properties },
+      },
+    };
+    required.push('batch_cooks');
+  }
+  return { type: 'object', additionalProperties: false, required, properties };
+}

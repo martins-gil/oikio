@@ -14,10 +14,20 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { AI_MODEL_MEALS } from '../_shared/ai.ts';
 import { cleanMeals, violation, type Known, type StockItem } from '../suggest-meals/meals.ts';
-import { addDays, allocate, dayName, favoriteMeal, freezerMeal, PLAN_SCHEMA, placeFavorites, planWeek, totals, type FavoriteRow, type PlannedMeal, type Slot } from './plan.ts';
+import { addDays, allocate, dayName, favoriteMeal, freezerMeal, planSchema, placeFavorites, planWeek, totals, type FavoriteRow, type PlannedMeal, type Slot } from './plan.ts';
 
 const CALL_LIMIT = 12; // pedidos à IA por plano nas últimas 24 h (controla o custo)
 const FOOD_PLACES = ['pantry', 'fridge', 'freezer'];
+
+const FAVORITES_RULE = `- Há FAVORITAS pedidas: são receitas já escolhidas pela casa. Coloca cada uma numa posição adequada em «favorite_slots» e NÃO proponhas outra refeição nessa posição.
+`;
+const BUY_RULE = `- Há PRODUTOS A COMPRAR: a casa aceita comprá-los. Usa-os à vontade (vão para «missing») e planeia várias refeições com eles quando fizer sentido.
+`;
+const BATCH_RULE = `- Há PREPARAÇÃO DE MARMITAS: propõe 1 a 3 receitas que aguentem bem a congelação e o aquecimento, para cozinhar em quantidade no domingo antes da semana. Em «batch_cooks», indica em «serves_slots» as posições dos dias úteis servidas por essas marmitas (essas posições NÃO levam outra refeição) e põe em «servings» o total de doses, com ingredientes para todas.
+`;
+
+const systemPrompt = (o: { favorites: boolean; buy: boolean; batch: boolean }) =>
+  SYSTEM.replace('@@FAV@@', o.favorites ? FAVORITES_RULE : '').replace('@@BUY@@', o.buy ? BUY_RULE : '').replace('@@BATCH@@', o.batch ? BATCH_RULE : '');
 
 const SYSTEM = `És um cozinheiro prático que planeia a semana de uma casa portuguesa. Escreves em português de Portugal.
 
@@ -26,10 +36,7 @@ Regras que nunca podes quebrar:
 - Respeita SEMPRE as restrições e alergias. Em «contains» marca tudo o que a receita contém (glúten, lactose, frutos secos, marisco, ovos, peixe, porco, carne, produtos animais). Em caso de dúvida sobre um ingrediente, marca-o.
 - Usa SÓ o equipamento que a casa tem; em «equipment» lista o que a receita usa.
 - Varia: não repitas a mesma receita nem o mesmo ingrediente principal em refeições seguidas.
-- Se houver FAVORITAS pedidas, são receitas já escolhidas pela casa: coloca cada uma numa posição adequada em «favorite_slots» e NÃO proponhas outra refeição nessa posição.
-- Se houver PRODUTOS A COMPRAR, a casa aceita comprá-los: usa-os à vontade (vão para «missing») e planeia várias refeições com eles quando fizer sentido.
-- Se houver PREPARAÇÃO DE MARMITAS, propõe 1 a 3 receitas que aguentem bem a congelação e o aquecimento, para cozinhar em quantidade no domingo antes da semana. Em «batch_cooks», indica em «serves_slots» as posições dos dias úteis que serão servidas por essas marmitas (essas posições NÃO levam outra refeição) e põe em «servings» o total de doses, com ingredientes para todas. Sem preparação pedida, «batch_cooks» fica vazio.
-- Dá prioridade ao que foi comprado há mais tempo (e ao que tem validade mais próxima): planeia essas refeições para os primeiros dias.
+@@FAV@@@@BUY@@@@BATCH@@- Dá prioridade ao que foi comprado há mais tempo (e ao que tem validade mais próxima): planeia essas refeições para os primeiros dias.
 - Reaproveita ingredientes entre refeições (o que se compra uma vez serve várias), sem ficar repetitivo.
 - «uses_stock» só pode ter produtos da lista de stock, pelo id, na unidade do produto. O stock é PARTILHADO por toda a semana: a soma do que gastas de cada produto nas várias refeições nunca pode passar do que há.
 - O que não está em stock vai para «missing». Se for um produto conhecido da casa (lista «sem stock»), indica o id. Não indiques preços.
@@ -210,13 +217,15 @@ Deno.serve(async (req) => {
     message = await anthropic.messages.create({
       model: AI_MODEL_MEALS,
       max_tokens: 16000,
-      output_config: { effort: 'medium', format: { type: 'json_schema', schema: PLAN_SCHEMA } },
-      system: SYSTEM,
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema: planSchema({ favorites: favorites.length > 0, batch }) } },
+      system: systemPrompt({ favorites: favorites.length > 0, buy: buy.length > 0, batch }),
       messages: [{ role: 'user', content: userText }],
     } as never);
   } catch (e) {
-    console.error('Claude API:', e instanceof Error ? e.message : e);
-    return json({ ok: false, error: 'O serviço de IA não respondeu. Tenta outra vez daqui a pouco.' });
+    const detail = e instanceof Error ? e.message : String(e);
+    console.error('Claude API:', detail);
+    // O detalhe (sem segredos) ajuda a perceber o que falhou
+    return json({ ok: false, error: `O serviço de IA não respondeu. Tenta outra vez daqui a pouco. (${detail.slice(0, 200)})` });
   }
   if (message.stop_reason === 'refusal') return json({ ok: false, error: 'Não foi possível gerar o plano agora. Tenta outra vez.' });
   if (message.stop_reason === 'max_tokens') return json({ ok: false, error: 'A resposta ficou incompleta. Tenta outra vez.' });
