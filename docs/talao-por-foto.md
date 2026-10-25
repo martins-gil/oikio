@@ -14,6 +14,11 @@ O talão diz «ARROZ 1KG ×2» e o produto conta-se em gramas: a app converte (`
 Quando não dá para ter a certeza (por exemplo «2 un» de um produto em gramas, sem tamanho), a linha fica a laranja
 e é preciso confirmar a quantidade antes de registar.
 
+## Produtos novos
+Uma linha que não corresponde a nenhum produto da casa cria, ao confirmar, um produto novo: nome limpo (editável),
+local sugerido (frigorífico, despensa…) e a unidade certa (um artigo ao peso, como «ALFACE 0,62 kg», fica em gramas: 620 g).
+Cada linha tem «Não adicionar aos produtos» se a pessoa não quiser. Se já existir um produto com esse nome, a compra vai para ele.
+
 ## Configuração única
 1. Criar a chave em console.anthropic.com → API keys (e um limite mensal baixo em Limits). Nunca a partilhar nem a pôr no código.
 2. Guardá-la nos secrets do Supabase (no PowerShell): `npx supabase secrets set ANTHROPIC_API_KEY=<a chave>`

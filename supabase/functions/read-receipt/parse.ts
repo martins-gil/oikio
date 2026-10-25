@@ -9,6 +9,7 @@ const PACK_UNITS = ['g', 'kg', 'ml', 'l'];
 export type RawLine = Record<string, unknown>;
 export type CleanLine = {
   raw_text: string;
+  ai_name: string | null;
   quantity: number;
   unit_price_cents: number | null;
   total_cents: number | null;
@@ -58,6 +59,7 @@ export function cleanReceipt(raw: unknown, productIds: Set<string>, today = new 
     const packUnit = typeof l.pack_unit === 'string' && PACK_UNITS.includes(l.pack_unit) ? l.pack_unit : null;
     lines.push({
       raw_text: text,
+      ai_name: str(l.name, 80),
       quantity: Math.round(quantity * 1000) / 1000,
       unit_price_cents: cents(l.unit_price_cents),
       total_cents: cents(l.total_cents),
@@ -92,9 +94,10 @@ export const RECEIPT_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['text', 'quantity', 'unit', 'pack_amount', 'pack_unit', 'unit_price_cents', 'total_cents', 'product_id', 'location'],
+        required: ['text', 'name', 'quantity', 'unit', 'pack_amount', 'pack_unit', 'unit_price_cents', 'total_cents', 'product_id', 'location'],
         properties: {
           text: { type: 'string', description: 'Nome do produto como está no talão' },
+          name: nullable({ type: 'string', description: 'Nome curto e legível em português, sem marca, peso nem maiúsculas (ex.: «Alface frisada», «Leite meio-gordo»)' }),
           quantity: { type: 'number', description: 'Quantidade comprada: nº de artigos, ou o peso/volume se vendido ao peso' },
           unit: { type: 'string', enum: UNITS },
           pack_amount: nullable({ type: 'number', description: 'Tamanho de cada embalagem se vier no nome (ex.: 500 em «ARROZ 500G»)' }),

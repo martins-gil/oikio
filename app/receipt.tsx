@@ -12,7 +12,7 @@ import { addDaysIso, formatEuros, localDate, parseEuros } from '@/lib/money';
 import { extensionFor, pickReceiptPhoto } from '@/lib/photo';
 import { suggestBaseUnit, toBaseQuantity, type AiLine } from '@/lib/receiptUnits';
 import { useSession } from '@/lib/session';
-import { formatAmount, stepFor, type Place } from '@/lib/stock';
+import { formatAmount, PLACES, stepFor, type Place } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
@@ -20,19 +20,23 @@ type Product = { id: string; name: string; base_unit: string };
 type Pack = { id: string; product_id: string; name: string; units_per_package: number };
 type Line = {
   key: number;
-  text: string;
+  raw: string; // texto original do talão
+  text: string; // nome do produto (editável)
   productId: string | null;
   packageId: string | null;
   qtyText: string; // quantidade na unidade do produto (ou nº de embalagens, se escolheres uma embalagem)
   price: string; // € pago por esta linha (opcional)
   check: boolean; // a quantidade precisa de ser confirmada (ex.: o talão diz «2 un» e o produto conta-se em gramas)
   ai: AiLine | null; // o que a IA leu (unidade e embalagem do talão)
-  location: Place | null; // onde a IA acha que fica o produto
+  location: Place | null; // onde fica (ou ficará) o produto
+  addNew: boolean; // sem produto: criar um produto novo com esta compra
+  newUnit: 'g' | 'ml' | 'un'; // unidade do produto novo
 };
 
 type DbLine = {
   id: string;
   raw_text: string;
+  ai_name: string | null;
   product_id: string | null;
   quantity: number;
   total_cents: number | null;
@@ -113,7 +117,7 @@ export default function ReceiptScreen() {
     const needsAmount = unit === 'g' || unit === 'ml';
     setLines((prev) => [
       ...prev,
-      { key, text: clean, productId, packageId: null, qtyText: needsAmount ? '' : '1', price: '', check: needsAmount, ai: null, location: null },
+      { key, raw: clean, text: clean, productId, packageId: null, qtyText: needsAmount ? '' : '1', price: '', check: needsAmount, ai: null, location: null, addNew: !productId, newUnit: 'un' },
     ]);
     setEntry('');
   };
@@ -123,27 +127,6 @@ export default function ReceiptScreen() {
   };
   const patch = (key: number, change: Partial<Line>) => setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...change } : l)));
   const removeLine = (key: number) => setLines((prev) => prev.filter((l) => l.key !== key));
-
-  // Criar um produto novo a partir de uma linha (a unidade vem do que a IA leu: g, ml ou un)
-  const createProduct = async (l: Line) => {
-    if (!household) return;
-    const baseUnit = l.ai ? suggestBaseUnit(l.ai) : 'un';
-    const { data, error } = await supabase
-      .from('products')
-      .insert({ household_id: household.id, name: l.text, base_unit: baseUnit, location: l.location ?? 'pantry' })
-      .select('id, name, base_unit')
-      .single();
-    if (error || !data) {
-      setToast('Não foi possível criar o produto (já existe um com esse nome?).');
-      return;
-    }
-    setProducts((prev) => [...prev, data as Product].sort((a, b) => a.name.localeCompare(b.name)));
-    const conv = l.ai ? toBaseQuantity(l.ai, (data as Product).base_unit) : null;
-    patch(l.key, {
-      productId: (data as Product).id,
-      ...(conv ? { qtyText: toText(conv.qty), check: conv.check } : {}),
-    });
-  };
 
   // ----- foto -----
   const readPhoto = async (source: 'camera' | 'library') => {
@@ -204,7 +187,7 @@ export default function ReceiptScreen() {
     // 3) mostra o que a IA propôs, para confirmares
     const [{ data: rc }, { data: dbLines }, list] = await Promise.all([
       supabase.from('receipts').select('store_name, purchased_at, total_cents').eq('id', id).single(),
-      supabase.from('receipt_lines').select('id, raw_text, product_id, quantity, total_cents, suggested_location, ai_unit, ai_pack_amount, ai_pack_unit').eq('receipt_id', id).order('id'),
+      supabase.from('receipt_lines').select('id, raw_text, ai_name, product_id, quantity, total_cents, suggested_location, ai_unit, ai_pack_amount, ai_pack_unit').eq('receipt_id', id).order('id'),
       loadProducts(),
     ]);
     setStore(rc?.store_name ?? '');
@@ -217,17 +200,22 @@ export default function ReceiptScreen() {
       ((dbLines ?? []) as DbLine[]).map((d) => {
         const ai: AiLine = { quantity: Number(d.quantity), ai_unit: d.ai_unit, ai_pack_amount: d.ai_pack_amount, ai_pack_unit: d.ai_pack_unit };
         const product = list.find((p) => p.id === d.product_id);
-        const conv = product ? toBaseQuantity(ai, product.base_unit) : null;
+        const newUnit = suggestBaseUnit(ai);
+        // linha ligada a um produto: converte para a unidade dele; sem produto: converte para a unidade do produto novo
+        const conv = toBaseQuantity(ai, product ? product.base_unit : newUnit);
         return {
           key: keyRef.current++,
-          text: d.raw_text,
+          raw: d.raw_text,
+          text: d.ai_name ?? d.raw_text,
           productId: product?.id ?? null,
           packageId: null,
-          qtyText: toText(conv ? conv.qty : Number(d.quantity)),
+          qtyText: toText(conv.qty),
           price: euroText(d.total_cents),
-          check: conv?.check ?? false,
+          check: product ? conv.check : false,
           ai,
           location: (d.suggested_location as Place | null) ?? null,
+          addNew: !product,
+          newUnit,
         };
       }),
     );
@@ -242,7 +230,7 @@ export default function ReceiptScreen() {
   const linesSum = lines.reduce((s, l) => s + (parseEuros(l.price) ?? 0), 0);
   const typedTotal = totalText.trim() ? parseEuros(totalText) : null;
   const total = typedTotal ?? linesSum;
-  const stockLines = lines.filter((l) => l.productId).length;
+  const stockLines = lines.filter((l) => l.productId || l.addNew).length;
   const pendingChecks = lines.filter((l) => l.productId && l.check).length;
 
   const confirm = async () => {
@@ -255,22 +243,60 @@ export default function ReceiptScreen() {
       setToast('Confirma as quantidades marcadas a laranja antes de registar.');
       return;
     }
-    const rows = lines.map((l) => ({
-      raw_text: l.text.slice(0, 200),
-      product_id: l.productId,
+    if (lines.some((l) => !(num(l.qtyText) > 0))) {
+      setToast('Todas as linhas precisam de uma quantidade maior que zero.');
+      return;
+    }
+    setSaving(true);
+
+    // Linhas sem produto criam um produto novo (no local certo e na unidade certa), a menos que desligues. Se já
+    // existir um produto com esse nome, a compra vai para ele.
+    const resolved: { l: Line; productId: string | null; qty: number }[] = [];
+    for (const l of lines) {
+      let productId = l.productId;
+      let qty = num(l.qtyText);
+      const name = l.text.trim().slice(0, 80);
+      if (!productId && l.addNew && name) {
+        const existing = products.find((p) => norm(p.name) === norm(name));
+        if (existing) {
+          productId = existing.id;
+          if (existing.base_unit !== l.newUnit && l.ai) {
+            const conv = toBaseQuantity(l.ai, existing.base_unit);
+            if (conv.check) {
+              setSaving(false);
+              setToast(`«${name}» já existe em ${existing.base_unit}: escolhe-o na lista para confirmar a quantidade.`);
+              return;
+            }
+            qty = conv.qty;
+          }
+        } else {
+          const { data, error } = await supabase
+            .from('products')
+            .insert({ household_id: household.id, name, base_unit: l.newUnit, location: l.location ?? 'pantry' })
+            .select('id')
+            .single();
+          if (error || !data) {
+            setSaving(false);
+            setToast(`Não foi possível criar o produto «${name}».`);
+            return;
+          }
+          productId = data.id as string;
+        }
+      }
+      resolved.push({ l, productId, qty });
+    }
+    const rows = resolved.map(({ l, productId, qty }) => ({
+      raw_text: l.raw.slice(0, 200),
+      ai_name: l.ai ? l.text.slice(0, 80) : null,
+      product_id: productId,
       package_id: l.productId ? l.packageId : null,
-      quantity: num(l.qtyText),
+      quantity: qty,
       total_cents: parseEuros(l.price),
       suggested_location: l.location,
       ai_unit: l.ai?.ai_unit ?? null,
       ai_pack_amount: l.ai?.ai_pack_amount ?? null,
       ai_pack_unit: l.ai?.ai_pack_unit ?? null,
     }));
-    if (rows.some((r) => !(r.quantity > 0))) {
-      setToast('Todas as linhas precisam de uma quantidade maior que zero.');
-      return;
-    }
-    setSaving(true);
 
     let rid = receiptId;
     if (rid) {
@@ -398,8 +424,9 @@ export default function ReceiptScreen() {
         {lines.map((l) => {
           const linkedPacks = packs.filter((k) => k.product_id === l.productId);
           const product = productOf(l.productId);
-          const unitLabel = l.packageId ? 'emb.' : (product?.base_unit ?? 'un');
-          const step = l.packageId || !product ? 1 : stepFor(product.base_unit);
+          const willCreate = !product && l.addNew;
+          const unitLabel = l.packageId ? 'emb.' : (product?.base_unit ?? l.newUnit);
+          const step = l.packageId ? 1 : stepFor(product?.base_unit ?? l.newUnit);
           const bump = (delta: number) => {
             const current = num(l.qtyText);
             const next = Math.max(step, (Number.isFinite(current) ? current : 0) + delta * step);
@@ -409,12 +436,19 @@ export default function ReceiptScreen() {
             <View key={l.key} style={styles.card}>
               <View style={styles.lineHead}>
                 <View style={styles.flex}>
-                  <Text style={styles.lineName}>{product?.name ?? l.text}</Text>
-                  {product && product.name !== l.text && <Text style={styles.small}>no talão: {l.text}</Text>}
+                  {willCreate ? (
+                    <TextInput style={styles.nameInput} value={l.text} onChangeText={(t) => patch(l.key, { text: t })} placeholder="Nome do produto" />
+                  ) : (
+                    <Text style={styles.lineName}>{product?.name ?? l.text}</Text>
+                  )}
+                  {product && product.name !== l.raw && <Text style={styles.small}>no talão: {l.raw}</Text>}
+                  {!product && l.raw !== l.text && <Text style={styles.small}>no talão: {l.raw}</Text>}
                   {product ? (
                     <Text style={styles.ok}>✓ stock sobe ({product.base_unit})</Text>
+                  ) : willCreate ? (
+                    <Text style={styles.ok}>➕ vai criar um produto novo ({l.newUnit})</Text>
                   ) : (
-                    <Text style={styles.warn}>sem produto: fica só no registo</Text>
+                    <Text style={styles.warn}>não entra nos produtos: fica só no registo</Text>
                   )}
                 </View>
                 <Pressable hitSlop={12} onPress={() => removeLine(l.key)}>
@@ -422,9 +456,22 @@ export default function ReceiptScreen() {
                 </Pressable>
               </View>
               {!product && (
-                <Pressable style={styles.link} onPress={() => createProduct(l)}>
-                  <Text style={styles.linkText}>＋ Criar «{l.text}» como produto</Text>
-                </Pressable>
+                <>
+                  {willCreate && (
+                    <View style={styles.chips}>
+                      {PLACES.map((pl) => (
+                        <Pressable key={pl.key} style={[styles.chip, (l.location ?? 'pantry') === pl.key && styles.chipOn]} onPress={() => patch(l.key, { location: pl.key })}>
+                          <Text style={[styles.chipText, (l.location ?? 'pantry') === pl.key && styles.chipTextOn]}>
+                            {pl.emoji} {pl.label}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                  <Pressable style={styles.link} onPress={() => patch(l.key, { addNew: !l.addNew })}>
+                    <Text style={styles.linkText}>{willCreate ? 'Não adicionar aos produtos' : '＋ Adicionar aos produtos'}</Text>
+                  </Pressable>
+                </>
               )}
               {linkedPacks.length > 0 && (
                 <View style={styles.chips}>
@@ -471,8 +518,8 @@ export default function ReceiptScreen() {
                   {l.ai?.ai_unit ? ` (o talão diz ${toText(l.ai.quantity)} ${l.ai.ai_unit})` : ''}.
                 </Text>
               )}
-              {product && !l.check && (product.base_unit === 'g' || product.base_unit === 'ml') && (
-                <Text style={styles.small}>= {formatAmount(num(l.qtyText) || 0, product.base_unit)}</Text>
+              {!l.check && ((product?.base_unit ?? l.newUnit) === 'g' || (product?.base_unit ?? l.newUnit) === 'ml') && (
+                <Text style={styles.small}>= {formatAmount(num(l.qtyText) || 0, product?.base_unit ?? l.newUnit)}</Text>
               )}
             </View>
           );
@@ -521,6 +568,7 @@ const styles = StyleSheet.create({
   reading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   lineHead: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   lineName: { fontSize: 17, color: colors.ink },
+  nameInput: { fontSize: 17, color: colors.ink, borderBottomWidth: 1, borderBottomColor: colors.border, paddingVertical: 2 },
   ok: { color: colors.success, fontSize: 13 },
   warn: { color: colors.muted, fontSize: 13 },
   remove: { fontSize: 18, color: colors.faint },

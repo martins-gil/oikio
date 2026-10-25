@@ -63,6 +63,9 @@ begin
   insert into res values ('bad_unit', v_err);
   begin insert into receipt_lines(receipt_id, raw_text, quantity, ai_pack_amount, ai_pack_unit) values (rid, 'X', 1, 0, 'g'); v_err := 'aceitou'; exception when others then v_err := 'recusou'; end;
   insert into res values ('bad_pack', v_err);
+  insert into receipt_lines(receipt_id, raw_text, quantity, ai_name) values (rid, 'ALFACE FRISADA KG', 0.62, 'Alface frisada');
+  begin insert into receipt_lines(receipt_id, raw_text, quantity, ai_name) values (rid, 'X', 1, repeat('a', 81)); v_err := 'aceitou'; exception when others then v_err := 'recusou'; end;
+  insert into res values ('long_name', v_err);
   reset role;
 
   perform pg_temp.assert_eq('I4 o membro guarda e vê a foto da sua casa', (select v from res where k = 'a_sees'), '1');
@@ -74,6 +77,8 @@ begin
   perform pg_temp.assert_eq('I10 o dono apaga a sua foto', (select v from res where k = 'a_deletes'), '1');
   perform pg_temp.assert_eq('I11 unidade inválida recusada', (select v from res where k = 'bad_unit'), 'recusou');
   perform pg_temp.assert_eq('I12 embalagem com tamanho zero recusada', (select v from res where k = 'bad_pack'), 'recusou');
+  perform pg_temp.assert_eq('I13 nome limpo da linha guardado', (select ai_name from receipt_lines where raw_text = 'ALFACE FRISADA KG'), 'Alface frisada');
+  perform pg_temp.assert_eq('I14 nome com mais de 80 caracteres recusado', (select v from res where k = 'long_name'), 'recusou');
 end $$;
 
 rollback;

@@ -24,6 +24,7 @@ Extrai: o nome da loja, a data da compra (AAAA-MM-DD), o total pago em cêntimos
 - Se o nome do produto traz o tamanho da embalagem (ex.: «ARROZ AGULHA 1KG», «LEITE 6X1L»), preenche «pack_amount» e «pack_unit» com o tamanho de UMA embalagem.
 - Não incluas subtotais, IVA, descontos, troco, cartões, pontos nem formas de pagamento como produtos.
 - Se não consegues ler um valor com certeza, usa null. Não inventes.
+- «name»: o nome curto do produto, legível, sem marca, peso nem maiúsculas.
 - «product_id»: só se o artigo do talão for claramente o mesmo que um produto da lista que te dou; em caso de dúvida, null.
 - «location»: onde o produto costuma ficar em casa (pantry = despensa, fridge = frigorífico, freezer = congelador, cleaning = limpeza, other = outros).`;
 
