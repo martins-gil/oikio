@@ -537,6 +537,10 @@ export default function HomeScreen() {
                 <Text style={styles.tileText}>Sugestões</Text>
               </Pressable>
             )}
+            <Pressable style={styles.tile} onPress={() => router.push('/meals')}>
+              <Text style={styles.tileIcon}>🍽️</Text>
+              <Text style={styles.tileText}>Refeições</Text>
+            </Pressable>
             {current && scheduled.length > 0 && (
               <Pressable style={styles.tile} onPress={() => setShowScheduled(!showScheduled)}>
                 <Text style={styles.tileIcon}>📅</Text>

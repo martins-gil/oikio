@@ -157,7 +157,8 @@ export default function StockScreen() {
           );
         })
       )}
-      <Button title="🍽️ Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />
+      <Button title="🍽️ O que cozinhar?" onPress={() => router.push('/meals')} />
+      <Button title="Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />
       <Button title="Escolher dos sugeridos" variant="secondary" onPress={() => router.push(filter ? { pathname: '/onboarding', params: { place: filter } } : '/onboarding')} />
     </ScrollView>
     </Screen>
