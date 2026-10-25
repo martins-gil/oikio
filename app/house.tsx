@@ -204,7 +204,7 @@ export default function HouseScreen() {
           <Switch
             value={showAiExplain}
             onValueChange={async (v) => {
-              if (!(await setShowAiExplain(v))) setToast('Não foi possível guardar.');
+              if (!(await setShowAiExplain(v))) setToast('Não foi possível guardar. Falta aplicar a migração? Corre "npx supabase db push".');
             }}
           />
         </View>

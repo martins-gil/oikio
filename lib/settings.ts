@@ -23,8 +23,14 @@ export function useSettings() {
         .select('show_costs, show_expiry, show_ai_explain')
         .eq('user_id', me)
         .maybeSingle()
-        .then(({ data }) => {
-          setSettings({ show_costs: !!data?.show_costs, show_expiry: !!data?.show_expiry, show_ai_explain: !!data?.show_ai_explain });
+        .then(async ({ data, error }) => {
+          let row = data as Partial<Settings> | null;
+          if (error) {
+            // Falta aplicar a migração mais recente (coluna nova): lê só as definições mais antigas
+            const old = await supabase.from('user_settings').select('show_costs').eq('user_id', me).maybeSingle();
+            row = old.data as Partial<Settings> | null;
+          }
+          setSettings({ show_costs: !!row?.show_costs, show_expiry: !!row?.show_expiry, show_ai_explain: !!row?.show_ai_explain });
           setLoaded(true);
         });
     }, [me]),

@@ -105,6 +105,27 @@ export default function AnalysisScreen() {
   return (
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container}>
+        {showAiExplain && (
+          <View style={styles.card}>
+            <Text style={styles.title}>💬 Explica-me</Text>
+            {explain ? (
+              <>
+                <Text style={styles.bold}>{explain.summary}</Text>
+                {explain.highlights.map((h, k) => (
+                  <Text key={k} style={styles.small}>• {h}</Text>
+                ))}
+                {explain.tip ? <Text style={styles.small}>💡 {explain.tip}</Text> : null}
+                <Text style={styles.source}>Escrito por IA a partir dos números desta página (só despesas partilhadas). Confirma sempre.</Text>
+              </>
+            ) : (
+              <Text style={styles.small}>{hasData ? 'A IA explica, em poucas frases, como correu o mês e onde podes poupar. Só usa os números calculados aqui.' : 'Quando houver despesas partilhadas, a IA explica aqui, em poucas frases, como correu o mês e onde podes poupar.'}</Text>
+            )}
+            <Pressable style={[styles.explainButton, (explaining || !hasData) && styles.explainOff]} disabled={explaining || !hasData} onPress={askExplain}>
+              <Text style={styles.applyText}>{explaining ? 'A escrever…' : explain ? 'Explicar outra vez' : 'Explica-me'}</Text>
+            </Pressable>
+          </View>
+        )}
+
         {!hasData ? (
           <View style={styles.card}>
             <Text style={styles.title}>Ainda sem dados</Text>
@@ -112,27 +133,6 @@ export default function AnalysisScreen() {
           </View>
         ) : (
           <>
-            {showAiExplain && (
-              <View style={styles.card}>
-                <Text style={styles.title}>💬 Explica-me</Text>
-                {explain ? (
-                  <>
-                    <Text style={styles.bold}>{explain.summary}</Text>
-                    {explain.highlights.map((h, k) => (
-                      <Text key={k} style={styles.small}>• {h}</Text>
-                    ))}
-                    {explain.tip ? <Text style={styles.small}>💡 {explain.tip}</Text> : null}
-                    <Text style={styles.source}>Escrito por IA a partir dos números desta página (só despesas partilhadas). Confirma sempre.</Text>
-                  </>
-                ) : (
-                  <Text style={styles.small}>A IA explica, em poucas frases, como correu o mês e onde podes poupar. Só usa os números calculados aqui.</Text>
-                )}
-                <Pressable style={[styles.explainButton, explaining && styles.explainOff]} disabled={explaining} onPress={askExplain}>
-                  <Text style={styles.applyText}>{explaining ? 'A escrever…' : explain ? 'Explicar outra vez' : 'Explica-me'}</Text>
-                </Pressable>
-              </View>
-            )}
-
             <View style={styles.card}>
               <Text style={styles.title}>Nota do mês</Text>
               <View style={styles.scoreRow}>
