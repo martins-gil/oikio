@@ -53,6 +53,13 @@ begin
   perform pg_temp.assert_eq('W7 junta à lista de compras', add_plan_to_shopping_list(plan)::text, '3');
   perform pg_temp.assert_eq('W7b cebola com quantidade e unidade (3 un)', (select quantity::text || ' ' || unit from shopping_list_items where lower(free_text) = 'cebola' and checked_at is null), '3.00 un');
   perform pg_temp.assert_eq('W7c arroz com a quantidade (300 g)', (select quantity::text from shopping_list_items where product_id = arroz and checked_at is null), '300.00');
+  -- um ingrediente sem id cujo nome coincide com um produto da casa liga-se a ele (a unidade vem do produto)
+  perform pg_temp.assert_eq('W7d nome igual a produto liga-se a ele', add_recipe_items_to_shopping_list(h, jsonb_build_array(jsonb_build_object('product_id', null, 'name', 'ARROZ', 'quantity', 300, 'unit', 'g')))::text, '0');
+  perform pg_temp.assert_eq('W7e e já estava na lista: não duplica', (select count(*)::text from shopping_list_items where checked_at is null and (product_id = arroz or lower(free_text) = 'arroz')), '1');
+  insert into products(household_id, name, base_unit) values (h, 'Lentilhas', 'g');
+  perform pg_temp.assert_eq('W7f «lentilhas 300 g» entra ligada ao produto', add_recipe_items_to_shopping_list(h, jsonb_build_array(jsonb_build_object('product_id', null, 'name', 'lentilhas', 'quantity', 300, 'unit', 'g')))::text, '1');
+  perform pg_temp.assert_eq('W7g com a quantidade e sem texto livre', (select quantity::text || '/' || coalesce(free_text, '-') from shopping_list_items where product_id = (select id from products where name = 'Lentilhas') and checked_at is null), '300.00/-');
+  perform pg_temp.assert_eq('W7h unidade diferente da do produto fica como texto livre', add_recipe_items_to_shopping_list(h, jsonb_build_array(jsonb_build_object('product_id', null, 'name', 'Lentilhas', 'quantity', 2, 'unit', 'un')))::text, '1');
   perform pg_temp.assert_eq('W8 não duplica à segunda', add_plan_to_shopping_list(plan)::text, '0');
 
   -- «Cozinhei» a primeira refeição

@@ -14,7 +14,7 @@ import { colors, radius, shadow } from '@/lib/theme';
 
 const itemName = (i: ShopItem) => i.products?.name ?? i.free_text ?? '';
 
-const UNIT_CHOICES = ['un', 'g', 'ml'];
+const UNIT_CHOICES = ['un', 'g', 'ml', 'dose', 'rolo'];
 const num = (t: string) => Number(t.replace(',', '.'));
 const toText = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
 const unitOf = (i: ShopItem) => i.products?.base_unit ?? i.unit ?? null;
@@ -104,6 +104,7 @@ export default function ShoppingScreen() {
       return;
     }
     const patch: Record<string, unknown> = { quantity };
+    if (!item.product_id && quantity !== null && !unitSel) return setToast('Escolhe a unidade (un, g, ml…).');
     if (!item.product_id) {
       const name = nameText.trim();
       if (!name) return setToast('O nome não pode ficar vazio.');
