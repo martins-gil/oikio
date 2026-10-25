@@ -1,4 +1,4 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -10,19 +10,28 @@ import {
   describeTask,
   LEVEL_COLOR,
   LEVEL_LABEL,
+  PLACE_QUESTION,
+  placeOf,
+  PLACES,
   type Level,
+  type Place,
   type ProductTemplate,
   type StockRow,
 } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 
-const MAX_CHOICES = 3;
+// Sem local (primeira vez): 3 produtos críticos. Com um local escolhido: até 5.
+const MAX_WITHOUT_PLACE = 3;
+const MAX_WITH_PLACE = 5;
 
 type Step = 'pick' | 'level' | 'done';
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ place?: string }>();
+  const place: Place | null = PLACES.some((p) => p.key === params.place) ? (params.place as Place) : null;
+  const MAX_CHOICES = place ? MAX_WITH_PLACE : MAX_WITHOUT_PLACE;
   const { household, loading: householdLoading } = useHousehold();
 
   const [templates, setTemplates] = useState<ProductTemplate[]>([]);
@@ -43,7 +52,7 @@ export default function OnboardingScreen() {
       const [tpl, prod] = await Promise.all([
         supabase
           .from('product_templates')
-          .select('id, name, emoji, task_title, task_times_per_period, task_period')
+          .select('id, name, emoji, task_title, task_times_per_period, task_period, location, product_categories(default_location)')
           .order('id'),
         supabase.from('products').select('name').eq('household_id', household.id),
       ]);
@@ -51,11 +60,13 @@ export default function OnboardingScreen() {
         setError('Não foi possível carregar os modelos.');
       } else {
         const have = new Set((prod.data ?? []).map((p: { name: string }) => p.name));
-        setTemplates((tpl.data as ProductTemplate[]).filter((t) => !have.has(t.name)));
+        const all = (tpl.data as unknown as ProductTemplate[]).filter((t) => !have.has(t.name));
+        // Com um local escolhido, só as sugestões desse local (o do modelo ou, sem ele, o da categoria)
+        setTemplates(place ? all.filter((t) => placeOf(t.location ?? t.product_categories?.default_location ?? 'other') === place) : all);
       }
       setLoading(false);
     })();
-  }, [household]);
+  }, [household, place]);
 
   const byId = (id: number) => templates.find((t) => t.id === id)!;
 
@@ -114,10 +125,10 @@ export default function OnboardingScreen() {
   if (step === 'pick') {
     return (
       <ScrollView contentContainerStyle={styles.container}>
-        <Stack.Screen options={{ title: 'Consumíveis' }} />
-        <Text style={styles.title}>Quais destes acabam sempre sem darem conta?</Text>
+        <Stack.Screen options={{ title: 'Produtos' }} />
+        <Text style={styles.title}>{place ? PLACE_QUESTION[place] : 'Quais destes acabam sempre sem darem conta?'}</Text>
         {templates.length === 0 ? (
-          <Text style={styles.hint}>Já tens todos os consumíveis sugeridos.</Text>
+          <Text style={styles.hint}>Já tens todos os produtos sugeridos para aqui.</Text>
         ) : (
           <Text style={styles.hint}>
             Escolhe até {MAX_CHOICES} ({chosen.length}/{MAX_CHOICES}). Podes juntar mais tarde.

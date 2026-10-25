@@ -62,7 +62,7 @@ export default function RootLayout() {
           }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="create-house" options={{ title: 'NestKeep' }} />
-          <Stack.Screen name="onboarding" options={{ title: 'Consumíveis' }} />
+          <Stack.Screen name="onboarding" options={{ title: 'Produtos' }} />
           <Stack.Screen name="product/[id]" options={{ title: 'Produto' }} />
           <Stack.Screen name="house" options={{ title: 'Casa' }} />
           <Stack.Screen name="status" options={{ title: 'Estado da casa' }} />

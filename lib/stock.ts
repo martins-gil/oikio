@@ -24,6 +24,8 @@ export type ProductTemplate = {
   task_title: string | null;
   task_times_per_period: number | null;
   task_period: 'day' | 'week' | 'month' | 'year' | null;
+  location: string | null; // local do modelo; sem ele vale o da categoria
+  product_categories: { default_location: string } | null;
 };
 
 export type StockRow = {
@@ -38,7 +40,7 @@ export type StockRow = {
   location: string; // location_kind da base de dados
 };
 
-// Onde está cada produto: as secções do ecrã Consumíveis
+// Onde está cada produto: as secções do ecrã Produtos
 export type Place = 'pantry' | 'fridge' | 'freezer' | 'cleaning' | 'other';
 export const PLACES: { key: Place; label: string; emoji: string }[] = [
   { key: 'pantry', label: 'Despensa', emoji: '🥫' },
@@ -47,6 +49,15 @@ export const PLACES: { key: Place; label: string; emoji: string }[] = [
   { key: 'cleaning', label: 'Limpeza', emoji: '🧴' },
   { key: 'other', label: 'Outros', emoji: '📦' },
 ];
+// Pergunta das sugestões de cada local
+export const PLACE_QUESTION: Record<Place, string> = {
+  pantry: 'O que acaba sempre na despensa?',
+  fridge: 'O que acaba sempre no frigorífico?',
+  freezer: 'O que acaba sempre no congelador?',
+  cleaning: 'O que acaba sempre dos produtos de limpeza?',
+  other: 'O que mais acaba sempre sem darem conta?',
+};
+
 // 'bathroom' (higiene) e qualquer outro valor juntam-se em "Outros"
 export const placeOf = (location: string): Place => (PLACES.some((p) => p.key === location) ? (location as Place) : 'other');
 

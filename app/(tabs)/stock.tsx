@@ -41,11 +41,11 @@ export default function StockScreen() {
     }, [load]),
   );
 
-  // Apagar um consumível: some o stock, o item da lista de compras e a ligação às tarefas (as tarefas ficam)
+  // Apagar um produto: some o stock, o item da lista de compras e a ligação às tarefas (as tarefas ficam)
   const askDelete = (p: StockRow) =>
     Alert.alert(
       `Apagar «${p.name}»?`,
-      'Deixa de existir nos consumíveis e na lista de compras, e as tarefas deixam de o gastar. As tarefas ficam.',
+      'Deixa de existir nos produtos e na lista de compras, e as tarefas deixam de o gastar. As tarefas ficam.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -85,7 +85,7 @@ export default function StockScreen() {
   };
 
   return (
-    <Screen title="Consumíveis" subtitle="O que há em casa">
+    <Screen title="Produtos" subtitle="O que há em casa">
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.addRow}>
         <TextInput
@@ -126,7 +126,7 @@ export default function StockScreen() {
       {stock === null ? (
         <ActivityIndicator />
       ) : stock.length === 0 ? (
-        <Text style={styles.hint}>Ainda não tens consumíveis.</Text>
+        <Text style={styles.hint}>Ainda não tens produtos.</Text>
       ) : (
         PLACES.filter((pl) => filter === null || filter === pl.key).map((pl) => {
           const items = stock.filter((p) => placeOf(p.location) === pl.key);
@@ -157,7 +157,7 @@ export default function StockScreen() {
           );
         })
       )}
-      <Button title="Escolher dos sugeridos" variant="secondary" onPress={() => router.push('/onboarding')} />
+      <Button title="Escolher dos sugeridos" variant="secondary" onPress={() => router.push(filter ? { pathname: '/onboarding', params: { place: filter } } : '/onboarding')} />
     </ScrollView>
     </Screen>
   );

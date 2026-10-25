@@ -43,7 +43,7 @@ export default function TabsLayout() {
     <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
       <Tabs.Screen name="index" options={{ title: 'Resumo' }} />
       <Tabs.Screen name="shopping" options={{ title: 'Compras' }} />
-      <Tabs.Screen name="stock" options={{ title: 'Consumíveis' }} />
+      <Tabs.Screen name="stock" options={{ title: 'Produtos' }} />
       <Tabs.Screen name="money" options={{ title: 'Dinheiro' }} />
       <Tabs.Screen name="personal" options={{ title: 'Pessoal' }} />
     </Tabs>

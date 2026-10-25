@@ -90,7 +90,7 @@ export default function ReceiptScreen() {
     if (!household) return;
     const { data, error } = await supabase.from('products').insert({ household_id: household.id, name: l.text }).select('id, name, base_unit').single();
     if (error || !data) {
-      setToast('Não foi possível criar o consumível (já existe um com esse nome?).');
+      setToast('Não foi possível criar o produto (já existe um com esse nome?).');
       return;
     }
     setProducts((prev) => [...prev, data as Product].sort((a, b) => a.name.localeCompare(b.name)));
@@ -206,7 +206,7 @@ export default function ReceiptScreen() {
           </View>
         )}
 
-        {lines.length === 0 && <Text style={styles.hint}>Escreve um produto e toca em +. Podes escolher um dos teus consumíveis para o stock subir.</Text>}
+        {lines.length === 0 && <Text style={styles.hint}>Escreve um produto e toca em +. Podes escolher um dos teus produtos para o stock subir.</Text>}
         {lines.map((l) => {
           const linkedPacks = packs.filter((k) => k.product_id === l.productId);
           const product = products.find((p) => p.id === l.productId);
@@ -218,7 +218,7 @@ export default function ReceiptScreen() {
                   {product ? (
                     <Text style={styles.ok}>✓ stock sobe ({product.base_unit})</Text>
                   ) : (
-                    <Text style={styles.warn}>sem consumível: fica só no registo</Text>
+                    <Text style={styles.warn}>sem produto: fica só no registo</Text>
                   )}
                 </View>
                 <Pressable hitSlop={12} onPress={() => removeLine(l.key)}>
@@ -227,7 +227,7 @@ export default function ReceiptScreen() {
               </View>
               {!product && (
                 <Pressable style={styles.link} onPress={() => createProduct(l)}>
-                  <Text style={styles.linkText}>＋ Criar «{l.text}» como consumível</Text>
+                  <Text style={styles.linkText}>＋ Criar «{l.text}» como produto</Text>
                 </Pressable>
               )}
               {linkedPacks.length > 0 && (

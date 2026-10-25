@@ -57,6 +57,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Atribuição: `fixed`, `rotation`, `balanced` (por defeito), `free`.
 - Stock em lotes (`stock_lots`) com consumo FEFO via `consume_product()`.
 - Produtos em modo `level` (Cheio/Meio/Quase a acabar) usam `set_stock_level()`.
+- Cada produto tem um local (`products.location`; sem ele vale `product_categories.default_location`); a vista `v_stock` devolve o local efetivo. Sugestões de produtos por local em `product_templates.location`.
 - Lista de compras: `add_to_shopping_list()`; riscar = `buy_shopping_item()` (repõe o stock); `undo_occurrence()` desfaz uma tarefa feita.
 - Convites: `get_or_create_invite()` (só admin) dá um código de 10 caracteres; `accept_invite(código, nome)` entra na casa.
 - Onboarding: `onboard_from_template()` cria produto + tarefa + consumo num passo.
@@ -92,8 +93,11 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M7 Lembretes: preferências (9h e 17h, alteráveis), produtos essenciais, registo do telemóvel, `due_notifications()`
 - [x] M7b Entregar os lembretes: development build Android (Firebase + EAS) + Edge Function `send-reminders` + agendamento (`pg_cron` + `pg_net` + Vault); ver `docs/lembretes.md`
 - [x] M8 Talões: registo da compra à mão + `confirm_receipt()` (stock, lista de compras, despesa) e ecrã de confirmação
+- [x] M13 Produtos por local (despensa, frigorífico, congelador, limpeza, outros) + sugestões por local; o separador "Consumíveis" chama-se agora "Produtos"
 - [ ] M8b Ler o talão por foto com IA (Edge Function + chave da Claude API nos secrets; preenche as linhas do ecrã do M8)
+- [ ] M14 Perfil de cozinha: pessoas, horários das refeições, orçamento semanal, preferências, restrições e equipamentos (air fryer, forno, Bimby…)
 - [ ] M9 Sugestões de refeições com IA
+- [ ] M15 Otimização dos custos semanais da comida (preços reais dos talões, stock a expirar, orçamento)
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas

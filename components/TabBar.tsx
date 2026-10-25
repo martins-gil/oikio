@@ -17,7 +17,7 @@ const ICONS = {
 const LABELS: Record<keyof typeof ICONS, string> = {
   index: 'Resumo',
   shopping: 'Compras',
-  stock: 'Consumíveis',
+  stock: 'Produtos',
   money: 'Dinheiro',
   personal: 'Pessoal',
 };

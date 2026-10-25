@@ -605,9 +605,9 @@ export default function HomeScreen() {
         {current && pending.length === 0 && doneWeek.length === 0 && !error && (
           <View style={styles.empty}>
             <Text style={styles.hint}>
-              Ainda não há tarefas. Escolhe consumíveis, ou cria tarefas em "Estado da casa", e aparecem aqui.
+              Ainda não há tarefas. Escolhe produtos, ou cria tarefas em "Estado da casa", e aparecem aqui.
             </Text>
-            <Button title="Escolher consumíveis" onPress={() => router.push('/onboarding')} />
+            <Button title="Escolher produtos" onPress={() => router.push('/onboarding')} />
           </View>
         )}
         {current && pending.length === 0 && doneWeek.length > 0 && <Text style={styles.allDone}>Está tudo feito por agora 🎉</Text>}
