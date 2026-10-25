@@ -5,11 +5,14 @@ import { useCallback, useState } from 'react';
 import { useSession } from './session';
 import { supabase } from './supabase';
 
-// «Mostrar custos e orçamento»: desligado por defeito. Quem não quer saber de dinheiro não vê preços nas refeições.
-export function useShowCosts() {
+type Settings = { show_costs: boolean; show_expiry: boolean };
+type Key = keyof Settings;
+
+// Tudo desligado por defeito: quem não quer saber de dinheiro ou de validades não vê nada disso.
+export function useSettings() {
   const { session } = useSession();
   const me = session?.user.id;
-  const [showCosts, setShow] = useState(false);
+  const [settings, setSettings] = useState<Settings>({ show_costs: false, show_expiry: false });
   const [loaded, setLoaded] = useState(false);
 
   useFocusEffect(
@@ -17,25 +20,38 @@ export function useShowCosts() {
       if (!me) return;
       supabase
         .from('user_settings')
-        .select('show_costs')
+        .select('show_costs, show_expiry')
         .eq('user_id', me)
         .maybeSingle()
         .then(({ data }) => {
-          setShow(!!data?.show_costs);
+          setSettings({ show_costs: !!data?.show_costs, show_expiry: !!data?.show_expiry });
           setLoaded(true);
         });
     }, [me]),
   );
 
-  const setShowCosts = async (value: boolean) => {
+  // Só envia a definição que mudou (as outras ficam como estão)
+  const set = async (key: Key, value: boolean) => {
     if (!me) return false;
-    setShow(value);
+    setSettings((s) => ({ ...s, [key]: value }));
     const { error } = await supabase
       .from('user_settings')
-      .upsert({ user_id: me, show_costs: value, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-    if (error) setShow(!value);
+      .upsert({ user_id: me, [key]: value, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) setSettings((s) => ({ ...s, [key]: !value }));
     return !error;
   };
 
-  return { showCosts, loaded, setShowCosts };
+  return { settings, loaded, set };
+}
+
+// «Mostrar custos e orçamento»
+export function useShowCosts() {
+  const { settings, loaded, set } = useSettings();
+  return { showCosts: settings.show_costs, loaded, setShowCosts: (v: boolean) => set('show_costs', v) };
+}
+
+// «Mostrar validades sugeridas»
+export function useShowExpiry() {
+  const { settings, loaded, set } = useSettings();
+  return { showExpiry: settings.show_expiry, loaded, setShowExpiry: (v: boolean) => set('show_expiry', v) };
 }

@@ -20,6 +20,8 @@ import {
 } from '@/lib/stock';
 import { formatEuros } from '@/lib/money';
 import { saveErrorText } from '@/lib/notifications';
+import { useShowExpiry } from '@/lib/settings';
+import { ExpiryCard } from '@/components/ExpiryCard';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 
@@ -34,6 +36,7 @@ export default function ProductScreen() {
   const [unitSize, setUnitSize] = useState<number | null>(null); // tamanho de cada unidade, na unidade base
   const [sizeText, setSizeText] = useState('');
   const [sizeUnit, setSizeUnit] = useState<'g' | 'ml'>('g');
+  const { showExpiry } = useShowExpiry();
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
@@ -316,6 +319,8 @@ export default function ProductScreen() {
             <Text style={styles.linkText}>🗑️ Deitei fora</Text>
           </Pressable>
         ) : null}
+
+        {showExpiry && <ExpiryCard productId={id} refreshKey={product.total} onMessage={setToast} />}
 
         <View style={styles.spacer} />
         {listItemId ? (

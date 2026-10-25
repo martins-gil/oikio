@@ -8,7 +8,7 @@ import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type GamificationMode } from '@/lib/household';
 import { useSession } from '@/lib/session';
-import { useShowCosts } from '@/lib/settings';
+import { useShowCosts, useShowExpiry } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
@@ -23,6 +23,7 @@ export default function HouseScreen() {
   const isAdmin = myMember?.role === 'admin';
   const anonymous = !!me?.is_anonymous;
   const { showCosts, setShowCosts } = useShowCosts();
+  const { showExpiry, setShowExpiry } = useShowExpiry();
 
   const [name, setName] = useState<string | null>(null); // null = ainda não editado
   const [invite, setInvite] = useState<Invite | null>(null);
@@ -177,6 +178,19 @@ export default function HouseScreen() {
             value={showCosts}
             onValueChange={async (v) => {
               if (!(await setShowCosts(v))) setToast('Não foi possível guardar.');
+            }}
+          />
+        </View>
+
+        <View style={styles.prefRow}>
+          <View style={styles.prefText}>
+            <Text style={styles.prefTitle}>Mostrar validades sugeridas</Text>
+            <Text style={styles.cardLine}>Prazos de conservação do USDA FoodKeeper nos produtos. É só teu: não muda o que o parceiro vê.</Text>
+          </View>
+          <Switch
+            value={showExpiry}
+            onValueChange={async (v) => {
+              if (!(await setShowExpiry(v))) setToast('Não foi possível guardar.');
             }}
           />
         </View>

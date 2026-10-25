@@ -7,6 +7,7 @@ import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
+import { useShowExpiry } from '@/lib/settings';
 import {
   formatAmount,
   LEVEL_COLOR,
@@ -23,6 +24,7 @@ import { colors, radius, shadow } from '@/lib/theme';
 export default function StockScreen() {
   const router = useRouter();
   const { household } = useHousehold();
+  const { showExpiry } = useShowExpiry();
   const [stock, setStock] = useState<StockRow[] | null>(null);
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -157,6 +159,7 @@ export default function StockScreen() {
           );
         })
       )}
+      {showExpiry && <Button title="⏳ Validades" variant="secondary" onPress={() => router.push('/expiry')} />}
       <Button title="🍽️ O que cozinhar?" onPress={() => router.push('/meals')} />
       <Button title="Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />
       <Button title="Escolher dos sugeridos" variant="secondary" onPress={() => router.push(filter ? { pathname: '/onboarding', params: { place: filter } } : '/onboarding')} />
