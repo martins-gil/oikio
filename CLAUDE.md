@@ -90,7 +90,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M5 Stock e lista de compras (níveis, +/−, riscar)
 - [x] M6 Convidar o parceiro por código; guardar a conta com e-mail (Apple/Google na fase das lojas)
 - [x] M7 Lembretes: preferências (9h e 17h, alteráveis), produtos essenciais, registo do telemóvel, `due_notifications()`
-- [ ] M7b Entregar os lembretes: development build Android (Firebase + EAS) + Edge Function + agendamento (`pg_cron`)
+- [x] M7b Entregar os lembretes: development build Android (Firebase + EAS) + Edge Function `send-reminders` + agendamento (`pg_cron` + `pg_net` + Vault); ver `docs/lembretes.md`
 - [x] M8 Talões: registo da compra à mão + `confirm_receipt()` (stock, lista de compras, despesa) e ecrã de confirmação
 - [ ] M8b Ler o talão por foto com IA (Edge Function + chave da Claude API nos secrets; preenche as linhas do ecrã do M8)
 - [ ] M9 Sugestões de refeições com IA
