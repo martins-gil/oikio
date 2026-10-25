@@ -75,13 +75,19 @@ export default function ProductScreen() {
   };
 
   // «Deitei fora»: regista o desperdício (sai do stock e conta para a análise de despesas)
-  const discard = (qty: number | null) =>
-    run(async () => {
-      const { data, error } = await supabase.rpc('discard_product', { p_product: id, p_qty: qty });
+  const discard = async (qty: number | null) => {
+    if (busy) return;
+    setBusy(true);
+    const { data, error } = await supabase.rpc('discard_product', { p_product: id, p_qty: qty });
+    if (error) {
+      setToast(/discard_product|schema cache/i.test(error.message) ? 'Falta aplicar a migração: corre "npx supabase db push".' : `Não foi possível registar (${error.message}).`);
+    } else {
       const value = (data as { value_cents: number | null } | null)?.value_cents;
-      if (!error) setToast(value ? `🗑️ Registado: ${formatEuros(value)} deitados fora` : '🗑️ Registado como deitado fora');
-      return { error };
-    }, 'Não foi possível registar.');
+      setToast(value ? `🗑️ Registado: ${formatEuros(value)} deitados fora` : '🗑️ Registado como deitado fora');
+    }
+    await load();
+    setBusy(false);
+  };
 
   const askDiscard = () => {
     if (!product) return;
