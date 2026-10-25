@@ -8,15 +8,23 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
-import { formatAmount, type ShopItem } from '@/lib/stock';
+import { formatAmount, stepFor, type ShopItem } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
 const itemName = (i: ShopItem) => i.products?.name ?? i.free_text ?? '';
 
+const UNIT_CHOICES = ['un', 'g', 'ml'];
+const num = (t: string) => Number(t.replace(',', '.'));
+const toText = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
+const unitOf = (i: ShopItem) => i.products?.base_unit ?? i.unit ?? null;
+
 function itemDetail(i: ShopItem): string | null {
   const parts: string[] = [];
-  if (i.quantity && i.products) parts.push(formatAmount(i.quantity, i.products.base_unit));
+  if (i.quantity) {
+    const unit = unitOf(i);
+    parts.push(unit ? formatAmount(i.quantity, unit) : toText(i.quantity));
+  }
   if (i.reason === 'min_stock') parts.push('abaixo do mínimo');
   return parts.length > 0 ? parts.join(' · ') : null;
 }
@@ -26,6 +34,10 @@ export default function ShoppingScreen() {
   const { household } = useHousehold();
   const [items, setItems] = useState<ShopItem[] | null>(null);
   const [text, setText] = useState('');
+  const [editing, setEditing] = useState<string | null>(null); // item aberto para definir quantidade
+  const [qtyText, setQtyText] = useState('');
+  const [unitSel, setUnitSel] = useState<string | null>(null);
+  const [nameText, setNameText] = useState('');
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
 
@@ -35,7 +47,7 @@ export default function ShoppingScreen() {
     startOfToday.setHours(0, 0, 0, 0);
     const { data, error } = await supabase
       .from('shopping_list_items')
-      .select('id, product_id, free_text, quantity, reason, checked_at, products(name, base_unit)')
+      .select('id, product_id, free_text, quantity, unit, reason, checked_at, products(name, base_unit)')
       .eq('household_id', household.id)
       // por comprar + o que foi riscado hoje
       .or(`checked_at.is.null,checked_at.gte.${startOfToday.toISOString()}`)
@@ -72,6 +84,35 @@ export default function ShoppingScreen() {
     } else if (item.product_id) {
       setToast(`✅ ${itemName(item)}: stock reposto`);
     }
+    load();
+  };
+
+  // Abrir um item (tocar no nome) para definir quantidade; riscar é só no círculo
+  const openEditor = (item: ShopItem) => {
+    if (editing === item.id) return setEditing(null);
+    setEditing(item.id);
+    setQtyText(item.quantity ? toText(item.quantity) : '');
+    setUnitSel(unitOf(item));
+    setNameText(item.free_text ?? '');
+  };
+
+  const saveEdit = async (item: ShopItem) => {
+    const raw = qtyText.trim();
+    const quantity = raw === '' ? null : num(raw);
+    if (quantity !== null && (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100000)) {
+      setToast('Quantidade inválida.');
+      return;
+    }
+    const patch: Record<string, unknown> = { quantity };
+    if (!item.product_id) {
+      const name = nameText.trim();
+      if (!name) return setToast('O nome não pode ficar vazio.');
+      patch.free_text = name;
+      patch.unit = quantity !== null && unitSel && UNIT_CHOICES.includes(unitSel) ? unitSel : null;
+    }
+    const { error } = await supabase.from('shopping_list_items').update(patch).eq('id', item.id);
+    if (error) return setToast('Não foi possível guardar.');
+    setEditing(null);
     load();
   };
 
@@ -112,29 +153,73 @@ export default function ShoppingScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Button title="🧾 Registar compra" variant="secondary" onPress={() => router.push('/receipt')} />
         {open.length === 0 && <Text style={styles.empty}>Nada por comprar 🎉</Text>}
-        {open.map((i) => (
-          <View key={i.id} style={styles.row}>
-            <Pressable style={styles.rowMain} onPress={() => buy(i)}>
-              <Text style={styles.circle}>⚪</Text>
-              <View style={styles.rowText}>
-                <Text style={styles.name}>{itemName(i)}</Text>
-                {itemDetail(i) && <Text style={styles.detail}>{itemDetail(i)}</Text>}
+        {open.map((i) => {
+          const unit = unitOf(i);
+          const isEditing = editing === i.id;
+          return (
+            <View key={i.id} style={styles.item}>
+              <View style={styles.row}>
+                <Pressable style={styles.check} hitSlop={6} onPress={() => buy(i)} accessibilityLabel="Marcar como comprado">
+                  <Text style={styles.circle}>⚪</Text>
+                </Pressable>
+                <Pressable style={styles.rowMain} onPress={() => openEditor(i)}>
+                  <View style={styles.rowText}>
+                    <Text style={styles.name}>{itemName(i)}</Text>
+                    <Text style={styles.detail}>{itemDetail(i) ?? 'Toca para definir a quantidade'}</Text>
+                  </View>
+                </Pressable>
+                <Pressable hitSlop={12} onPress={() => remove(i)}>
+                  <Text style={styles.remove}>✕</Text>
+                </Pressable>
               </View>
-            </Pressable>
-            <Pressable hitSlop={12} onPress={() => remove(i)}>
-              <Text style={styles.remove}>✕</Text>
-            </Pressable>
-          </View>
-        ))}
+              {isEditing && (
+                <View style={styles.editor}>
+                  {!i.product_id && <TextInput style={styles.editInput} value={nameText} onChangeText={setNameText} placeholder="Nome" />}
+                  <View style={styles.qtyRow}>
+                    <Pressable style={styles.step} onPress={() => setQtyText(toText(Math.max(0, (num(qtyText) || 0) - stepFor(unitSel ?? 'un'))))}>
+                      <Text style={styles.stepText}>−</Text>
+                    </Pressable>
+                    <TextInput style={[styles.editInput, styles.qtyInput]} value={qtyText} onChangeText={setQtyText} keyboardType="decimal-pad" placeholder="Quantidade" />
+                    <Pressable style={styles.step} onPress={() => setQtyText(toText((num(qtyText) || 0) + stepFor(unitSel ?? 'un')))}>
+                      <Text style={styles.stepText}>＋</Text>
+                    </Pressable>
+                    {i.product_id ? (
+                      <Text style={styles.detail}>{unit}</Text>
+                    ) : (
+                      <View style={styles.unitRow}>
+                        {UNIT_CHOICES.map((u) => (
+                          <Pressable key={u} style={[styles.unitChip, unitSel === u && styles.unitChipOn]} onPress={() => setUnitSel(u)}>
+                            <Text style={[styles.unitText, unitSel === u && styles.unitTextOn]}>{u}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.editButtons}>
+                    <View style={styles.flex}>
+                      <Button title="Cancelar" variant="secondary" onPress={() => setEditing(null)} />
+                    </View>
+                    <View style={styles.flex}>
+                      <Button title="Guardar" onPress={() => saveEdit(i)} />
+                    </View>
+                  </View>
+                </View>
+              )}
+            </View>
+          );
+        })}
 
         {bought.length > 0 && (
           <View style={styles.group}>
             <Text style={styles.section}>Comprado hoje</Text>
             {bought.map((i) => (
               <View key={i.id} style={[styles.row, styles.rowDone]}>
-                <View style={styles.rowMain}>
+                <View style={[styles.rowMain, styles.rowMainDone]}>
                   <Text style={styles.circle}>✅</Text>
-                  <Text style={[styles.name, styles.strike]}>{itemName(i)}</Text>
+                  <View style={styles.rowText}>
+                    <Text style={[styles.name, styles.strike]}>{itemName(i)}</Text>
+                    {itemDetail(i) && <Text style={styles.detail}>{itemDetail(i)}</Text>}
+                  </View>
                 </View>
                 <Pressable hitSlop={12} onPress={() => remove(i)}>
                   <Text style={styles.remove}>✕</Text>
@@ -171,7 +256,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   rowDone: { opacity: 0.55 },
-  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
+  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 16 },
+  item: { gap: 0 },
+  rowMainDone: { paddingLeft: 16 },
+  check: { paddingLeft: 16, paddingRight: 4, paddingVertical: 14 },
+  editor: { gap: 10, padding: 14, marginTop: -6, borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card, backgroundColor: colors.bg },
+  editInput: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 10, fontSize: 16, color: colors.ink },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  qtyInput: { minWidth: 90, textAlign: 'center' },
+  step: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: '#fff', fontSize: 22, lineHeight: 26 },
+  unitRow: { flexDirection: 'row', gap: 6 },
+  unitChip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 10 },
+  unitChipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
+  unitText: { color: colors.primary },
+  unitTextOn: { color: '#fff' },
+  editButtons: { flexDirection: 'row', gap: 10 },
   circle: { fontSize: 24 },
   rowText: { flex: 1, gap: 2 },
   name: { fontSize: 18, flexShrink: 1 },

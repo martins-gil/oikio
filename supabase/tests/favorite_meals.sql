@@ -63,6 +63,7 @@ begin
   perform pg_temp.assert_eq('R3 frango inteiro', (select quantity::text from shopping_list_items where product_id = frango and checked_at is null), '500.00');
   perform pg_temp.assert_eq('R4 não duplica à segunda', add_favorite_to_shopping_list(fav)::text, '0');
 
+  perform pg_temp.assert_eq('R4b cebola na lista com 2 un', (select quantity::text || ' ' || unit from shopping_list_items where lower(free_text) = 'cebola' and checked_at is null), '2.00 un');
   update stock_lots set quantity = 500 where product_id = arroz;
   delete from shopping_list_items where product_id = arroz;
   perform pg_temp.assert_eq('R5 com stock suficiente não pede o arroz', (select add_favorite_to_shopping_list(fav))::text, '0');

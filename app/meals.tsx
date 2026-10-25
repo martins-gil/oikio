@@ -101,7 +101,7 @@ export default function MealsScreen() {
     setBusy(true);
     const { data, error } = await supabase.rpc('add_recipe_items_to_shopping_list', {
       p_household: household.id,
-      p_items: m.missing.map((x) => ({ product_id: x.product_id, name: x.name, quantity: x.quantity })),
+      p_items: m.missing.map((x) => ({ product_id: x.product_id, name: x.name, quantity: x.quantity, unit: x.unit })),
     });
     setBusy(false);
     setToast(error ? 'Não foi possível pôr na lista.' : data === 0 ? 'Já estava tudo na lista de compras.' : `🛒 ${data} ${data === 1 ? 'item' : 'itens'} na lista de compras`);

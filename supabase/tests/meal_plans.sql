@@ -37,9 +37,9 @@ begin
   -- três refeições; duas precisam de cebola (sem produto) e duas do mesmo produto conhecido (arroz)
   insert into meal_plans(household_id, week_start, created_by, response) values (h, '2026-11-16', A, jsonb_build_object('meals', jsonb_build_array(
     jsonb_build_object('date', '2026-11-16', 'slot', 'jantar', 'title', 'Arroz de frango',
-      'missing', jsonb_build_array(jsonb_build_object('product_id', arroz, 'name', 'Arroz', 'quantity', 200), jsonb_build_object('product_id', null, 'name', 'Cebola', 'quantity', 2))),
+      'missing', jsonb_build_array(jsonb_build_object('product_id', arroz, 'name', 'Arroz', 'quantity', 200), jsonb_build_object('product_id', null, 'name', 'Cebola', 'unit', 'un', 'quantity', 2))),
     jsonb_build_object('date', '2026-11-17', 'slot', 'jantar', 'title', 'Sopa',
-      'missing', jsonb_build_array(jsonb_build_object('product_id', null, 'name', 'cebola', 'quantity', 1), jsonb_build_object('product_id', arroz, 'name', 'Arroz', 'quantity', 100))),
+      'missing', jsonb_build_array(jsonb_build_object('product_id', null, 'name', 'cebola', 'unit', 'un', 'quantity', 1), jsonb_build_object('product_id', arroz, 'name', 'Arroz', 'quantity', 100))),
     jsonb_build_object('date', '2026-11-18', 'slot', 'jantar', 'title', 'Omelete',
       'missing', jsonb_build_array(jsonb_build_object('product_id', null, 'name', 'Ovos', 'quantity', null)))
   ))) returning id into plan;
@@ -51,6 +51,8 @@ begin
   perform pg_temp.assert_eq('W6 sem quantidade fica sem quantidade', (select (x->'quantity')::text from jsonb_array_elements(r) x where x->>'name' = 'Ovos'), 'null');
 
   perform pg_temp.assert_eq('W7 junta à lista de compras', add_plan_to_shopping_list(plan)::text, '3');
+  perform pg_temp.assert_eq('W7b cebola com quantidade e unidade (3 un)', (select quantity::text || ' ' || unit from shopping_list_items where lower(free_text) = 'cebola' and checked_at is null), '3.00 un');
+  perform pg_temp.assert_eq('W7c arroz com a quantidade (300 g)', (select quantity::text from shopping_list_items where product_id = arroz and checked_at is null), '300.00');
   perform pg_temp.assert_eq('W8 não duplica à segunda', add_plan_to_shopping_list(plan)::text, '0');
 
   -- «Cozinhei» a primeira refeição

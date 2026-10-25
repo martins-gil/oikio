@@ -31,3 +31,7 @@ Máximo de 12 pedidos à IA por plano em 24 h (gerar + trocar). Cerca de 10–15
 - **🧊 Marmitas para congelar** (só na próxima semana): a IA propõe 1 a 3 receitas que aguentam a congelação, cozinhadas no domingo antes da semana. O stock e o custo ficam na preparação; nos dias úteis aparece «marmita do congelador». Não há prazos de congelação inventados: a app lembra de pôr a data e de confirmar numa fonte de segurança alimentar (regra n.º 5).
 - **🛒 E se eu comprar…?** Até 3 produtos que aceitas comprar: a IA usa-os à vontade e entram em «Falta comprar».
 - Testes: `supabase/tests/favorite_meals.sql` (24 verificações) e `plan.test.ts`.
+
+## Lista de compras com quantidades
+- Os itens sem produto (ex.: «Cebola») guardam agora a unidade (`shopping_list_items.unit`); o plano, as favoritas e o «O que cozinhar» levam a quantidade e a unidade até à lista.
+- Na lista: o **círculo** à esquerda marca como comprado (repõe o stock); tocar no **nome** abre o item para definir a quantidade (− / + / escrever), a unidade (itens sem produto) e o nome. Nos produtos da casa, a quantidade é na unidade do produto.

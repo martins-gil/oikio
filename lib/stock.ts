@@ -66,6 +66,7 @@ export type ShopItem = {
   product_id: string | null;
   free_text: string | null;
   quantity: number | null;
+  unit: string | null; // só nos itens sem produto (ex.: «Cebola — 2 un»)
   reason: 'manual' | 'min_stock' | 'recipe';
   checked_at: string | null;
   products: { name: string; base_unit: string } | null;
