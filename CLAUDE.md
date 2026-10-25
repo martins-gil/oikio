@@ -70,6 +70,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Trocas e agradecimentos só por funções (`request_swap`/`answer_swap`/`cancel_swap`, `give_kudos`/`mark_kudos_seen`); as tabelas são só de leitura para a app.
 - Perfil de cozinha por casa em `cooking_profiles` (escolhas validadas na base de dados; a IA das refeições lê-o, e as restrições são sempre respeitadas).
 - Refeições (M9): `suggest-meals` propõe 3 receitas; o servidor descarta as que contrariam restrições ou equipamento; `add_recipe_items_to_shopping_list()` e `cook_meal()` só correm com confirmação; preços só de `v_product_prices` (talões confirmados). Ver `docs/refeicoes.md`.
+- Plano semanal (M15b): `meal_plans` (um por casa e semana), `plan_missing_items()`, `add_plan_to_shopping_list()`, `cook_planned_meal()`; custos só se `user_settings.show_costs` (pessoal, RLS do próprio). Ver `docs/plano-semanal.md`.
 - Análise (M15): `spending_scores()`, `budget_suggestions()`, `loss_insights()` (só despesas partilhadas, só membros) `discard_product()` («Deitei fora» → movimento `waste`); produtos apagam-se só por `delete_product()` (apagar é lógico, `deleted_at`, nunca `delete` na tabela). Ver `docs/analise-de-despesas.md`.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
 
@@ -101,7 +102,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M14 Perfil de cozinha: pessoas, horários das refeições, orçamento semanal, preferências, restrições e equipamentos (air fryer, forno, Bimby…); ver `docs/perfil-de-cozinha.md`
 - [x] M9 Sugestões de refeições com IA: Edge Function `suggest-meals`, lista de compras e «Cozinhei» (desconta do stock); ver `docs/refeicoes.md`
 - [x] M15 Análise de despesas por algoritmo SQL (sem IA): nota mensal, onde se perde dinheiro, orçamento sugerido e «Deitei fora»; ver `docs/analise-de-despesas.md`
-- [ ] M15b Plano semanal de refeições com custos (preços reais dos talões, stock a expirar, orçamento)
+- [ ] M15b Plano semanal de refeições: Edge Function `plan-week`, custos só com preços de talões e só para quem ligar «Mostrar custos e orçamento» (definição pessoal); ver `docs/plano-semanal.md`
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas

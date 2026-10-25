@@ -19,6 +19,7 @@ import {
 } from '@/lib/kitchen';
 import { formatEuros } from '@/lib/money';
 import { useSession } from '@/lib/session';
+import { useShowCosts } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
@@ -39,6 +40,7 @@ export default function KitchenScreen() {
   const me = session?.user.id;
 
   const [profile, setProfile] = useState<CookingProfile>(DEFAULT_PROFILE);
+  const { showCosts } = useShowCosts();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -87,14 +89,16 @@ export default function KitchenScreen() {
     );
   }
 
-  const id: Step = STEPS[step];
-  const last = step === STEPS.length - 1;
+  // O orçamento só se pergunta a quem ligou «Mostrar custos e orçamento» nas definições
+  const steps = STEPS.filter((s) => showCosts || s !== 'budget');
+  const id: Step = steps[step];
+  const last = step === steps.length - 1;
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: 'Perfil de cozinha' }} />
       <View style={styles.progress}>
-        {STEPS.map((s, i) => (
+        {steps.map((s, i) => (
           <View key={s} style={[styles.progressBar, i <= step && styles.progressOn]} />
         ))}
       </View>

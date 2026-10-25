@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
@@ -8,6 +8,7 @@ import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type GamificationMode } from '@/lib/household';
 import { useSession } from '@/lib/session';
+import { useShowCosts } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
@@ -21,6 +22,7 @@ export default function HouseScreen() {
   const myMember = members.find((m) => m.user_id === me?.id);
   const isAdmin = myMember?.role === 'admin';
   const anonymous = !!me?.is_anonymous;
+  const { showCosts, setShowCosts } = useShowCosts();
 
   const [name, setName] = useState<string | null>(null); // null = ainda não editado
   const [invite, setInvite] = useState<Invite | null>(null);
@@ -165,6 +167,20 @@ export default function HouseScreen() {
         <Button title="🔔 Horas dos lembretes" variant="secondary" onPress={() => router.push('/notifications')} />
         <Button title="🍽️ Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />
 
+        <Text style={styles.section}>Preferências pessoais</Text>
+        <View style={styles.prefRow}>
+          <View style={styles.prefText}>
+            <Text style={styles.prefTitle}>Mostrar custos e orçamento</Text>
+            <Text style={styles.cardLine}>Preços e orçamento nas refeições. É só teu: não muda o que o parceiro vê.</Text>
+          </View>
+          <Switch
+            value={showCosts}
+            onValueChange={async (v) => {
+              if (!(await setShowCosts(v))) setToast('Não foi possível guardar.');
+            }}
+          />
+        </View>
+
         <Text style={styles.section}>A tua conta</Text>
         {anonymous ? (
           <View style={styles.warn}>
@@ -195,6 +211,9 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.card, ...shadow, padding: 14, backgroundColor: '#fff', gap: 2 },
   cardTitle: { fontSize: 17, fontWeight: '600' },
   cardLine: { color: colors.muted },
+  prefRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  prefText: { flex: 1, gap: 2 },
+  prefTitle: { fontSize: 16, color: colors.ink },
   row: { flexDirection: 'row' },
   input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 12, fontSize: 17 },
   inviteBox: { gap: 10, borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 12, padding: 16, alignItems: 'center' },

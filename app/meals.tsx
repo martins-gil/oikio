@@ -11,6 +11,7 @@ import { EQUIPMENT, SCHEDULES } from '@/lib/kitchen';
 import { formatEuros } from '@/lib/money';
 import type { Meal, SuggestionRow } from '@/lib/meals';
 import { formatAmount } from '@/lib/stock';
+import { useShowCosts } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
@@ -23,6 +24,7 @@ const toText = (n: number) => String(Math.round(n * 100) / 100).replace('.', ','
 export default function MealsScreen() {
   const router = useRouter();
   const { household } = useHousehold();
+  const { showCosts } = useShowCosts();
 
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined); // undefined = a carregar, null = sem perfil
   const [meal, setMeal] = useState<'almoço' | 'jantar'>(new Date().getHours() < 15 ? 'almoço' : 'jantar');
@@ -158,7 +160,7 @@ export default function MealsScreen() {
         <View style={styles.card}>
           <Text style={styles.summary}>
             {profile.diners} {profile.diners === 1 ? 'pessoa' : 'pessoas'} · {schedule}
-            {profile.weekly_budget_cents ? ` · até ${formatEuros(profile.weekly_budget_cents)}/semana` : ''} · {profile.equipment.length} equipamentos
+            {showCosts && profile.weekly_budget_cents ? ` · até ${formatEuros(profile.weekly_budget_cents)}/semana` : ''} · {profile.equipment.length} equipamentos
           </Text>
           <Pressable onPress={() => router.push('/kitchen')}>
             <Text style={styles.link}>Mudar o perfil</Text>
@@ -171,6 +173,7 @@ export default function MealsScreen() {
             ))}
           </View>
           <Button title={loading ? 'A pensar…' : '✨ Sugerir'} disabled={loading} onPress={suggest} />
+          <Button title="📅 Plano da semana" variant="secondary" onPress={() => router.push('/plan')} />
           {loading && (
             <View style={styles.reading}>
               <ActivityIndicator color={colors.primary} />
@@ -206,13 +209,15 @@ export default function MealsScreen() {
                     <Text key={k} style={styles.line}>
                       • {x.name}
                       {x.quantity && x.unit ? ` — ${formatAmount(x.quantity, x.unit)}` : ''}
-                      {x.est_cost_cents !== null ? ` ≈ ${formatEuros(x.est_cost_cents)}` : ''}
+                      {showCosts && x.est_cost_cents !== null ? ` ≈ ${formatEuros(x.est_cost_cents)}` : ''}
                     </Text>
                   ))}
-                  <Text style={styles.small}>
-                    {m.est_missing_cost_cents > 0 ? `≈ ${formatEuros(m.est_missing_cost_cents)} (pelos teus talões)` : 'Sem preços nos teus talões'}
-                    {m.unpriced_count > 0 && m.est_missing_cost_cents > 0 ? ` + ${m.unpriced_count} sem preço` : ''}
-                  </Text>
+                  {showCosts && (
+                    <Text style={styles.small}>
+                      {m.est_missing_cost_cents > 0 ? `≈ ${formatEuros(m.est_missing_cost_cents)} (pelos teus talões)` : 'Sem preços nos teus talões'}
+                      {m.unpriced_count > 0 && m.est_missing_cost_cents > 0 ? ` + ${m.unpriced_count} sem preço` : ''}
+                    </Text>
+                  )}
                 </View>
               )}
 
