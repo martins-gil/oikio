@@ -103,7 +103,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M14 Perfil de cozinha: pessoas, horários das refeições, orçamento semanal, preferências, restrições e equipamentos (air fryer, forno, Bimby…); ver `docs/perfil-de-cozinha.md`
 - [x] M9 Sugestões de refeições com IA: Edge Function `suggest-meals`, lista de compras e «Cozinhei» (desconta do stock); ver `docs/refeicoes.md`
 - [x] M15 Análise de despesas por algoritmo SQL (sem IA): nota mensal, onde se perde dinheiro, orçamento sugerido e «Deitei fora»; ver `docs/analise-de-despesas.md`
-- [ ] M15b Plano semanal de refeições: Edge Function `plan-week`, custos só com preços de talões e só para quem ligar «Mostrar custos e orçamento» (definição pessoal); M15c: semana seguinte, favoritas ⭐, marmitas para congelar e «E se eu comprar…?»; ver `docs/plano-semanal.md`
+- [x] M15b Plano semanal de refeições: Edge Function `plan-week`, custos só com preços de talões e só para quem ligar «Mostrar custos e orçamento» (definição pessoal); M15c: semana seguinte, favoritas ⭐, marmitas para congelar e «E se eu comprar…?»; ver `docs/plano-semanal.md`
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas
