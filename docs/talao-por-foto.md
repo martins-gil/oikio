@@ -35,3 +35,9 @@ Cada linha tem «Não adicionar aos produtos» se a pessoa não quiser. Se já e
 ## Privacidade
 - A foto e as linhas só são visíveis aos membros da casa (RLS e políticas do Storage; `supabase/tests/receipt_images.sql`).
 - O texto do talão é tratado como dados, nunca como instruções.
+
+## «3 un» sem tamanho (ex.: 3 queijos cottage de 200 g)
+Quando o talão só diz a quantidade, a linha pede «cada unidade tem __ g» (ou ml): a quantidade passa a 3 × 200 = 600 g
+e o tamanho fica guardado no produto (`product_packages`, nome «unidade»), por isso nas compras seguintes já vem certo.
+No ecrã do produto, «Unidade e tamanho» permite mudar a qualquer altura (`convert_product_unit()`: o stock, o mínimo,
+os consumos e as embalagens são convertidos pelo mesmo fator, com um movimento de ajuste registado) ou voltar a contar em unidades.

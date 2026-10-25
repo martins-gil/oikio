@@ -29,6 +29,8 @@ type Line = {
   check: boolean; // a quantidade precisa de ser confirmada (ex.: o talão diz «2 un» e o produto conta-se em gramas)
   ai: AiLine | null; // o que a IA leu (unidade e embalagem do talão)
   location: Place | null; // onde fica (ou ficará) o produto
+  count: number | null; // nº de artigos que o talão diz («3 un»), sem tamanho: a pessoa indica quanto tem cada um
+  sizeText: string; // tamanho de cada unidade (200), na unidade do produto (g ou ml)
   addNew: boolean; // sem produto: criar um produto novo com esta compra
   newUnit: 'g' | 'ml' | 'un'; // unidade do produto novo
 };
@@ -90,15 +92,16 @@ export default function ReceiptScreen() {
   const hideToast = useCallback(() => setToast(null), []);
 
   const loadProducts = useCallback(async () => {
-    if (!household) return [] as Product[];
+    if (!household) return { list: [] as Product[], packList: [] as Pack[] };
     const [p, k] = await Promise.all([
       supabase.from('products').select('id, name, base_unit').eq('household_id', household.id).order('name'),
       supabase.from('product_packages').select('id, product_id, name, units_per_package'),
     ]);
     const list = (p.data ?? []) as Product[];
     setProducts(list);
-    setPacks((k.data ?? []) as Pack[]);
-    return list;
+    const packList = (k.data ?? []) as Pack[];
+    setPacks(packList);
+    return { list, packList };
   }, [household]);
 
   useEffect(() => {
@@ -117,7 +120,7 @@ export default function ReceiptScreen() {
     const needsAmount = unit === 'g' || unit === 'ml';
     setLines((prev) => [
       ...prev,
-      { key, raw: clean, text: clean, productId, packageId: null, qtyText: needsAmount ? '' : '1', price: '', check: needsAmount, ai: null, location: null, addNew: !productId, newUnit: 'un' },
+      { key, raw: clean, text: clean, productId, packageId: null, qtyText: needsAmount ? '' : '1', price: '', check: needsAmount, ai: null, location: null, count: null, sizeText: '', addNew: !productId, newUnit: 'un' },
     ]);
     setEntry('');
   };
@@ -125,7 +128,16 @@ export default function ReceiptScreen() {
     const match = products.find((p) => norm(p.name) === norm(entry.trim()));
     addLine(match ? match.name : entry, match?.id ?? null);
   };
-  const patch = (key: number, change: Partial<Line>) => setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...change } : l)));
+  // Linhas com «N un» sem tamanho: quantidade = N × tamanho de cada unidade (g ou ml)
+  const withSize = (l: Line, list: Product[]): Line => {
+    if (l.count === null) return l;
+    const base = list.find((p) => p.id === l.productId)?.base_unit ?? l.newUnit;
+    if (base !== 'g' && base !== 'ml') return { ...l, check: false, qtyText: toText(l.count) };
+    const size = num(l.sizeText);
+    return size > 0 ? { ...l, qtyText: toText(l.count * size), check: false } : { ...l, check: true };
+  };
+  const patch = (key: number, change: Partial<Line>) =>
+    setLines((prev) => prev.map((l) => (l.key === key ? (('sizeText' in change || 'newUnit' in change) ? withSize({ ...l, ...change }, products) : { ...l, ...change }) : l)));
   const removeLine = (key: number) => setLines((prev) => prev.filter((l) => l.key !== key));
 
   // ----- foto -----
@@ -185,11 +197,12 @@ export default function ReceiptScreen() {
       return;
     }
     // 3) mostra o que a IA propôs, para confirmares
-    const [{ data: rc }, { data: dbLines }, list] = await Promise.all([
+    const [{ data: rc }, { data: dbLines }, loaded] = await Promise.all([
       supabase.from('receipts').select('store_name, purchased_at, total_cents').eq('id', id).single(),
       supabase.from('receipt_lines').select('id, raw_text, ai_name, product_id, quantity, total_cents, suggested_location, ai_unit, ai_pack_amount, ai_pack_unit').eq('receipt_id', id).order('id'),
       loadProducts(),
     ]);
+    const { list, packList } = loaded;
     setStore(rc?.store_name ?? '');
     if (rc?.purchased_at) {
       setDate(rc.purchased_at as string);
@@ -201,22 +214,29 @@ export default function ReceiptScreen() {
         const ai: AiLine = { quantity: Number(d.quantity), ai_unit: d.ai_unit, ai_pack_amount: d.ai_pack_amount, ai_pack_unit: d.ai_pack_unit };
         const product = list.find((p) => p.id === d.product_id);
         const newUnit = suggestBaseUnit(ai);
-        // linha ligada a um produto: converte para a unidade dele; sem produto: converte para a unidade do produto novo
-        const conv = toBaseQuantity(ai, product ? product.base_unit : newUnit);
-        return {
+        const base = product ? product.base_unit : newUnit;
+        // «N un» sem tamanho de embalagem: se o produto já tem um tamanho guardado (ex.: 200 g), usa-o
+        const noSize = (ai.ai_unit ?? 'un') === 'un' && !ai.ai_pack_amount;
+        const saved = product ? packList.find((k) => k.product_id === product.id && k.name === 'unidade') : undefined;
+        const line: Line = {
           key: keyRef.current++,
           raw: d.raw_text,
           text: d.ai_name ?? d.raw_text,
           productId: product?.id ?? null,
           packageId: null,
-          qtyText: toText(conv.qty),
+          qtyText: '',
           price: euroText(d.total_cents),
-          check: product ? conv.check : false,
+          check: false,
           ai,
           location: (d.suggested_location as Place | null) ?? null,
+          count: noSize ? Number(d.quantity) : null,
+          sizeText: saved && (base === 'g' || base === 'ml') ? toText(Number(saved.units_per_package)) : '',
           addNew: !product,
           newUnit,
         };
+        if (noSize) return withSize(line, list);
+        const conv = toBaseQuantity(ai, base);
+        return { ...line, qtyText: toText(conv.qty), check: product ? conv.check : false };
       }),
     );
     setReceiptId(id);
@@ -231,7 +251,7 @@ export default function ReceiptScreen() {
   const typedTotal = totalText.trim() ? parseEuros(totalText) : null;
   const total = typedTotal ?? linesSum;
   const stockLines = lines.filter((l) => l.productId || l.addNew).length;
-  const pendingChecks = lines.filter((l) => l.productId && l.check).length;
+  const pendingChecks = lines.filter((l) => (l.productId || l.addNew) && l.check).length;
 
   const confirm = async () => {
     if (!household || !me || saving || lines.length === 0) return;
@@ -282,6 +302,12 @@ export default function ReceiptScreen() {
           }
           productId = data.id as string;
         }
+      }
+      // «3 un» de 200 g cada: guarda o tamanho no produto para os talões seguintes e para as receitas
+      const baseUnit = products.find((p) => p.id === productId)?.base_unit ?? l.newUnit;
+      const size = num(l.sizeText);
+      if (productId && l.count !== null && size > 0 && (baseUnit === 'g' || baseUnit === 'ml')) {
+        await supabase.from('product_packages').upsert({ product_id: productId, name: 'unidade', units_per_package: size }, { onConflict: 'product_id,name' });
       }
       resolved.push({ l, productId, qty });
     }
@@ -487,6 +513,26 @@ export default function ReceiptScreen() {
                   ))}
                 </View>
               )}
+              {l.count !== null && (product || willCreate) && (
+                <View style={styles.sizeBox}>
+                  {willCreate && (
+                    <View style={styles.chips}>
+                      {(['un', 'g', 'ml'] as const).map((u) => (
+                        <Pressable key={u} style={[styles.chip, l.newUnit === u && styles.chipOn]} onPress={() => patch(l.key, { newUnit: u })}>
+                          <Text style={[styles.chipText, l.newUnit === u && styles.chipTextOn]}>{u === 'un' ? 'contar em unidades' : `contar em ${u}`}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                  {(product?.base_unit ?? l.newUnit) !== 'un' && ((product?.base_unit ?? l.newUnit) === 'g' || (product?.base_unit ?? l.newUnit) === 'ml') && (
+                    <View style={styles.sizeRow}>
+                      <Text style={styles.small}>{toText(l.count)} un × cada unidade tem</Text>
+                      <TextInput style={styles.sizeInput} value={l.sizeText} onChangeText={(t) => patch(l.key, { sizeText: t })} keyboardType="decimal-pad" placeholder="200" />
+                      <Text style={styles.small}>{product?.base_unit ?? l.newUnit}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
               <View style={styles.lineBottom}>
                 <View style={styles.stepper}>
                   <Pressable style={styles.step} hitSlop={8} onPress={() => bump(-1)}>
@@ -512,10 +558,11 @@ export default function ReceiptScreen() {
                   keyboardType="decimal-pad"
                 />
               </View>
-              {l.check && l.productId && (
+              {l.check && (l.productId || willCreate) && (
                 <Text style={styles.checkText}>
-                  Confirma a quantidade em {unitLabel}
-                  {l.ai?.ai_unit ? ` (o talão diz ${toText(l.ai.quantity)} ${l.ai.ai_unit})` : ''}.
+                  {l.count !== null
+                    ? `O talão diz ${toText(l.count)} un, sem o tamanho. Escreve quanto tem cada unidade (ex.: 200 ${unitLabel}).`
+                    : `Confirma a quantidade em ${unitLabel}${l.ai?.ai_unit ? ` (o talão diz ${toText(l.ai.quantity)} ${l.ai.ai_unit})` : ''}.`}
                 </Text>
               )}
               {!l.check && ((product?.base_unit ?? l.newUnit) === 'g' || (product?.base_unit ?? l.newUnit) === 'ml') && (
@@ -564,6 +611,9 @@ const styles = StyleSheet.create({
   suggest: { backgroundColor: colors.lavender, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
   suggestText: { color: colors.primary },
   hint: { color: colors.muted, textAlign: 'center' },
+  sizeBox: { gap: 8 },
+  sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sizeInput: { minWidth: 70, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 8, fontSize: 16, textAlign: 'center', color: colors.ink },
   photoRow: { flexDirection: 'row', gap: 10 },
   reading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   lineHead: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },

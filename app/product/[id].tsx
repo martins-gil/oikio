@@ -1,8 +1,8 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
-import { Text } from '@/components/Text';
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -30,16 +30,23 @@ export default function ProductScreen() {
   const [product, setProduct] = useState<StockRow | null>(null);
   const [listItemId, setListItemId] = useState<string | null>(null); // item por comprar deste produto
   const [essential, setEssential] = useState(false);
+  const [unitSize, setUnitSize] = useState<number | null>(null); // tamanho de cada unidade, na unidade base
+  const [sizeText, setSizeText] = useState('');
+  const [sizeUnit, setSizeUnit] = useState<'g' | 'ml'>('g');
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
 
   const load = useCallback(async (): Promise<{ product: StockRow | null; inList: boolean }> => {
-    const [stock, list, ess] = await Promise.all([
+    const [stock, list, ess, size] = await Promise.all([
       supabase.from('v_stock').select(STOCK_COLUMNS).eq('product_id', id).maybeSingle(),
       supabase.from('shopping_list_items').select('id').eq('product_id', id).is('checked_at', null).maybeSingle(),
       supabase.from('products').select('is_essential').eq('id', id).maybeSingle(),
+      supabase.from('product_packages').select('units_per_package').eq('product_id', id).eq('name', 'unidade').maybeSingle(),
     ]);
+    const sz = size.data ? Number(size.data.units_per_package) : null;
+    setUnitSize(sz);
+    setSizeText(sz ? String(sz).replace('.', ',') : '');
     setEssential(!!ess.data?.is_essential);
     if (ess.error) setToast(saveErrorText(ess.error.message));
     const p = (stock.data ?? null) as StockRow | null;
@@ -89,6 +96,30 @@ export default function ProductScreen() {
     setToast(error ? 'Não foi possível mudar o local.' : 'Local mudado');
     load();
   };
+  // Tamanho de cada unidade (ex.: 200 g): serve para as compras seguintes e para as receitas
+  const parsedSize = Number(sizeText.replace(',', '.'));
+  const sizeOk = Number.isFinite(parsedSize) && parsedSize > 0;
+  const saveSize = () =>
+    run(
+      () => supabase.from('product_packages').upsert({ product_id: id, name: 'unidade', units_per_package: parsedSize }, { onConflict: 'product_id,name' }),
+      'Não foi possível guardar o tamanho.',
+    );
+  // Passar de «un» para g/ml (ex.: 3 un de queijo → 600 g) ou voltar a contar em unidades
+  const changeUnit = (newUnit: string, factor: number, text: string) =>
+    Alert.alert('Mudar a unidade?', text, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Mudar',
+        onPress: () =>
+          run(async () => {
+            const r = await supabase.rpc('convert_product_unit', { p_product: id, p_new_unit: newUnit, p_factor: factor });
+            if (r.error) return r;
+            // o tamanho de cada unidade fica guardado, na nova unidade (200 g) ou 1 un
+            const unitSizeAfter = newUnit === 'un' ? 1 : factor;
+            return supabase.from('product_packages').upsert({ product_id: id, name: 'unidade', units_per_package: unitSizeAfter }, { onConflict: 'product_id,name' });
+          }, 'Não foi possível mudar a unidade.'),
+      },
+    ]);
   const toggleEssential = async (value: boolean) => {
     setEssential(value);
     const { error } = await supabase.from('products').update({ is_essential: value }).eq('id', id);
@@ -180,6 +211,56 @@ export default function ProductScreen() {
           </>
         )}
 
+        <Text style={styles.label}>Unidade e tamanho</Text>
+        {product.base_unit === 'un' ? (
+          <View style={styles.sizeBox}>
+            <Text style={styles.essentialHint}>
+              Conta-se em unidades. Se cada unidade tem um peso ou volume (ex.: 200 g), indica-o: as receitas passam a saber quanto tens.
+            </Text>
+            <View style={styles.sizeRow}>
+              <TextInput style={styles.sizeInput} value={sizeText} onChangeText={setSizeText} placeholder="200" keyboardType="decimal-pad" />
+              {(['g', 'ml'] as const).map((u) => (
+                <Pressable key={u} style={[styles.place, sizeUnit === u && styles.placeOn]} onPress={() => setSizeUnit(u)}>
+                  <Text style={[styles.placeText, sizeUnit === u && styles.placeTextOn]}>{u}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Button
+              title={sizeOk ? `Cada unidade tem ${sizeText} ${sizeUnit}: converter o stock` : 'Escreve o tamanho de cada unidade'}
+              variant="secondary"
+              disabled={!sizeOk || busy}
+              onPress={() =>
+                changeUnit(
+                  sizeUnit,
+                  parsedSize,
+                  `${formatAmount(product.total, 'un')} passam a ${formatAmount(product.total * parsedSize, sizeUnit)}, e as compras seguintes ao talão também serão contadas em ${sizeUnit}.`,
+                )
+              }
+            />
+          </View>
+        ) : product.base_unit === 'g' || product.base_unit === 'ml' ? (
+          <View style={styles.sizeBox}>
+            <Text style={styles.essentialHint}>Conta-se em {product.base_unit}. Tamanho de cada unidade comprada (ex.: 200), para os talões que só dizem «3 un»:</Text>
+            <View style={styles.sizeRow}>
+              <TextInput style={styles.sizeInput} value={sizeText} onChangeText={setSizeText} placeholder="200" keyboardType="decimal-pad" />
+              <Text style={styles.placeText}>{product.base_unit}</Text>
+              <View style={styles.flex}>
+                <Button title="Guardar" variant="secondary" disabled={!sizeOk || busy || parsedSize === unitSize} onPress={saveSize} />
+              </View>
+            </View>
+            {(product.base_unit === 'g' || product.base_unit === 'ml') && unitSize ? (
+              <Pressable
+                onPress={() =>
+                  changeUnit('un', Math.round((1 / unitSize) * 1e6) / 1e6, `${formatAmount(product.total, product.base_unit)} passam a ${formatAmount(product.total / unitSize, 'un')}.`)
+                }>
+                <Text style={styles.linkText}>Voltar a contar em unidades</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : (
+          <Text style={styles.essentialHint}>Conta-se em {product.base_unit}.</Text>
+        )}
+
         <Text style={styles.label}>Onde fica?</Text>
         <View style={styles.places}>
           {PLACES.map((pl) => {
@@ -218,6 +299,10 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 20, gap: 12, paddingBottom: 80 },
+  sizeBox: { gap: 8 },
+  sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sizeInput: { minWidth: 84, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: '#fff', padding: 10, fontSize: 17, textAlign: 'center', color: colors.ink },
+  linkText: { color: colors.primary },
   places: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   place: { borderWidth: 1, borderColor: colors.primary, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
   placeOn: { backgroundColor: colors.pink, borderColor: colors.pink },
