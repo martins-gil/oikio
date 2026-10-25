@@ -1,5 +1,5 @@
 import { Screen } from '@/components/Screen';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
@@ -42,6 +42,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 export default function MoneyScreen() {
   const { session } = useSession();
+  const router = useRouter();
   const { household, members } = useHousehold();
   const me = session?.user.id;
 
@@ -237,6 +238,10 @@ export default function MoneyScreen() {
           <Button title={saving ? 'A guardar…' : 'Guardar'} disabled={cents === null || saving} onPress={save} />
         </View>
 
+        <Pressable style={styles.analysisLink} onPress={() => router.push('/analysis')}>
+          <Text style={styles.analysisText}>📈 Análise: onde se perde dinheiro e orçamento sugerido</Text>
+        </Pressable>
+
         <View style={styles.monthRow}>
           <Pressable hitSlop={12} onPress={() => changeMonth(-1)}>
             <Text style={styles.arrow}>◀</Text>
@@ -368,6 +373,8 @@ export default function MoneyScreen() {
 }
 
 const styles = StyleSheet.create({
+  analysisLink: { borderRadius: radius.card, padding: 14, backgroundColor: colors.lavender },
+  analysisText: { color: colors.primary, fontSize: 15 },
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16, gap: 14, paddingBottom: 100 },

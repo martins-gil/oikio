@@ -18,6 +18,7 @@ import {
   type StockLevel,
   type StockRow,
 } from '@/lib/stock';
+import { formatEuros } from '@/lib/money';
 import { saveErrorText } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
@@ -71,6 +72,27 @@ export default function ProductScreen() {
     const after = await load();
     if (!error && !wasInList && after.inList) setToast('🛒 Entrou na lista de compras');
     setBusy(false);
+  };
+
+  // «Deitei fora»: regista o desperdício (sai do stock e conta para a análise de despesas)
+  const discard = (qty: number | null) =>
+    run(async () => {
+      const { data, error } = await supabase.rpc('discard_product', { p_product: id, p_qty: qty });
+      const value = (data as { value_cents: number | null } | null)?.value_cents;
+      if (!error) setToast(value ? `🗑️ Registado: ${formatEuros(value)} deitados fora` : '🗑️ Registado como deitado fora');
+      return { error };
+    }, 'Não foi possível registar.');
+
+  const askDiscard = () => {
+    if (!product) return;
+    const one = stepFor(product.base_unit);
+    const all = Number(product.total);
+    const buttons = [
+      { text: 'Cancelar', style: 'cancel' as const },
+      ...(all > one ? [{ text: `Só ${formatAmount(one, product.base_unit)}`, onPress: () => discard(one) }] : []),
+      { text: `Tudo (${formatAmount(all, product.base_unit)})`, style: 'destructive' as const, onPress: () => discard(null) },
+    ];
+    Alert.alert('Deitaste fora?', 'Sai do stock e fica registado como desperdício.', buttons);
   };
 
   const setLevel = (level: StockLevel) =>
@@ -283,6 +305,12 @@ export default function ProductScreen() {
           <Switch value={essential} onValueChange={toggleEssential} />
         </View>
 
+        {!isLevel && Number(product.total) > 0 ? (
+          <Pressable style={styles.discard} onPress={askDiscard} disabled={busy}>
+            <Text style={styles.linkText}>🗑️ Deitei fora</Text>
+          </Pressable>
+        ) : null}
+
         <View style={styles.spacer} />
         {listItemId ? (
           <Button title="🛒 Está na lista — tirar" variant="secondary" disabled={busy} onPress={removeFromList} />
@@ -303,6 +331,7 @@ const styles = StyleSheet.create({
   sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sizeInput: { minWidth: 84, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: '#fff', padding: 10, fontSize: 17, textAlign: 'center', color: colors.ink },
   linkText: { color: colors.primary },
+  discard: { alignSelf: 'flex-start', paddingVertical: 8 },
   places: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   place: { borderWidth: 1, borderColor: colors.primary, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
   placeOn: { backgroundColor: colors.pink, borderColor: colors.pink },

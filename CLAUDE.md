@@ -70,6 +70,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Trocas e agradecimentos só por funções (`request_swap`/`answer_swap`/`cancel_swap`, `give_kudos`/`mark_kudos_seen`); as tabelas são só de leitura para a app.
 - Perfil de cozinha por casa em `cooking_profiles` (escolhas validadas na base de dados; a IA das refeições lê-o, e as restrições são sempre respeitadas).
 - Refeições (M9): `suggest-meals` propõe 3 receitas; o servidor descarta as que contrariam restrições ou equipamento; `add_recipe_items_to_shopping_list()` e `cook_meal()` só correm com confirmação; preços só de `v_product_prices` (talões confirmados). Ver `docs/refeicoes.md`.
+- Análise (M15): `spending_scores()`, `budget_suggestions()`, `loss_insights()` (só despesas partilhadas, só membros) e `discard_product()` («Deitei fora» → movimento `waste`). Ver `docs/analise-de-despesas.md`.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
 
 ## Forma de trabalhar comigo
@@ -99,7 +100,8 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M8b Ler o talão por foto com IA: Edge Function `read-receipt` (chave da Claude API só nos secrets; modelo em `supabase/functions/_shared/ai.ts`), fotos num balde privado, produtos novos e tamanho de cada unidade; ver `docs/talao-por-foto.md`
 - [x] M14 Perfil de cozinha: pessoas, horários das refeições, orçamento semanal, preferências, restrições e equipamentos (air fryer, forno, Bimby…); ver `docs/perfil-de-cozinha.md`
 - [x] M9 Sugestões de refeições com IA: Edge Function `suggest-meals`, lista de compras e «Cozinhei» (desconta do stock); ver `docs/refeicoes.md`
-- [ ] M15 Otimização dos custos semanais da comida (preços reais dos talões, stock a expirar, orçamento)
+- [x] M15 Análise de despesas por algoritmo SQL (sem IA): nota mensal, onde se perde dinheiro, orçamento sugerido e «Deitei fora»; ver `docs/analise-de-despesas.md`
+- [ ] M15b Plano semanal de refeições com custos (preços reais dos talões, stock a expirar, orçamento)
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas
