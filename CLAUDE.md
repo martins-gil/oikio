@@ -109,7 +109,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M15b Plano semanal de refeições: Edge Function `plan-week`, custos só com preços de talões e só para quem ligar «Mostrar custos e orçamento» (definição pessoal); M15c: semana seguinte, favoritas ⭐, marmitas para congelar e «E se eu comprar…?»; ver `docs/plano-semanal.md`
 - [x] M16 Validades reais (USDA FoodKeeper) como definição pessoal «Mostrar validades sugeridas»; ver `docs/validades.md`
 - [x] M17 «Explica-me» com IA na Análise de despesas: `explain-spending`, definição pessoal «Explicações com IA», números verificados; ver `docs/analise-de-despesas.md`
-- [ ] M18 Várias casas por conta: seletor no cabeçalho, casa ativa por telemóvel, sair da casa e passar a administração; ver `docs/varias-casas.md`
+- [x] M18 Várias casas por conta: seletor no cabeçalho, casa ativa por telemóvel, sair da casa e passar a administração; ver `docs/varias-casas.md`
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas
