@@ -39,4 +39,10 @@ const m3 = allocate({ ...base, uses_stock: [{ product_id: 'arroz', name: 'Arroz'
 assert.equal(m3.missing[0].est_cost_cents, null);
 assert.equal(m3.unpriced_count, 1);
 assert.deepEqual(totals([m2, m3]), { total_cost_cents: 40, unpriced_count: 1, meals_count: 2 });
+// semana seguinte: inteira, a começar na próxima segunda-feira
+const next = planWeek('workweek', '2026-10-25', 'next');
+assert.equal(next.monday, '2026-10-26');
+assert.equal(next.slots.length, 10);
+// o caso real: ao domingo, «esta semana» só tem o jantar de hoje (por isso a app oferece a semana seguinte)
+assert.equal(planWeek('dinners', '2026-10-25', 'this').slots.length, 1);
 console.log('plan.test: tudo ok');

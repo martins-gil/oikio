@@ -8,7 +8,7 @@ import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { EQUIPMENT } from '@/lib/kitchen';
-import { budgetColor, callPlanWeek, dayLabel, SLOT_EMOJI, type PlanRow } from '@/lib/mealPlan';
+import { addDays, budgetColor, callPlanWeek, dayLabel, lisbonToday, mondayOf, shortDate, SLOT_EMOJI, type PlanRow } from '@/lib/mealPlan';
 import { formatEuros } from '@/lib/money';
 import { useShowCosts } from '@/lib/settings';
 import { formatAmount } from '@/lib/stock';
@@ -25,7 +25,11 @@ export default function PlanScreen() {
   const { household } = useHousehold();
   const { showCosts } = useShowCosts();
 
-  const [plan, setPlan] = useState<PlanRow | null | undefined>(undefined); // undefined = a carregar
+  const today = lisbonToday();
+  const thisMonday = mondayOf(today);
+  const nextMonday = addDays(thisMonday, 7);
+  const [week, setWeek] = useState<'this' | 'next'>(new Date(`${today}T12:00:00Z`).getUTCDay() === 0 ? 'next' : 'this'); // ao domingo, a semana seguinte
+  const [plans, setPlans] = useState<Record<string, PlanRow> | undefined>(undefined); // undefined = a carregar
   const [budget, setBudget] = useState<number | null>(null);
   const [hasProfile, setHasProfile] = useState(true);
   const [working, setWorking] = useState<string | null>(null); // 'plan' | 'swap-N'
@@ -39,13 +43,13 @@ export default function PlanScreen() {
   const load = useCallback(async () => {
     if (!household) return;
     const [p, c] = await Promise.all([
-      supabase.from('meal_plans').select('id, week_start, cooked, response').eq('household_id', household.id).order('week_start', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('meal_plans').select('id, week_start, cooked, response').eq('household_id', household.id).in('week_start', [thisMonday, nextMonday]),
       supabase.from('cooking_profiles').select('weekly_budget_cents').eq('household_id', household.id).maybeSingle(),
     ]);
-    setPlan((p.data as PlanRow | null) ?? null);
+    setPlans(Object.fromEntries(((p.data ?? []) as PlanRow[]).map((r) => [r.week_start, r])));
     setHasProfile(!!c.data);
     setBudget((c.data?.weekly_budget_cents as number | null | undefined) ?? null);
-  }, [household]);
+  }, [household, thisMonday, nextMonday]);
 
   useFocusEffect(
     useCallback(() => {
@@ -70,14 +74,15 @@ export default function PlanScreen() {
 
   const generate = () => {
     const cooked = plan?.cooked.length ?? 0;
+    const body = { week };
     if (plan && cooked > 0) {
       Alert.alert('Refazer o plano?', `Já cozinhaste ${cooked} ${cooked === 1 ? 'refeição' : 'refeições'} deste plano. Um plano novo substitui o atual (o stock já descontado não volta).`, [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Refazer', style: 'destructive', onPress: () => run('plan', {}) },
+        { text: 'Refazer', style: 'destructive', onPress: () => run('plan', body) },
       ]);
       return;
     }
-    run('plan', {});
+    run('plan', body);
   };
 
   const addAll = async () => {
@@ -109,7 +114,9 @@ export default function PlanScreen() {
     load();
   };
 
-  if (!household || plan === undefined) {
+  const plan = plans?.[week === 'next' ? nextMonday : thisMonday] ?? null;
+
+  if (!household || plans === undefined) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.primary} />
@@ -141,12 +148,31 @@ export default function PlanScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={styles.chips}>
+          {(['this', 'next'] as const).map((w) => {
+            const monday = w === 'next' ? nextMonday : thisMonday;
+            const on = week === w;
+            return (
+              <Pressable key={w} style={[styles.chip, on && styles.chipOn]} onPress={() => { setWeek(w); setOpen(null); setCooking(null); }}>
+                <Text style={[styles.chipText, on && styles.chipTextOn]}>
+                  {w === 'this' ? 'Esta semana' : 'Próxima semana'} · {shortDate(monday)}
+                  {plans[monday] ? ' ✓' : ''}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <View style={styles.card}>
-          <Text style={styles.title}>{plan ? `Semana de ${dayLabel(plan.week_start).split(' ')[1]}` : 'Plano da semana'}</Text>
+          <Text style={styles.title}>{week === 'next' ? 'Próxima semana' : 'Esta semana'}</Text>
           <Text style={styles.hint}>
-            {plan ? `${meals.length} ${meals.length === 1 ? 'refeição' : 'refeições'} · o stock é repartido entre elas.` : 'Planeia as refeições da semana com o que tens em casa. A IA propõe; tu confirmas.'}
+            {plan
+              ? `${meals.length} ${meals.length === 1 ? 'refeição' : 'refeições'} · o stock é repartido entre elas.`
+              : week === 'next'
+                ? 'Prepara a semana toda com antecedência. A IA propõe; tu confirmas.'
+                : 'Planeia o que resta da semana (a partir de hoje) com o que tens em casa. A IA propõe; tu confirmas.'}
           </Text>
-          <Button title={working === 'plan' ? 'A planear…' : plan ? '🔁 Refazer o plano' : '✨ Planear a semana'} disabled={!!working} onPress={generate} />
+          <Button title={working === 'plan' ? 'A planear…' : plan ? '🔁 Refazer o plano' : week === 'next' ? '✨ Planear a próxima semana' : '✨ Planear o que resta da semana'} disabled={!!working} onPress={generate} />
           {working === 'plan' && (
             <View style={styles.reading}>
               <ActivityIndicator color={colors.primary} />
@@ -293,6 +319,11 @@ const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, paddingBottom: 90 },
   card: { gap: 10, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   cardDone: { opacity: 0.6 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 7, paddingHorizontal: 14 },
+  chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
+  chipText: { color: colors.primary },
+  chipTextOn: { color: '#fff' },
   title: { fontSize: 22, color: colors.ink },
   hint: { color: colors.muted },
   link: { color: colors.primary, fontSize: 15 },

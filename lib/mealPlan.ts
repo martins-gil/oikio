@@ -37,3 +37,9 @@ export function budgetColor(total: number, budget: number): string {
   const r = total / budget;
   return r <= 0.85 ? '#35B38A' : r <= 1 ? '#E59A1E' : '#DC4F89';
 }
+
+// Datas em Lisboa (AAAA-MM-DD) e segunda-feira da semana
+export const lisbonToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date());
+export const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+export const mondayOf = (iso: string) => addDays(iso, -((new Date(`${iso}T12:00:00Z`).getUTCDay() + 6) % 7));
+export const shortDate = (iso: string) => `${Number(iso.slice(8))}/${Number(iso.slice(5, 7))}`;

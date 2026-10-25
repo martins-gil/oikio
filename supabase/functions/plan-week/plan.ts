@@ -30,8 +30,13 @@ export function weekSlots(schedule: string, monday: string): Slot[] {
   return out;
 }
 
-// O plano começa esta semana; se já não há refeições por vir (ex.: domingo à noite), passa para a próxima
-export function planWeek(schedule: string, today: string): { monday: string; slots: Slot[] } {
+// Semana pedida: «this» = o que resta desta semana (se já não há refeições por vir, passa para a próxima);
+// «next» = a semana seguinte inteira (para preparar com antecedência, ex.: ao domingo).
+export function planWeek(schedule: string, today: string, which: 'this' | 'next' = 'this'): { monday: string; slots: Slot[] } {
+  if (which === 'next') {
+    const monday = addDays(mondayOf(today), 7);
+    return { monday, slots: weekSlots(schedule, monday) };
+  }
   let monday = mondayOf(today);
   for (let tries = 0; tries < 2; tries++) {
     const slots = weekSlots(schedule, monday).filter((s) => s.date >= today);

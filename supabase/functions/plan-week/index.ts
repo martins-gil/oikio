@@ -3,7 +3,7 @@
 // lista de compras sem a pessoa confirmar na app.
 //
 // Dois pedidos (POST, com a sessão de quem pede; a RLS limita tudo à casa):
-//   { }                                  -> gera o plano desta semana (ou da próxima, se esta já acabou)
+//   { week?: 'this' | 'next' }           -> gera o plano do que resta desta semana (ou da próxima, se esta já acabou), ou da semana seguinte
 //   { plan_id, slot_index }              -> propõe outra refeição para uma posição do plano
 // Segredos (só nos secrets do Supabase): ANTHROPIC_API_KEY. SUPABASE_URL e SUPABASE_ANON_KEY são injetados pelo Supabase.
 import Anthropic from 'npm:@anthropic-ai/sdk@1.3.0';
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     slots = existing!.response.slots ?? [];
     if (swapIndex! < 0 || swapIndex! >= slots.length) return json({ ok: false, error: 'Refeição inexistente' }, 400);
   } else {
-    const wk = planWeek(profile.schedule as string, today);
+    const wk = planWeek(profile.schedule as string, today, body?.week === 'next' ? 'next' : 'this');
     monday = wk.monday;
     slots = wk.slots;
     const { data } = await supabase.from('meal_plans').select('id, week_start, response, cooked, context').eq('household_id', hid).eq('week_start', monday).maybeSingle();
