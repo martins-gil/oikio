@@ -98,7 +98,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M13 Produtos por local (despensa, frigorífico, congelador, limpeza, outros) + sugestões por local; o separador "Consumíveis" chama-se agora "Produtos"
 - [x] M8b Ler o talão por foto com IA: Edge Function `read-receipt` (chave da Claude API só nos secrets; modelo em `supabase/functions/_shared/ai.ts`), fotos num balde privado, produtos novos e tamanho de cada unidade; ver `docs/talao-por-foto.md`
 - [x] M14 Perfil de cozinha: pessoas, horários das refeições, orçamento semanal, preferências, restrições e equipamentos (air fryer, forno, Bimby…); ver `docs/perfil-de-cozinha.md`
-- [ ] M9 Sugestões de refeições com IA
+- [x] M9 Sugestões de refeições com IA: Edge Function `suggest-meals`, lista de compras e «Cozinhei» (desconta do stock); ver `docs/refeicoes.md`
 - [ ] M15 Otimização dos custos semanais da comida (preços reais dos talões, stock a expirar, orçamento)
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
