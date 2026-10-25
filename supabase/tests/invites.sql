@@ -150,7 +150,7 @@ begin
   perform pg_temp.assert_eq('K4 quem já é da casa não gasta o código', (select (used_at is null)::text from household_invites where token = v_code2), 'true');
 end $$;
 
--- ===== Casa vazia criada por engano é apagada; casa com dados recusa =====
+-- ===== Casa vazia criada por engano é apagada; quem já tem casas com dados fica com todas =====
 do $$
 declare
   h uuid := (select v::uuid from ids where k = 'h'); code text := (select v from ids where k = 'code2');
@@ -177,9 +177,10 @@ begin
   begin perform accept_invite(code3, 'Filipe'); v_err := 'aceitou';
   exception when others then v_err := sqlerrm; end;
   reset role;
-  perform pg_temp.assert_eq('F1 casa com dados: recusa', v_err, 'Já pertences a outra casa com dados');
+  perform pg_temp.assert_eq('F1 casa com dados: entra na casa do convite sem perder a sua', (v_err = 'aceitou')::text, 'true');
   perform pg_temp.assert_eq('F2 a casa com dados continua', (select count(*)::text from households where id = hf), '1');
-  perform pg_temp.assert_eq('F3 o convite não foi gasto', (select (used_at is null)::text from household_invites where token = code3), 'true');
+  perform pg_temp.assert_eq('F3 o convite foi gasto', (select (used_at is not null)::text from household_invites where token = code3), 'true');
+  perform pg_temp.assert_eq('F4 F pertence a duas casas', (select count(*)::text from household_members where user_id = '00000000-0000-0000-0000-0000000000f6'), '2');
 end $$;
 
 rollback;

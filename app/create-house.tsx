@@ -11,7 +11,7 @@ import { colors } from '@/lib/theme';
 
 export default function CreateHouseScreen() {
   const router = useRouter();
-  const { reload } = useHousehold();
+  const { reload, household } = useHousehold();
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,13 +21,13 @@ export default function CreateHouseScreen() {
     if (!trimmed || saving) return;
     setSaving(true);
     setError(null);
-    const { error: err } = await supabase.rpc('create_household', { p_name: trimmed });
+    const { data: newId, error: err } = await supabase.rpc('create_household', { p_name: trimmed });
     if (err) {
       setSaving(false);
-      setError('Não foi possível criar a casa. Tenta outra vez.');
+      setError(/máximo de casas/i.test(err.message) ? 'Já tens o máximo de casas (10).' : 'Não foi possível criar a casa. Tenta outra vez.');
       return;
     }
-    await reload();
+    await reload((newId as string | null) ?? undefined); // a casa nova passa a ser a ativa
     // Fica o ecrã "Hoje" por baixo e o onboarding por cima
     router.replace('/');
     router.push('/onboarding');
@@ -55,7 +55,7 @@ export default function CreateHouseScreen() {
         <Text style={styles.orText}>ou</Text>
       </View>
       <Button title="Tenho um convite" variant="secondary" onPress={() => router.push('/join')} />
-      <Button title="Já tenho conta" variant="secondary" onPress={() => router.push('/sign-in')} />
+      {!household && <Button title="Já tenho conta" variant="secondary" onPress={() => router.push('/sign-in')} />}
     </View>
   );
 }

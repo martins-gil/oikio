@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { useSession } from './session';
 import { supabase } from './supabase';
@@ -13,60 +14,111 @@ export type Member = {
 };
 
 type HouseholdState = {
-  household: Household | null;
-  members: Member[];
+  household: Household | null; // a casa ativa
+  households: Household[]; // todas as casas desta pessoa
+  members: Member[]; // membros da casa ativa
   loading: boolean;
   error: string | null;
-  reload: () => Promise<void>;
+  reload: (preferId?: string) => Promise<void>; // recarrega; `preferId` torna essa casa a ativa (ex.: a que acabou de criar)
+  setActiveHousehold: (id: string) => Promise<void>;
 };
 
 const HouseholdContext = createContext<HouseholdState>({
   household: null,
+  households: [],
   members: [],
   loading: true,
   error: null,
   reload: async () => {},
+  setActiveHousehold: async () => {},
 });
 
-// Procura a casa do utilizador (a RLS só devolve casas de que é membro), com os membros,
-// e partilha-a por toda a app.
+// Chave onde cada telemóvel guarda a casa ativa de cada pessoa
+const activeKey = (userId: string) => `nestkeep.activeHousehold.${userId}`;
+
+// Procura as casas da pessoa (a RLS só devolve casas de que é membro), escolhe a ativa (a última usada neste telemóvel)
+// e carrega os membros dela. Uma pessoa pode pertencer a várias casas.
 export function HouseholdProvider({ children }: { children: ReactNode }) {
   const { session } = useSession();
   const userId = session?.user.id;
-  const [household, setHousehold] = useState<Household | null>(null);
+  const [households, setHouseholds] = useState<Household[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const activeRef = useRef<string | null>(null);
 
-  const reload = useCallback(async () => {
-    const { data, error: err } = await supabase
-      .from('households')
-      .select('id, name, gamification')
-      .limit(1)
-      .maybeSingle();
-    setError(err ? 'Não foi possível carregar a casa.' : null);
-    setHousehold(data as Household | null);
-    if (data) {
-      const { data: rows } = await supabase.rpc('household_members_info', { p_household: data.id });
-      setMembers((rows ?? []) as Member[]);
-    } else {
-      setMembers([]);
-    }
-    setLoading(false);
+  const loadMembers = useCallback(async (id: string | null) => {
+    if (!id) return setMembers([]);
+    const { data: rows } = await supabase.rpc('household_members_info', { p_household: id });
+    setMembers((rows ?? []) as Member[]);
   }, []);
+
+  const choose = useCallback(
+    async (id: string | null) => {
+      activeRef.current = id;
+      setActiveId(id);
+      if (userId && id) AsyncStorage.setItem(activeKey(userId), id).catch(() => {});
+      await loadMembers(id);
+    },
+    [userId, loadMembers],
+  );
+
+  const reload = useCallback(
+    async (preferId?: string) => {
+      if (!userId) return;
+      const { data, error: err } = await supabase
+        .from('household_members')
+        .select('joined_at, households(id, name, gamification)')
+        .eq('user_id', userId)
+        .order('joined_at');
+      setError(err ? 'Não foi possível carregar a casa.' : null);
+      const list = ((data ?? []) as unknown as { households: Household | Household[] | null }[])
+        .map((r) => (Array.isArray(r.households) ? r.households[0] : r.households))
+        .filter((h): h is Household => !!h);
+      setHouseholds(list);
+
+      let stored: string | null = null;
+      try {
+        stored = await AsyncStorage.getItem(activeKey(userId));
+      } catch {
+        stored = null;
+      }
+      const wanted = [preferId, activeRef.current, stored].find((id) => id && list.some((h) => h.id === id)) ?? list[0]?.id ?? null;
+      // Mudou a casa ativa (criou, entrou ou saiu de uma): os ecrãs recomeçam do zero, para nunca aparecerem dados da casa anterior
+      if (activeRef.current && wanted !== activeRef.current) setLoading(true);
+      await choose(wanted);
+      setLoading(false);
+    },
+    [userId, choose],
+  );
+
+  const setActiveHousehold = useCallback(
+    async (id: string) => {
+      if (id === activeRef.current || !households.some((h) => h.id === id)) return;
+      setLoading(true);
+      await choose(id);
+      setLoading(false);
+    },
+    [households, choose],
+  );
 
   // Muda a pessoa com sessão (entrar, sair, aceitar convite): recomeça do zero
   useEffect(() => {
-    setHousehold(null);
+    setHouseholds([]);
     setMembers([]);
+    setActiveId(null);
+    activeRef.current = null;
     if (userId) {
       setLoading(true);
       reload();
     }
   }, [userId, reload]);
 
+  const household = households.find((h) => h.id === activeId) ?? null;
+
   return (
-    <HouseholdContext.Provider value={{ household, members, loading, error, reload }}>
+    <HouseholdContext.Provider value={{ household, households, members, loading, error, reload, setActiveHousehold }}>
       {children}
     </HouseholdContext.Provider>
   );

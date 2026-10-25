@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HouseSwitcher } from '@/components/HouseSwitcher';
 import { Text } from '@/components/Text';
 import { colors, fonts, radius } from '@/lib/theme';
 
@@ -20,6 +21,7 @@ export function Screen({ title, subtitle, logo, children }: Props) {
   return (
     <View style={styles.root}>
       <View style={[styles.hero, { paddingTop: insets.top + 10 }]}>
+        <HouseSwitcher />
         <View style={styles.topRow}>
           {logo ? (
             <Image source={require('../assets/brand/logo-horizontal-white.png')} style={styles.logo} resizeMode="contain" />

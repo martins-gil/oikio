@@ -6,19 +6,20 @@ import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
+import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 import { colors, radius } from '@/lib/theme';
 
 // Mensagens da base de dados → texto para quem usa a app
 function friendly(message: string): string {
   if (message.includes('inválido ou expirado')) return 'Código inválido ou expirado. Pede um novo a quem te convidou.';
-  if (message.includes('outra casa com dados')) return 'Já tens uma casa com dados nesta conta, por isso não podes entrar noutra.';
   return 'Não foi possível entrar. Tenta outra vez.';
 }
 
 export default function JoinScreen() {
   const router = useRouter();
   const { reload } = useHousehold();
+  const { session } = useSession();
   const params = useLocalSearchParams<{ code?: string }>();
   const [code, setCode] = useState(params.code ?? '');
   const [name, setName] = useState('');
@@ -31,22 +32,25 @@ export default function JoinScreen() {
     if (!ready || saving) return;
     setSaving(true);
     setError(null);
-    const { error: err } = await supabase.rpc('accept_invite', { p_token: code, p_display_name: name.trim() });
+    const { data: joinedId, error: err } = await supabase.rpc('accept_invite', { p_token: code, p_display_name: name.trim() });
     if (err) {
       setSaving(false);
       setError(friendly(err.message));
       return;
     }
-    await reload();
+    await reload((joinedId as string | null) ?? undefined); // a casa do convite passa a ser a ativa
     router.replace('/');
-    Alert.alert(
-      'Guarda a tua conta',
-      'Para não perderes o acesso a esta casa (por exemplo se mudares de telemóvel), protege a conta com e-mail e palavra-passe.',
-      [
-        { text: 'Agora não', style: 'cancel' },
-        { text: 'Guardar a conta', onPress: () => router.push('/account') },
-      ],
-    );
+    // Só quem tem uma conta temporária precisa de a guardar
+    if (session?.user.is_anonymous) {
+      Alert.alert(
+        'Guarda a tua conta',
+        'Para não perderes o acesso a esta casa (por exemplo se mudares de telemóvel), protege a conta com e-mail e palavra-passe.',
+        [
+          { text: 'Agora não', style: 'cancel' },
+          { text: 'Guardar a conta', onPress: () => router.push('/account') },
+        ],
+      );
+    }
   };
 
   return (

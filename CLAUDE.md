@@ -73,6 +73,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Plano semanal (M15b): `meal_plans` (um por casa e semana), `plan_missing_items()`, `add_plan_to_shopping_list()`, `cook_planned_meal()`; custos só se `user_settings.show_costs` (pessoal, RLS do próprio). Ver `docs/plano-semanal.md`.
 - Favoritas (M15c): `favorite_meals` (da casa, RLS por casa), `save_favorite()`, `add_favorite_to_shopping_list()` (só o que falta); estrela amarela `#FFBF67`. Plano: semana atual/seguinte, marmitas para congelar e «E se eu comprar…?». Ver `docs/plano-semanal.md`.
 - Validades (M16): tabela `food_shelf_life` gerada do USDA FoodKeeper (CC0) por `supabase/scripts/foodkeeper_to_sql.py`; `product_expiry()`, `expiry_overview()`, `set_product_food()`, `set_printed_expiry()` (a data impressa prevalece); só se mostra com `user_settings.show_expiry` (pessoal). Ver `docs/validades.md`.
+- Várias casas (M18): uma pessoa pode estar em até 10 casas; a casa ativa guarda-se no telemóvel (`useHousehold().household`); `leave_household()`, `make_admin()`; as funções de IA recebem `household_id`. Ver `docs/varias-casas.md`.
 - Explica-me (M17): `explain-spending` (a IA só redige; recusa números que não estão nos dados), `ai_explanations` (cache, histórico e limite), `user_settings.show_ai_explain` (pessoal).
 - Análise (M15): `spending_scores()`, `budget_suggestions()`, `loss_insights()` (só despesas partilhadas, só membros) `discard_product()` («Deitei fora» → movimento `waste`); produtos apagam-se só por `delete_product()` (apagar é lógico, `deleted_at`, nunca `delete` na tabela). Ver `docs/analise-de-despesas.md`.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
@@ -108,7 +109,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M15b Plano semanal de refeições: Edge Function `plan-week`, custos só com preços de talões e só para quem ligar «Mostrar custos e orçamento» (definição pessoal); M15c: semana seguinte, favoritas ⭐, marmitas para congelar e «E se eu comprar…?»; ver `docs/plano-semanal.md`
 - [x] M16 Validades reais (USDA FoodKeeper) como definição pessoal «Mostrar validades sugeridas»; ver `docs/validades.md`
 - [x] M17 «Explica-me» com IA na Análise de despesas: `explain-spending`, definição pessoal «Explicações com IA», números verificados; ver `docs/analise-de-despesas.md`
-- [ ] M18 Várias casas por conta, com seletor da casa ativa
+- [ ] M18 Várias casas por conta: seletor no cabeçalho, casa ativa por telemóvel, sair da casa e passar a administração; ver `docs/varias-casas.md`
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas

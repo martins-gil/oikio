@@ -66,7 +66,7 @@ export default function PlanScreen() {
   const run = async (key: string, body: Record<string, unknown>) => {
     if (working) return;
     setWorking(key);
-    const res = await callPlanWeek(body);
+    const res = await callPlanWeek({ ...body, household_id: household?.id });
     setWorking(null);
     if (res.error) {
       setToast(res.error);

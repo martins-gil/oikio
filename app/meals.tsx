@@ -67,7 +67,7 @@ export default function MealsScreen() {
     setCooked(false);
     setCooking(null);
     setOpen(null);
-    const { data, error } = await supabase.functions.invoke('suggest-meals', { body: { meal } });
+    const { data, error } = await supabase.functions.invoke('suggest-meals', { body: { meal, household_id: household?.id } });
     let result = data as { ok?: boolean; error?: string; needs_profile?: boolean; suggestion_id?: string; meals?: Meal[] } | null;
     if (error && 'context' in error) {
       try {

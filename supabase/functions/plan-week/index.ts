@@ -81,7 +81,10 @@ Deno.serve(async (req) => {
   const userId = userData.user?.id;
   if (!userId) return json({ ok: false, error: 'Sessão em falta' }, 401);
 
-  const { data: household } = await supabase.from('households').select('id').limit(1).maybeSingle();
+  // A casa pedida (a RLS só a devolve se a pessoa for membro); sem pedido, a primeira
+  const wantedHouse = typeof body?.household_id === 'string' && /^[0-9a-f-]{36}$/i.test(body.household_id) ? body.household_id : null;
+  const houseQuery = supabase.from('households').select('id');
+  const { data: household } = await (wantedHouse ? houseQuery.eq('id', wantedHouse) : houseQuery).limit(1).maybeSingle();
   if (!household) return json({ ok: false, error: 'Casa inexistente' }, 404);
   const hid = household.id as string;
 

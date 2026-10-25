@@ -6,7 +6,7 @@ import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
-import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type GamificationMode } from '@/lib/household';
+import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type GamificationMode, type Member } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { useShowAiExplain, useShowCosts, useShowExpiry } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
@@ -44,6 +44,45 @@ export default function HouseScreen() {
       reload();
     }
   };
+
+  // Passar o papel de administrador a outra pessoa da casa
+  const askMakeAdmin = (m: Member) =>
+    Alert.alert(`Tornar ${m.display_name} administrador(a)?`, 'Também poderá convidar pessoas e mudar as definições da casa.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Tornar administrador',
+        onPress: async () => {
+          const { error } = await supabase.rpc('make_admin', { p_household: household!.id, p_user: m.user_id });
+          setToast(error ? 'Não foi possível mudar o papel.' : `${m.display_name} é agora administrador(a)`);
+          reload();
+        },
+      },
+    ]);
+
+  // Sair desta casa: o histórico fica na casa; a pessoa continua nas outras
+  const askLeave = () =>
+    Alert.alert(`Sair de «${household!.name}»?`, 'Deixas de ver esta casa. O histórico fica com quem lá vive e podes voltar com um convite.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Sair da casa',
+        style: 'destructive',
+        onPress: async () => {
+          const { error } = await supabase.rpc('leave_household', { p_household: household!.id });
+          if (error) {
+            setToast(
+              /administrador/i.test(error.message)
+                ? 'És a única administradora: passa o papel a outra pessoa antes de saíres.'
+                : /única pessoa/i.test(error.message)
+                  ? 'És a única pessoa nesta casa, por isso não podes sair.'
+                  : 'Não foi possível sair da casa.',
+            );
+            return;
+          }
+          await reload();
+          router.replace('/');
+        },
+      },
+    ]);
 
   const showInvite = async () => {
     if (!household || busy) return;
@@ -113,6 +152,11 @@ export default function HouseScreen() {
               {m.user_id === me?.id ? ' (tu)' : ''}
             </Text>
             <Text style={styles.cardLine}>{ROLE_LABEL[m.role]}</Text>
+            {isAdmin && m.user_id !== me?.id && m.role !== 'admin' && (
+              <Pressable onPress={() => askMakeAdmin(m)}>
+                <Text style={styles.linkAction}>Tornar administrador</Text>
+              </Pressable>
+            )}
           </View>
         ))}
 
@@ -209,6 +253,9 @@ export default function HouseScreen() {
           />
         </View>
 
+        <Text style={styles.section}>Esta casa</Text>
+        <Button title="Sair desta casa" variant="secondary" onPress={askLeave} />
+
         <Text style={styles.section}>A tua conta</Text>
         {anonymous ? (
           <View style={styles.warn}>
@@ -239,6 +286,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.card, ...shadow, padding: 14, backgroundColor: '#fff', gap: 2 },
   cardTitle: { fontSize: 17, fontWeight: '600' },
   cardLine: { color: colors.muted },
+  linkAction: { color: colors.primary, fontSize: 14, marginTop: 4 },
   prefRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   prefText: { flex: 1, gap: 2 },
   prefTitle: { fontSize: 16, color: colors.ink },
