@@ -68,6 +68,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Despesas: partilhadas veem-se na casa, "só minhas" só o pagador; só o pagador altera/apaga. `time_entries` (banco de horas, consultas) só o dono.
 - Equilíbrio: `house_task_status()` (indicador verde→vermelho = tempo desde a última vez ÷ intervalo) e `weekly_summary()` (semana de Lisboa, sem tarefas pessoais). `households.gamification`: off / weekly_summary / competition; só o admin altera a casa (e nunca o `plan`).
 - Trocas e agradecimentos só por funções (`request_swap`/`answer_swap`/`cancel_swap`, `give_kudos`/`mark_kudos_seen`); as tabelas são só de leitura para a app.
+- Perfil de cozinha por casa em `cooking_profiles` (escolhas validadas na base de dados; a IA das refeições lê-o, e as restrições são sempre respeitadas).
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
 
 ## Forma de trabalhar comigo
@@ -95,7 +96,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M8 Talões: registo da compra à mão + `confirm_receipt()` (stock, lista de compras, despesa) e ecrã de confirmação
 - [x] M13 Produtos por local (despensa, frigorífico, congelador, limpeza, outros) + sugestões por local; o separador "Consumíveis" chama-se agora "Produtos"
 - [x] M8b Ler o talão por foto com IA: Edge Function `read-receipt` (chave da Claude API só nos secrets; modelo em `supabase/functions/_shared/ai.ts`), fotos num balde privado, produtos novos e tamanho de cada unidade; ver `docs/talao-por-foto.md`
-- [ ] M14 Perfil de cozinha: pessoas, horários das refeições, orçamento semanal, preferências, restrições e equipamentos (air fryer, forno, Bimby…)
+- [x] M14 Perfil de cozinha: pessoas, horários das refeições, orçamento semanal, preferências, restrições e equipamentos (air fryer, forno, Bimby…); ver `docs/perfil-de-cozinha.md`
 - [ ] M9 Sugestões de refeições com IA
 - [ ] M15 Otimização dos custos semanais da comida (preços reais dos talões, stock a expirar, orçamento)
 - [x] M10 Separador pessoal (privado)

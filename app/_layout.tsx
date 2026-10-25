@@ -71,6 +71,7 @@ export default function RootLayout() {
           <Stack.Screen name="task/suggestions" options={{ title: 'Sugestões' }} />
           <Stack.Screen name="hours" options={{ title: 'Banco de horas' }} />
           <Stack.Screen name="receipt" options={{ title: 'Registar compra' }} />
+          <Stack.Screen name="kitchen" options={{ title: 'Perfil de cozinha' }} />
           <Stack.Screen name="notifications" options={{ title: 'Lembretes' }} />
           <Stack.Screen name="join" options={{ title: 'Tenho um convite' }} />
           <Stack.Screen name="sign-in" options={{ title: 'Entrar' }} />
