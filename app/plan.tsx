@@ -15,7 +15,7 @@ import { useFavorites } from '@/lib/favorites';
 import { useShowCosts } from '@/lib/settings';
 import { formatAmount } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 const equipmentName = (key: string) => EQUIPMENT.find((e) => e.key === key)?.label ?? key;
 const num = (t: string) => Number(t.replace(',', '.'));
@@ -135,8 +135,8 @@ export default function PlanScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.card}>
-          <Text style={styles.title}>Primeiro, o perfil de cozinha</Text>
-          <Text style={styles.hint}>Preciso de saber quantas pessoas são, o que têm na cozinha e as alergias, para planear só o que serve.</Text>
+          <Text variant="section" style={styles.title}>Primeiro, o perfil de cozinha</Text>
+          <Text variant="label" style={styles.hint}>Preciso de saber quantas pessoas são, o que têm na cozinha e as alergias, para planear só o que serve.</Text>
           <Button title="🍽️ Preencher o perfil" onPress={() => router.push('/kitchen')} />
         </View>
       </View>
@@ -155,14 +155,14 @@ export default function PlanScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.chips}>
           {(['this', 'next'] as const).map((w) => {
             const monday = w === 'next' ? nextMonday : thisMonday;
             const on = week === w;
             return (
-              <Pressable key={w} style={[styles.chip, on && styles.chipOn]} onPress={() => { setWeek(w); setOpen(null); setCooking(null); }}>
-                <Text style={[styles.chipText, on && styles.chipTextOn]}>
+              <Pressable key={w} accessibilityRole="button" style={[styles.chip, on && styles.chipOn]} onPress={() => { setWeek(w); setOpen(null); setCooking(null); }}>
+                <Text variant="button" style={on ? styles.chipTextOn : styles.chipText}>
                   {w === 'this' ? 'Esta semana' : 'Próxima semana'} · {shortDate(monday)}
                   {plans[monday] ? ' ✓' : ''}
                 </Text>
@@ -172,8 +172,8 @@ export default function PlanScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}>{week === 'next' ? 'Próxima semana' : 'Esta semana'}</Text>
-          <Text style={styles.hint}>
+          <Text variant="section" style={styles.title}>{week === 'next' ? 'Próxima semana' : 'Esta semana'}</Text>
+          <Text variant="label" style={styles.hint}>
             {plan
               ? `${meals.length} ${meals.length === 1 ? 'refeição' : 'refeições'} · o stock é repartido entre elas.`
               : week === 'next'
@@ -182,13 +182,13 @@ export default function PlanScreen() {
           </Text>
           {fav.favorites.length > 0 && (
             <View style={styles.block}>
-              <Text style={styles.blockTitle}>⭐ Incluir favoritas</Text>
+              <Text variant="button" style={styles.blockTitle}>⭐ Incluir favoritas</Text>
               <View style={styles.chips}>
                 {fav.favorites.map((f) => {
                   const on = selectedFavs.includes(f.id);
                   return (
                     <Pressable key={f.id} style={[styles.chip, on && styles.chipOn]} onPress={() => setSelectedFavs(on ? selectedFavs.filter((x) => x !== f.id) : [...selectedFavs, f.id].slice(0, 7))}>
-                      <Text style={[styles.chipText, on && styles.chipTextOn]}>{f.title}</Text>
+                      <Text variant="button" style={on ? styles.chipTextOn : styles.chipText}>{f.title}</Text>
                     </Pressable>
                   );
                 })}
@@ -196,49 +196,48 @@ export default function PlanScreen() {
             </View>
           )}
           <View style={styles.block}>
-            <Text style={styles.blockTitle}>🛒 E se eu comprar…? (opcional)</Text>
-            <TextInput style={styles.input} value={buyText} onChangeText={setBuyText} placeholder="ex.: frango, natas (até 3 produtos)" />
+            <Text variant="button" style={styles.blockTitle}>🛒 E se eu comprar…? (opcional)</Text>
+            <TextInput style={styles.input} accessibilityLabel="E se eu comprar" value={buyText} onChangeText={setBuyText} placeholder="ex.: frango, natas (até 3 produtos)" />
           </View>
           {week === 'next' && (
             <View style={styles.switchRow}>
               <View style={styles.flex}>
-                <Text style={styles.blockTitle}>🧊 Preparar marmitas no domingo</Text>
-                <Text style={styles.small}>Cozinhas em quantidade antes da semana e congelas para os dias úteis.</Text>
+                <Text variant="button" style={styles.blockTitle}>🧊 Preparar marmitas no domingo</Text>
+                <Text variant="label" style={styles.small}>Cozinhas em quantidade antes da semana e congelas para os dias úteis.</Text>
               </View>
-              <Switch value={batch} onValueChange={setBatch} />
+              <Switch accessibilityLabel="Preparar marmitas no domingo" value={batch} onValueChange={setBatch} />
             </View>
           )}
-          <Button title={working === 'plan' ? 'A planear…' : plan ? '🔁 Refazer o plano' : week === 'next' ? '✨ Planear a próxima semana' : '✨ Planear o que resta da semana'} disabled={!!working} onPress={generate} />
           {working === 'plan' && (
             <View style={styles.reading}>
               <ActivityIndicator color={colors.primary} />
-              <Text style={styles.small}>A ver o que tens em casa… pode demorar até 2 minutos.</Text>
+              <Text variant="label" style={styles.small}>A ver o que tens em casa… pode demorar até 2 minutos.</Text>
             </View>
           )}
         </View>
 
         {plan && showCosts && (
           <View style={styles.card}>
-            <Text style={styles.blockTitle}>Custo do que falta comprar</Text>
-            <Text style={styles.big}>{total > 0 ? `≈ ${formatEuros(total)}` : 'Sem preços ainda'}</Text>
+            <Text variant="button" style={styles.blockTitle}>Custo do que falta comprar</Text>
+            <Text variant="display" style={styles.big}>{total > 0 ? `≈ ${formatEuros(total)}` : 'Sem preços ainda'}</Text>
             {budget !== null && budget > 0 && total > 0 && (
               <>
                 <View style={styles.track}>
                   <View style={[styles.fill, { width: `${Math.min(100, Math.round((total / budget) * 100))}%`, backgroundColor: budgetColor(total, budget) }]} />
                 </View>
-                <Text style={styles.small}>de {formatEuros(budget)} por semana</Text>
+                <Text variant="label" style={styles.small}>de {formatEuros(budget)} por semana</Text>
               </>
             )}
-            <Text style={styles.small}>
+            <Text variant="label" style={styles.small}>
               Preços dos teus talões{unpriced > 0 ? ` · ${unpriced} ${unpriced === 1 ? 'ingrediente' : 'ingredientes'} sem preço` : ''}.
             </Text>
             {over > 0 && priciest && (
               <View style={styles.warn}>
-                <Text style={styles.warnText}>
+                <Text variant="body" style={styles.warnText}>
                   O plano passa {formatEuros(over)} do orçamento. A refeição mais cara a comprar é «{priciest.m.title}» (≈ {formatEuros(priciest.m.est_missing_cost_cents)}).
                 </Text>
-                <Pressable disabled={!!working} onPress={() => run(`swap-${priciest.m.slot_index}`, { plan_id: plan.id, slot_index: priciest.m.slot_index })}>
-                  <Text style={styles.link}>🔄 Trocar por outra</Text>
+                <Pressable style={styles.linkRow} disabled={!!working} onPress={() => run(`swap-${priciest.m.slot_index}`, { plan_id: plan.id, slot_index: priciest.m.slot_index })}>
+                  <Text variant="button" style={styles.link}>🔄 Trocar por outra</Text>
                 </Pressable>
               </View>
             )}
@@ -254,32 +253,32 @@ export default function PlanScreen() {
             const isCooking = cooking === pos && pos >= 0;
             return (
               <View key={`${plan.id}-${i}`} style={[styles.card, done && styles.cardDone]}>
-                <Text style={styles.slot}>
+                <Text variant="button" style={styles.slot}>
                   {m?.from_freezer ? '🧊' : (SLOT_EMOJI[s.slot] ?? '🍽️')} {dayLabel(s.date)} · {m?.from_freezer ? `${s.slot} (do congelador)` : m?.is_prep ? 'preparação de marmitas (para congelar)' : s.slot}
                 </Text>
                 {!m ? (
                   <>
-                    <Text style={styles.small}>Sem proposta para esta refeição.</Text>
+                    <Text variant="label" style={styles.small}>Sem proposta para esta refeição.</Text>
                     <Button title={working === `swap-${i}` ? 'A pensar…' : '✨ Propor uma refeição'} variant="secondary" disabled={!!working} onPress={() => run(`swap-${i}`, { plan_id: plan.id, slot_index: i })} />
                   </>
                 ) : (
                   <>
                     <View style={styles.titleRow}>
-                      <Text style={[styles.mealTitle, styles.flex]}>{m.title}</Text>
+                      <Text variant="section" style={[styles.mealTitle, styles.flex]}>{m.title}</Text>
                       <FavoriteStar on={!!fav.find(m.title)} onPress={async () => setToast((await fav.toggle(m)) ?? 'Não foi possível guardar.')} />
                     </View>
-                    {m.why && <Text style={styles.hint}>{m.why}</Text>}
+                    {m.why && <Text variant="label" style={styles.hint}>{m.why}</Text>}
                     {m.is_prep && (
-                      <Text style={styles.small}>
+                      <Text variant="label" style={styles.small}>
                         Dá para {m.serves?.length ?? 0} {m.serves?.length === 1 ? 'refeição' : 'refeições'} dos dias úteis. Arrefece depressa, põe a data na embalagem e confirma os prazos de congelação numa fonte de segurança alimentar.
                       </Text>
                     )}
-                    <Text style={styles.small}>
+                    <Text variant="label" style={styles.small}>
                       {[m.time_minutes ? `⏱ ${m.time_minutes} min` : null, m.difficulty, ...m.equipment.map(equipmentName)].filter(Boolean).join(' · ')}
                     </Text>
                     {m.uses_stock.length > 0 && (
                       <View style={styles.block}>
-                        <Text style={styles.blockTitle}>Já tens</Text>
+                        <Text variant="button" style={styles.blockTitle}>Já tens</Text>
                         {m.uses_stock.map((u) => (
                           <Text key={u.product_id} style={styles.line}>
                             ✓ {u.name} — {formatAmount(u.quantity, u.unit)}
@@ -289,7 +288,7 @@ export default function PlanScreen() {
                     )}
                     {m.missing.length > 0 && (
                       <View style={styles.block}>
-                        <Text style={styles.blockTitle}>Falta comprar</Text>
+                        <Text variant="button" style={styles.blockTitle}>Falta comprar</Text>
                         {m.missing.map((x, k) => (
                           <Text key={k} style={styles.line}>
                             • {x.name}
@@ -298,49 +297,51 @@ export default function PlanScreen() {
                           </Text>
                         ))}
                         {showCosts && (
-                          <Text style={styles.small}>
+                          <Text variant="label" style={styles.small}>
                             {m.est_missing_cost_cents > 0 ? `≈ ${formatEuros(m.est_missing_cost_cents)}` : 'Sem preços nos teus talões'}
                             {m.unpriced_count > 0 && m.est_missing_cost_cents > 0 ? ` + ${m.unpriced_count} sem preço` : ''}
                           </Text>
                         )}
                       </View>
                     )}
-                    <Pressable onPress={() => setOpen(open === pos ? null : pos)}>
-                      <Text style={styles.link}>{open === pos ? 'Esconder os passos' : 'Ver os passos'}</Text>
+                    <Pressable style={styles.linkRow} onPress={() => setOpen(open === pos ? null : pos)} accessibilityRole="button">
+                      <Text variant="button" style={styles.link}>{open === pos ? 'Esconder os passos' : 'Ver os passos'}</Text>
                     </Pressable>
                     {open === pos && m.steps.map((st, k) => <Text key={k} style={styles.line}>{k + 1}. {st}</Text>)}
 
                     {isCooking ? (
                       <View style={styles.block}>
-                        <Text style={styles.blockTitle}>O que usaste? Ajusta e confirma</Text>
+                        <Text variant="button" style={styles.blockTitle}>O que usaste? Ajusta e confirma</Text>
                         {m.uses_stock.map((u) => (
-                          <View key={u.product_id} style={styles.qtyRow}>
-                            <Text style={[styles.line, styles.flex]}>{u.name}</Text>
-                            <TextInput style={styles.qtyInput} value={qty[u.product_id] ?? ''} onChangeText={(t) => setQty((prev) => ({ ...prev, [u.product_id]: t }))} keyboardType="decimal-pad" />
-                            <Text style={styles.small}>{u.unit}</Text>
+                          <View key={u.product_id} style={styles.qtyBlock}>
+                            <Text variant="body" style={styles.line}>{u.name}</Text>
+                            <View style={styles.qtyRow}>
+                              <TextInput style={styles.qtyInput} value={qty[u.product_id] ?? ''} onChangeText={(t) => setQty((prev) => ({ ...prev, [u.product_id]: t }))} keyboardType="decimal-pad" accessibilityLabel={`Quantidade de ${u.name}`} />
+                              <Text variant="label" style={styles.small}>{u.unit}</Text>
+                            </View>
                           </View>
                         ))}
                         <View style={styles.row}>
-                          <View style={styles.flex}>
+                          <View style={styles.rowButton}>
                             <Button title="Cancelar" variant="secondary" onPress={() => setCooking(null)} />
                           </View>
-                          <View style={styles.flex}>
+                          <View style={styles.rowButton}>
                             <Button title={busy ? 'A guardar…' : 'Confirmar'} disabled={busy} onPress={() => confirmCooked(pos)} />
                           </View>
                         </View>
                       </View>
                     ) : m.from_freezer ? (
-                      <Text style={styles.small}>🧊 Tira do congelador na véspera. O custo está na preparação.</Text>
+                      <Text variant="label" style={styles.small}>🧊 Tira do congelador na véspera. O custo está na preparação.</Text>
                     ) : done ? (
-                      <Text style={styles.small}>✅ Cozinhada</Text>
+                      <Text variant="label" style={styles.small}>✅ Cozinhada</Text>
                     ) : (
                       <View style={styles.row}>
                         {!m.is_prep && (
-                          <View style={styles.flex}>
+                          <View style={styles.rowButton}>
                             <Button title={working === `swap-${i}` ? 'A pensar…' : '🔄 Trocar'} variant="secondary" disabled={!!working} onPress={() => run(`swap-${i}`, { plan_id: plan.id, slot_index: i })} />
                           </View>
                         )}
-                        <View style={styles.flex}>
+                        <View style={styles.rowButton}>
                           <Button title="Cozinhei" disabled={busy || m.uses_stock.length === 0} onPress={() => startCooking(pos)} />
                         </View>
                       </View>
@@ -355,8 +356,15 @@ export default function PlanScreen() {
           <Button title={busy ? 'A pôr na lista…' : '🛒 Juntar tudo o que falta à lista'} disabled={busy} onPress={addAll} />
         )}
 
-        {plan && <Text style={styles.disclaimer}>A IA pode enganar-se. Confirma sempre os ingredientes e os rótulos, sobretudo se alguém tiver alergias.</Text>}
+        {plan && (
+          <View style={styles.disclaimerBox}>
+            <Text variant="label" style={styles.disclaimer}>⚠ A IA pode enganar-se. Confirma sempre os ingredientes e os rótulos, sobretudo se alguém tiver alergias.</Text>
+          </View>
+        )}
       </ScrollView>
+      <View style={styles.footer}>
+        <Button title={working === 'plan' ? 'A planear…' : plan ? '🔁 Refazer o plano' : week === 'next' ? '✨ Planear a próxima semana' : '✨ Planear o que resta da semana'} disabled={!!working} onPress={generate} />
+      </View>
       <Toast message={toast} onHide={hideToast} />
     </KeyboardAvoidingView>
   );
@@ -365,34 +373,39 @@ export default function PlanScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 12, paddingBottom: 90 },
-  card: { gap: 10, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  footer: { padding: spacing.md, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.white },
+  card: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   cardDone: { opacity: 0.6 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 7, paddingHorizontal: 14 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
   chipTextOn: { color: colors.white },
-  title: { fontSize: 22, color: colors.ink },
+  title: { color: colors.ink },
   hint: { color: colors.muted },
-  link: { color: colors.primary, fontSize: 15 },
+  link: { color: colors.primary },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
   reading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  small: { color: colors.muted, fontSize: 13 },
-  slot: { fontSize: 14, color: colors.primary, textTransform: 'capitalize' },
-  mealTitle: { fontSize: 20, color: colors.ink },
+  small: { color: colors.muted, flexShrink: 1 },
+  slot: { color: colors.primary, textTransform: 'capitalize' },
+  mealTitle: { color: colors.ink },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  block: { gap: 4, padding: 12, borderRadius: 14, backgroundColor: colors.bg },
-  blockTitle: { fontSize: 15, color: colors.ink },
-  line: { color: colors.ink, fontSize: 14 },
-  big: { fontSize: 28, color: colors.ink },
+  block: { gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: colors.panel },
+  blockTitle: { color: colors.ink },
+  line: { color: colors.ink },
+  big: { color: colors.ink },
   track: { height: 12, borderRadius: 6, backgroundColor: colors.lavender, overflow: 'hidden' },
   fill: { height: 12, borderRadius: 6 },
-  warn: { gap: 6, padding: 12, borderRadius: 14, backgroundColor: colors.peach },
-  warnText: { color: colors.ink, fontSize: 14 },
-  row: { flexDirection: 'row', gap: 10 },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  qtyInput: { minWidth: 76, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 8, textAlign: 'center', fontSize: 16, color: colors.ink },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 10, fontSize: 15, color: colors.ink },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  disclaimer: { color: colors.muted, fontSize: 12, textAlign: 'center' },
+  warn: { gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: colors.peach },
+  warnText: { color: colors.ink },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  rowButton: { flexGrow: 1, flexBasis: 140 },
+  qtyBlock: { gap: 6 },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  qtyInput: { minWidth: 100, minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 12, textAlign: 'center', color: colors.ink },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },
+  disclaimerBox: { padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.warnBg },
+  disclaimer: { color: colors.warnText },
 });

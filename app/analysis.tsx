@@ -2,6 +2,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 
 import { Toast } from '@/components/Toast';
@@ -10,7 +11,7 @@ import { useHousehold } from '@/lib/household';
 import { useShowAiExplain } from '@/lib/settings';
 import { formatEuros } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, radius, shadow, spacing } from '@/lib/theme';
 import { devHint } from '@/lib/errors';
 
 const BAR_HEIGHT = 90;
@@ -105,85 +106,83 @@ export default function AnalysisScreen() {
 
   return (
     <View style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         {showAiExplain && (
           <View style={styles.card}>
-            <Text style={styles.title}>💬 Explica-me</Text>
+            <Text variant="section" style={styles.title}>💬 Explica-me</Text>
             {explain ? (
               <>
-                <Text style={styles.bold}>{explain.summary}</Text>
+                <Text variant="button" style={styles.bold}>{explain.summary}</Text>
                 {explain.highlights.map((h, k) => (
                   <Text key={k} style={styles.small}>• {h}</Text>
                 ))}
-                {explain.tip ? <Text style={styles.small}>💡 {explain.tip}</Text> : null}
-                <Text style={styles.source}>Escrito por IA a partir dos números desta página (só despesas partilhadas). Confirma sempre.</Text>
+                {explain.tip ? <Text variant="label" style={styles.small}>💡 {explain.tip}</Text> : null}
+                <Text variant="label" style={styles.source}>Escrito por IA a partir dos números desta página (só despesas partilhadas). Confirma sempre.</Text>
               </>
             ) : (
-              <Text style={styles.small}>{hasData ? 'A IA explica, em poucas frases, como correu o mês e onde podes poupar. Só usa os números calculados aqui.' : 'Quando houver despesas partilhadas, a IA explica aqui, em poucas frases, como correu o mês e onde podes poupar.'}</Text>
+              <Text variant="label" style={styles.small}>{hasData ? 'A IA explica, em poucas frases, como correu o mês e onde podes poupar. Só usa os números calculados aqui.' : 'Quando houver despesas partilhadas, a IA explica aqui, em poucas frases, como correu o mês e onde podes poupar.'}</Text>
             )}
-            <Pressable style={[styles.explainButton, (explaining || !hasData) && styles.explainOff]} disabled={explaining || !hasData} onPress={askExplain}>
-              <Text style={styles.applyText}>{explaining ? 'A escrever…' : explain ? 'Explicar outra vez' : 'Explica-me'}</Text>
-            </Pressable>
+            <Button title={explaining ? 'A escrever…' : explain ? 'Explicar outra vez' : '💬 Explica-me'} disabled={explaining || !hasData} onPress={askExplain} />
           </View>
         )}
 
         {!hasData ? (
           <View style={styles.card}>
-            <Text style={styles.title}>Ainda sem dados</Text>
-            <Text style={styles.small}>Regista despesas partilhadas no separador Dinheiro e define orçamentos por categoria. A análise aparece aqui sozinha.</Text>
+            <Text variant="section" style={styles.title}>Ainda sem dados</Text>
+            <Text variant="label" style={styles.small}>Regista despesas partilhadas no separador Dinheiro e define orçamentos por categoria. A análise aparece aqui sozinha.</Text>
           </View>
         ) : (
           <>
             <View style={styles.card}>
-              <Text style={styles.title}>Nota do mês</Text>
+              <Text variant="section" style={styles.title}>Nota do mês</Text>
               <View style={styles.scoreRow}>
                 <View style={[styles.scoreCircle, { borderColor: scoreColor(current.score) }]}>
-                  <Text style={[styles.scoreNumber, { color: scoreColor(current.score) }]}>{current.score ?? '–'}</Text>
+                  <Text variant="title" style={[styles.scoreNumber, { color: scoreColor(current.score) }]}>{current.score ?? '–'}</Text>
                 </View>
                 <View style={styles.flex}>
-                  <Text style={styles.bold}>{current.score !== null ? scoreWord(current.score) : 'Sem nota ainda'}</Text>
-                  <Text style={styles.small}>
+                  <Text variant="button" style={styles.bold}>{current.score !== null ? scoreWord(current.score) : 'Sem nota ainda'}</Text>
+                  <Text variant="label" style={styles.small}>
                     {formatEuros(current.spent_cents)} gastos{current.budget_cents > 0 ? ` · orçamento ${formatEuros(current.budget_cents)}` : ''}
                     {current.partial ? ' · mês em curso' : ''}
                   </Text>
                 </View>
               </View>
-              <Text style={styles.small}>
+              <Text variant="label" style={styles.small}>
                 Conta: 60 % cumprir o orçamento, 20 % gastar como é habitual, 20 % gastar menos do que no mês anterior. Só despesas partilhadas.
               </Text>
             </View>
 
             <View style={styles.card}>
-              <Text style={styles.title}>Últimos meses</Text>
+              <Text variant="section" style={styles.title}>Últimos meses</Text>
               <View style={styles.bars}>
                 {scores.map((m) => (
                   <View key={m.month} style={styles.barCol}>
-                    <Text style={styles.barScore}>{m.score ?? ''}</Text>
+                    <Text variant="label" style={styles.barScore}>{m.score ?? ''}</Text>
                     <View style={styles.barTrack}>
                       <View style={[styles.bar, { height: Math.max(2, (m.spent_cents / maxSpent) * BAR_HEIGHT), backgroundColor: scoreColor(m.score) }]} />
                     </View>
-                    <Text style={styles.barLabel}>{monthShort(m.month)}</Text>
+                    <Text variant="label" style={styles.barLabel}>{monthShort(m.month)}</Text>
                   </View>
                 ))}
               </View>
-              <Text style={styles.small}>
+              <Text variant="label" style={styles.small}>
                 {lastComplete ? `Último mês completo: ${monthShort(lastComplete.month)} com nota ${lastComplete.score}. ` : ''}A altura é quanto gastaste; a cor é a nota.
               </Text>
             </View>
 
             <View style={styles.card}>
-              <Text style={styles.title}>Onde se perde dinheiro</Text>
+              <Text variant="section" style={styles.title}>Onde se perde dinheiro</Text>
               {insights.length === 0 ? (
-                <Text style={styles.small}>Nada a assinalar por agora. Boas contas! ✅</Text>
+                <Text variant="label" style={styles.small}>Nada a assinalar por agora. Boas contas! ✅</Text>
               ) : (
                 insights.map((ins, idx) => {
                   const t = insightText(ins);
                   return (
                     <View key={idx} style={styles.insight}>
-                      <Text style={styles.insightIcon}>{t.icon}</Text>
+                      <Text variant="section" style={styles.insightIcon}>{t.icon}</Text>
                       <View style={styles.flex}>
-                        <Text style={styles.bold}>{t.title}</Text>
-                        {t.hint ? <Text style={styles.small}>{t.hint}</Text> : null}
+                        <Text variant="button" style={styles.bold}>{t.title}</Text>
+                        {t.hint ? <Text variant="label" style={styles.small}>{t.hint}</Text> : null}
                       </View>
                     </View>
                   );
@@ -192,19 +191,19 @@ export default function AnalysisScreen() {
             </View>
 
             <View style={styles.card}>
-              <Text style={styles.title}>Orçamento sugerido</Text>
+              <Text variant="section" style={styles.title}>Orçamento sugerido</Text>
               {suggestions.length === 0 || !suggestions[0].enough_data ? (
-                <Text style={styles.small}>Precisa de pelo menos 3 meses completos de despesas partilhadas para sugerir valores.</Text>
+                <Text variant="label" style={styles.small}>Precisa de pelo menos 3 meses completos de despesas partilhadas para sugerir valores.</Text>
               ) : (
                 <>
-                  <Text style={styles.small}>Mediana dos últimos meses + 5 % de margem, arredondada aos 5 €. Só muda se tocares em «Usar».</Text>
+                  <Text variant="label" style={styles.small}>Mediana dos últimos meses + 5 % de margem, arredondada aos 5 €. Só muda se tocares em «Usar».</Text>
                   {suggestions.map((s) => {
                     const same = s.suggested_cents === s.current_cents;
                     return (
                       <View key={s.category} style={styles.suggestion}>
                         <View style={styles.flex}>
-                          <Text style={styles.bold}>{s.category}</Text>
-                          <Text style={styles.small}>
+                          <Text variant="button" style={styles.bold}>{s.category}</Text>
+                          <Text variant="label" style={styles.small}>
                             Habitual {formatEuros(s.median_cents ?? 0)}
                             {s.current_cents !== null ? ` · agora ${formatEuros(s.current_cents)}` : ' · sem orçamento'}
                             {s.over_months > 0 ? ` · ultrapassado em ${s.over_months} de ${s.months_used} meses` : ''}
@@ -212,11 +211,11 @@ export default function AnalysisScreen() {
                           </Text>
                         </View>
                         {s.suggested_cents !== null && !same ? (
-                          <Pressable style={styles.apply} disabled={busy !== null} onPress={() => apply(s)}>
-                            <Text style={styles.applyText}>Usar {formatEuros(s.suggested_cents)}</Text>
+                          <Pressable style={[styles.apply, busy !== null && styles.applyOff]} disabled={busy !== null} accessibilityRole="button" onPress={() => apply(s)}>
+                            <Text variant="button" style={styles.applyText}>Usar {formatEuros(s.suggested_cents)}</Text>
                           </Pressable>
                         ) : (
-                          <Text style={styles.small}>✓</Text>
+                          <Text variant="body" style={styles.small}>✓</Text>
                         )}
                       </View>
                     );
@@ -235,26 +234,25 @@ export default function AnalysisScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 14, paddingBottom: 80 },
-  card: { gap: 12, borderRadius: radius.card, padding: 16, backgroundColor: colors.card, ...shadow },
-  title: { fontSize: 20, color: colors.ink },
-  bold: { fontSize: 15, color: colors.ink, fontFamily: 'Ubuntu_500Medium' },
-  small: { fontSize: 13, color: colors.muted },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 80 },
+  card: { gap: 12, borderRadius: radius.card, padding: spacing.sm, backgroundColor: colors.card, ...shadow },
+  title: { color: colors.ink },
+  bold: { color: colors.ink },
+  small: { color: colors.muted },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  scoreCircle: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
-  scoreNumber: { fontSize: 26 },
+  scoreCircle: { width: 84, height: 84, borderRadius: 42, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
+  scoreNumber: { textAlign: 'center' },
   bars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   barCol: { flex: 1, alignItems: 'center', gap: 4 },
-  barScore: { fontSize: 12, color: colors.muted, minHeight: 16 },
+  barScore: { color: colors.muted, minHeight: 22 },
   barTrack: { height: BAR_HEIGHT, justifyContent: 'flex-end' },
-  bar: { width: 22, borderRadius: 6 },
-  barLabel: { fontSize: 12, color: colors.muted },
+  bar: { width: 24, borderRadius: 6 },
+  barLabel: { color: colors.muted },
   insight: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  insightIcon: { fontSize: 20 },
-  suggestion: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  apply: { borderRadius: radius.chip, backgroundColor: colors.primary, paddingVertical: 8, paddingHorizontal: 12 },
-  applyText: { color: colors.white, fontSize: 14 },
-  source: { color: colors.faint, fontSize: 12 },
-  explainButton: { alignSelf: 'flex-start', borderRadius: radius.chip, backgroundColor: colors.primary, paddingVertical: 9, paddingHorizontal: 16 },
-  explainOff: { opacity: 0.5 },
+  insightIcon: { color: colors.ink },
+  suggestion: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
+  apply: { minHeight: 48, justifyContent: 'center', borderRadius: 24, backgroundColor: colors.primary, paddingVertical: 8, paddingHorizontal: 18 },
+  applyOff: { opacity: 0.5 },
+  applyText: { color: colors.white },
+  source: { color: colors.muted },
 });
