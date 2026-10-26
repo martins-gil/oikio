@@ -141,6 +141,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M18 Várias casas por conta: seletor no cabeçalho, casa ativa por telemóvel, sair da casa e passar a administração; ver `docs/varias-casas.md`
 - [x] M19 Módulos opcionais por pessoa (Refeições, Dinheiro, Pessoal; só o núcleo numa conta nova), ecrã Casa reorganizado e mensagens sem texto técnico; ver `docs/modulos.md`
 - [x] M20 Tarefas primeiro: tarefa ↔ produtos no formulário, «Hoje» primeiro, arranque por tarefas, formulário e produtos mais simples; ver `docs/tarefas-primeiro.md`
+- [x] M21 Redesenho de legibilidade e elegância: escala de tipos e medidas em `lib/theme.ts`, `Text` com `variant`, todos os ecrãs e componentes redesenhados segundo `DESIGN.md` (texto ≥ 15, campos 56, alvos de toque ≥ 48, botão principal fixo em baixo); componentes partilhados `AuthScreen` (entrada e conta) e `CheckCircle` (listas de escolha)
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas
