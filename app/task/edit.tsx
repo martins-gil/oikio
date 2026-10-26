@@ -6,6 +6,7 @@ import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { DateSheet } from '@/components/DateSheet';
+import { TaskProducts, type TaskProduct } from '@/components/TaskProducts';
 import { useHousehold } from '@/lib/household';
 import { localDate } from '@/lib/money';
 import {
@@ -78,6 +79,8 @@ export default function TaskEditScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showStart, setShowStart] = useState(false);
   const [currentStart, setCurrentStart] = useState<string | null>(null); // início atual (ao editar)
+  const [products, setProducts] = useState<TaskProduct[]>([]); // produtos que a tarefa gasta
+  const [productsTouched, setProductsTouched] = useState(false);
   const set = (patch: Partial<TaskForm>) => setForm((f) => ({ ...f, ...patch }));
 
   useEffect(() => {
@@ -94,6 +97,19 @@ export default function TaskEditScreen() {
         }
         setLoading(false);
       });
+    supabase
+      .from('task_consumptions')
+      .select('product_id, quantity, products(name, base_unit)')
+      .eq('task_id', id)
+      .then(({ data }) => {
+        const rows = (data ?? []) as unknown as { product_id: string; quantity: number; products: { name: string; base_unit: string } | { name: string; base_unit: string }[] | null }[];
+        setProducts(
+          rows.flatMap((r) => {
+            const p = Array.isArray(r.products) ? r.products[0] : r.products;
+            return p ? [{ product_id: r.product_id, name: p.name, unit: p.base_unit, quantity: Number(r.quantity) }] : [];
+          }),
+        );
+      });
   }, [id]);
 
   const others = members.filter((m) => m.user_id !== me);
@@ -107,11 +123,24 @@ export default function TaskEditScreen() {
     if (!household || !valid || saving) return;
     setSaving(true);
     setError(null);
-    const { error: err } = await supabase.rpc('save_task', formToArgs(household.id, form, id));
+    const { data: savedId, error: err } = await supabase.rpc('save_task', formToArgs(household.id, form, id));
     if (err) {
       setSaving(false);
       setError(friendlyTaskError(err.message));
       return;
+    }
+    // Produtos que a tarefa gasta (só se mexeste neles, ou se é uma tarefa nova com produtos)
+    const taskId = (savedId as string | null) ?? id ?? null;
+    if (taskId && (productsTouched || (!id && products.length > 0))) {
+      const { error: pErr } = await supabase.rpc('set_task_products', {
+        p_task: taskId,
+        p_items: products.map((p) => ({ product_id: p.product_id, quantity: p.quantity })),
+      });
+      if (pErr) {
+        setSaving(false);
+        setError('A tarefa foi guardada, mas não consegui ligar os produtos. Abre-a para tentar outra vez.');
+        return;
+      }
     }
     await supabase.rpc('ensure_today_occurrences', { p_household: household.id });
     router.back();
@@ -284,6 +313,16 @@ export default function TaskEditScreen() {
           <Chip label="Alternar" on={who === 'rotation'} onPress={() => set({ assignment: 'rotation', assignee: null })} />
           <Chip label="Qualquer um" on={who === 'free'} onPress={() => set({ assignment: 'free', assignee: null })} />
         </View>
+
+        <Text style={styles.label}>Gasta produtos (opcional)</Text>
+        <TaskProducts
+          items={products}
+          onChange={(next) => {
+            setProducts(next);
+            setProductsTouched(true);
+          }}
+        />
+        <Text style={styles.hint}>Ao marcar a tarefa como feita, desconta do stock e, se estiver a acabar, o produto vai para as compras.</Text>
 
         <Text style={styles.label}>Esforço</Text>
         <View style={styles.chips}>

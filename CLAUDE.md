@@ -73,6 +73,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Plano semanal (M15b): `meal_plans` (um por casa e semana), `plan_missing_items()`, `add_plan_to_shopping_list()`, `cook_planned_meal()`; custos só se `user_settings.show_costs` (pessoal, RLS do próprio). Ver `docs/plano-semanal.md`.
 - Favoritas (M15c): `favorite_meals` (da casa, RLS por casa), `save_favorite()`, `add_favorite_to_shopping_list()` (só o que falta); estrela amarela `#FFBF67`. Plano: semana atual/seguinte, marmitas para congelar e «E se eu comprar…?». Ver `docs/plano-semanal.md`.
 - Validades (M16): tabela `food_shelf_life` gerada do USDA FoodKeeper (CC0) por `supabase/scripts/foodkeeper_to_sql.py`; `product_expiry()`, `expiry_overview()`, `set_product_food()`, `set_printed_expiry()` (a data impressa prevalece); só se mostra com `user_settings.show_expiry` (pessoal). Ver `docs/validades.md`.
+- Tarefa ↔ produtos (M20): `set_task_products(tarefa, [{product_id, quantity}])` substitui as ligações em `task_consumptions` (formulário da tarefa); ao marcar como feita desconta e repõe na lista de compras.
 - Módulos (M19): `user_settings.modules` (`meals`, `money`, `personal`; por pessoa, RLS do próprio); o núcleo (Resumo, Produtos, Compras) está sempre ligado; sem `money`, `confirm_receipt` não regista despesa. Ver `docs/modulos.md`.
 - Várias casas (M18): uma pessoa pode estar em até 10 casas; a casa ativa guarda-se no telemóvel (`useHousehold().household`); `leave_household()`, `make_admin()`; as funções de IA recebem `household_id`. Ver `docs/varias-casas.md`.
 - Explica-me (M17): `explain-spending` (a IA só redige; recusa números que não estão nos dados), `ai_explanations` (cache, histórico e limite), `user_settings.show_ai_explain` (pessoal).
@@ -112,6 +113,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M17 «Explica-me» com IA na Análise de despesas: `explain-spending`, definição pessoal «Explicações com IA», números verificados; ver `docs/analise-de-despesas.md`
 - [x] M18 Várias casas por conta: seletor no cabeçalho, casa ativa por telemóvel, sair da casa e passar a administração; ver `docs/varias-casas.md`
 - [ ] M19 Módulos opcionais por pessoa (Refeições, Dinheiro, Pessoal; só o núcleo numa conta nova), ecrã Casa reorganizado e mensagens sem texto técnico; ver `docs/modulos.md`
+- [ ] M20 Tarefas primeiro: tarefa ↔ produtos no formulário, «Hoje» primeiro, arranque por tarefas, formulário e produtos mais simples; ver `docs/tarefas-primeiro.md`
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas

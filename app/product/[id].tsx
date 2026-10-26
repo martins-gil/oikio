@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
@@ -38,6 +38,8 @@ export default function ProductScreen() {
   const [sizeText, setSizeText] = useState('');
   const [sizeUnit, setSizeUnit] = useState<'g' | 'ml'>('g');
   const { showExpiry } = useShowExpiry();
+  const router = useRouter();
+  const [usedIn, setUsedIn] = useState<{ task_id: string; title: string; quantity: number }[]>([]); // tarefas que gastam este produto
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
@@ -49,6 +51,13 @@ export default function ProductScreen() {
       supabase.from('products').select('is_essential').eq('id', id).maybeSingle(),
       supabase.from('product_packages').select('units_per_package').eq('product_id', id).eq('name', 'unidade').maybeSingle(),
     ]);
+    const used = await supabase.from('task_consumptions').select('task_id, quantity, tasks!inner(title, deleted_at)').eq('product_id', id);
+    setUsedIn(
+      ((used.data ?? []) as unknown as { task_id: string; quantity: number; tasks: { title: string; deleted_at: string | null } | { title: string; deleted_at: string | null }[] }[]).flatMap((r) => {
+        const t = Array.isArray(r.tasks) ? r.tasks[0] : r.tasks;
+        return t && !t.deleted_at ? [{ task_id: r.task_id, title: t.title, quantity: Number(r.quantity) }] : [];
+      }),
+    );
     const sz = size.data ? Number(size.data.units_per_package) : null;
     setUnitSize(sz);
     setSizeText(sz ? String(sz).replace('.', ',') : '');
@@ -321,6 +330,21 @@ export default function ProductScreen() {
           </Pressable>
         ) : null}
 
+        <View style={styles.usedBox}>
+          <Text style={styles.essentialTitle}>Usado em</Text>
+          {usedIn.length === 0 ? (
+            <Text style={styles.essentialHint}>Nenhuma tarefa gasta este produto. Numa tarefa, em «Gasta produtos», podes ligá-lo: ao marcá-la como feita, desconta daqui.</Text>
+          ) : (
+            usedIn.map((u) => (
+              <Pressable key={u.task_id} onPress={() => router.push({ pathname: '/task/[id]', params: { id: u.task_id } })}>
+                <Text style={styles.linkText}>
+                  {u.title} · {formatAmount(u.quantity, product.base_unit)}
+                </Text>
+              </Pressable>
+            ))
+          )}
+        </View>
+
         {showExpiry && <ExpiryCard productId={id} refreshKey={product.total} onMessage={setToast} />}
 
         <View style={styles.spacer} />
@@ -343,6 +367,7 @@ const styles = StyleSheet.create({
   sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sizeInput: { minWidth: 84, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: '#fff', padding: 10, fontSize: 17, textAlign: 'center', color: colors.ink },
   linkText: { color: colors.primary },
+  usedBox: { gap: 4, marginTop: 8 },
   discard: { alignSelf: 'flex-start', paddingVertical: 8 },
   places: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   place: { borderWidth: 1, borderColor: colors.primary, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
