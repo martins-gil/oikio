@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { CheckCircle } from '@/components/CheckCircle';
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
@@ -19,7 +20,7 @@ import {
   type StockRow,
 } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
-import { colors } from '@/lib/theme';
+import { colors, radius, shadow, spacing } from '@/lib/theme';
 
 // Sem local (primeira vez): 3 produtos críticos. Com um local escolhido: até 5.
 const MAX_WITHOUT_PLACE = 3;
@@ -117,131 +118,139 @@ export default function OnboardingScreen() {
   if (householdLoading || loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
 
   if (step === 'pick') {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.flex}>
         <Stack.Screen options={{ title: 'Produtos' }} />
-        <Text style={styles.title}>{place ? PLACE_QUESTION[place] : 'Quais destes acabam sempre sem darem conta?'}</Text>
-        {templates.length === 0 ? (
-          <Text style={styles.hint}>Já tens todos os produtos sugeridos para aqui.</Text>
-        ) : (
-          <Text style={styles.hint}>
-            Escolhe até {MAX_CHOICES} ({chosen.length}/{MAX_CHOICES}). Podes juntar mais tarde.
-          </Text>
-        )}
-        {templates.map((t) => {
-          const selected = chosen.includes(t.id);
-          const blocked = !selected && chosen.length >= MAX_CHOICES;
-          return (
-            <Pressable
-              key={t.id}
-              style={[styles.row, selected && styles.rowSelected, blocked && styles.rowBlocked]}
-              onPress={() => toggle(t.id)}>
-              <Text style={styles.emoji}>{t.emoji}</Text>
-              <Text style={styles.rowText}>{t.name}</Text>
-              <Text style={styles.check}>{selected ? '✓' : ''}</Text>
-            </Pressable>
-          );
-        })}
-        {error && <Text style={styles.error}>{error}</Text>}
-        <Button
-          title="Continuar"
-          disabled={chosen.length === 0}
-          onPress={() => {
-            setIndex(0);
-            setStep('level');
-          }}
-        />
-        <Button title="Agora não" variant="secondary" onPress={() => router.dismissTo('/')} />
-      </ScrollView>
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+          <Text variant="title" style={styles.title}>{place ? PLACE_QUESTION[place] : 'Quais destes acabam sempre sem darem conta?'}</Text>
+          {templates.length === 0 ? (
+            <Text variant="body" style={styles.hint}>Já tens todos os produtos sugeridos para aqui.</Text>
+          ) : (
+            <Text variant="body" style={styles.hint}>
+              Escolhe até {MAX_CHOICES} ({chosen.length}/{MAX_CHOICES}). Podes juntar mais tarde.
+            </Text>
+          )}
+          {templates.map((t) => {
+            const selected = chosen.includes(t.id);
+            const blocked = !selected && chosen.length >= MAX_CHOICES;
+            return (
+              <Pressable
+                key={t.id}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: selected, disabled: blocked }}
+                style={[styles.row, selected && styles.rowSelected, blocked && styles.rowBlocked]}
+                onPress={() => toggle(t.id)}>
+                <Text variant="section" style={styles.emoji}>{t.emoji}</Text>
+                <Text variant="body" style={styles.rowText}>{t.name}</Text>
+                <CheckCircle on={selected} />
+              </Pressable>
+            );
+          })}
+          {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button
+            title="Continuar"
+            disabled={chosen.length === 0}
+            onPress={() => {
+              setIndex(0);
+              setStep('level');
+            }}
+          />
+          <Button title="Agora não" variant="secondary" onPress={() => router.dismissTo('/')} />
+        </View>
+      </View>
     );
   }
 
   if (step === 'level') {
     const t = byId(chosen[index]);
     return (
-      <View style={styles.container}>
+      <View style={styles.flex}>
         <Stack.Screen options={{ title: `${index + 1} de ${chosen.length}` }} />
-        <Text style={styles.emojiBig}>{t.emoji}</Text>
-        <Text style={styles.title}>Quanto resta de {t.name}?</Text>
-        {saving ? (
-          <ActivityIndicator />
-        ) : (
-          (['full', 'half', 'low'] as Level[]).map((l) => (
-            <Pressable
-              key={l}
-              style={[styles.levelButton, { borderColor: LEVEL_COLOR[l] }]}
-              onPress={() => pickLevel(l)}>
-              <Text style={[styles.levelText, { color: LEVEL_COLOR[l] }]}>{LEVEL_LABEL[l]}</Text>
-            </Pressable>
-          ))
-        )}
-        {error && <Text style={styles.error}>{error}</Text>}
-        {error && <Button title="Tentar outra vez" onPress={() => submit(levels)} />}
-        {!saving && !error && (
-          <Button
-            title="Voltar"
-            variant="secondary"
-            onPress={() => (index > 0 ? setIndex(index - 1) : setStep('pick'))}
-          />
-        )}
+        <ScrollView style={styles.flex} contentContainerStyle={styles.centered}>
+          <Text variant="display" style={styles.emojiBig}>{t.emoji}</Text>
+          <Text variant="title" style={styles.title}>Quanto resta de {t.name}?</Text>
+          {saving ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            (['full', 'half', 'low'] as Level[]).map((l) => (
+              <Pressable
+                key={l}
+                accessibilityRole="button"
+                style={[styles.levelButton, { borderColor: LEVEL_COLOR[l] }]}
+                onPress={() => pickLevel(l)}>
+                <Text variant="button" style={{ color: LEVEL_COLOR[l] }}>{LEVEL_LABEL[l]}</Text>
+              </Pressable>
+            ))
+          )}
+          {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
+        </ScrollView>
+        <View style={styles.footer}>
+          {error && <Button title="Tentar outra vez" onPress={() => submit(levels)} />}
+          {!saving && !error && (
+            <Button
+              title="Voltar"
+              variant="secondary"
+              onPress={() => (index > 0 ? setIndex(index - 1) : setStep('pick'))}
+            />
+          )}
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.flex}>
       <Stack.Screen options={{ title: 'Tudo pronto' }} />
-      <Text style={styles.title}>Tudo pronto ✅</Text>
-      {chosen.map((id) => {
-        const t = byId(id);
-        const row = summary.find((r) => r.product_id === created[id]);
-        const task = describeTask(t);
-        return (
-          <View key={id} style={styles.card}>
-            <Text style={styles.cardTitle}>
-              {t.emoji} {t.name}
-              {row?.level ? ` — ${LEVEL_LABEL[row.level]}` : ''}
-            </Text>
-            {task && <Text style={styles.cardLine}>Tarefa criada: {task}</Text>}
-            {row?.below_min && <Text style={styles.cardLine}>🛒 Entrou na lista de compras</Text>}
-          </View>
-        );
-      })}
-      <Button title="Concluir" onPress={() => router.dismissTo('/')} />
-    </ScrollView>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+        <Text variant="title" style={styles.title}>Tudo pronto ✅</Text>
+        {chosen.map((id) => {
+          const t = byId(id);
+          const row = summary.find((r) => r.product_id === created[id]);
+          const task = describeTask(t);
+          return (
+            <View key={id} style={styles.card}>
+              <Text variant="button" style={styles.cardTitle}>
+                {t.emoji} {t.name}
+                {row?.level ? ` — ${LEVEL_LABEL[row.level]}` : ''}
+              </Text>
+              {task && <Text variant="label" style={styles.cardLine}>Tarefa criada: {task}</Text>}
+              {row?.below_min && <Text variant="label" style={styles.cardLine}>🛒 Entrou na lista de compras</Text>}
+            </View>
+          );
+        })}
+      </ScrollView>
+      <View style={styles.footer}>
+        <Button title="Concluir" onPress={() => router.dismissTo('/')} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 24, gap: 14, flexGrow: 1, justifyContent: 'center' },
-  title: { fontSize: 22, fontWeight: '600', textAlign: 'center' },
+  flex: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  centered: { padding: spacing.md, gap: spacing.sm, flexGrow: 1, justifyContent: 'center' },
+  footer: { gap: 8, padding: spacing.md, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.white },
+  title: { color: colors.ink, textAlign: 'center' },
   hint: { textAlign: 'center', color: colors.muted },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: 10,
-  },
-  rowSelected: { borderColor: colors.primary, backgroundColor: colors.lavender },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, padding: 14, borderRadius: radius.card, backgroundColor: colors.white, ...shadow },
+  rowSelected: { backgroundColor: colors.lavender },
   rowBlocked: { opacity: 0.4 },
-  emoji: { fontSize: 24 },
-  emojiBig: { fontSize: 56, textAlign: 'center' },
-  rowText: { flex: 1, fontSize: 17 },
-  check: { fontSize: 20, color: colors.primary, width: 24, textAlign: 'center' },
-  levelButton: { borderWidth: 2, borderRadius: 12, padding: 20, alignItems: 'center' },
-  levelText: { fontSize: 20, fontWeight: '600' },
-  card: { borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 10, padding: 14, gap: 4 },
-  cardTitle: { fontSize: 17, fontWeight: '600' },
+  emoji: { color: colors.ink },
+  emojiBig: { color: colors.ink, textAlign: 'center' },
+  rowText: { flex: 1, color: colors.ink },
+  levelButton: { minHeight: 64, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderRadius: radius.card, paddingVertical: 16, backgroundColor: colors.white },
+  card: { borderRadius: radius.card, padding: spacing.sm, gap: 4, backgroundColor: colors.white, ...shadow },
+  cardTitle: { color: colors.ink },
   cardLine: { color: colors.muted },
   error: { color: colors.pink, textAlign: 'center' },
 });

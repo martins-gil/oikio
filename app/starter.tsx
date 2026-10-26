@@ -2,9 +2,8 @@ import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { TextInput } from '@/components/Text';
-
-import { Text } from '@/components/Text';
+import { CheckCircle } from '@/components/CheckCircle';
+import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
@@ -12,7 +11,7 @@ import { describeForm, formToArgs } from '@/lib/schedule';
 import { LEVEL_COLOR, LEVEL_LABEL, type Level } from '@/lib/stock';
 import { normalizeTitle, PACKS, SUGGESTIONS, TASK_PRODUCT_HINTS } from '@/lib/taskSuggestions';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 type Step = 'packs' | 'review' | 'link' | 'done';
 type Link = { on: boolean; perUse: string; pack: string; level: Level };
@@ -132,13 +131,15 @@ export default function StarterScreen() {
     setStep('done');
   };
 
+  const unitWord = (u: string) => (u === 'dose' ? 'doses' : 'un');
+
   if (step === 'link') {
     return (
       <View style={styles.flex}>
         <Stack.Screen options={{ title: 'Produtos das tarefas' }} />
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Ligar produtos às tarefas</Text>
-          <Text style={styles.hint}>
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <Text variant="title" style={styles.title}>Ligar produtos às tarefas</Text>
+          <Text variant="body" style={styles.hint}>
             Quando marcares estas tarefas como feitas, o produto desce sozinho e, a acabar, vai para as compras. Os valores são só uma estimativa: ajusta-os ao que usas. É opcional.
           </Text>
           {hintRows.map(({ t, h, key }) => {
@@ -146,32 +147,26 @@ export default function StarterScreen() {
             if (!l) return null;
             return (
               <View key={key} style={[styles.linkCard, l.on && styles.rowOn]}>
-                <Pressable style={styles.linkHead} onPress={() => patchLink(key, { on: !l.on })}>
-                  <Text style={styles.check}>{l.on ? '☑' : '☐'}</Text>
+                <Pressable style={styles.linkHead} onPress={() => patchLink(key, { on: !l.on })} accessibilityRole="checkbox" accessibilityState={{ checked: l.on }}>
+                  <CheckCircle on={l.on} />
                   <View style={styles.flex}>
-                    <Text style={styles.rowTitle}>
+                    <Text variant="button" style={styles.rowTitle}>
                       {h.emoji} {t}
                     </Text>
-                    <Text style={styles.small}>gasta {h.product}</Text>
+                    <Text variant="label" style={styles.small}>gasta {h.product}</Text>
                   </View>
                 </Pressable>
                 {l.on && (
                   <View style={styles.linkBody}>
-                    <View style={styles.linkField}>
-                      <Text style={styles.small}>Gasta por vez</Text>
-                      <TextInput style={styles.linkInput} value={l.perUse} onChangeText={(v) => patchLink(key, { perUse: v })} keyboardType="decimal-pad" />
-                      <Text style={styles.small}>{h.unit === 'dose' ? 'doses' : 'un'}</Text>
-                    </View>
-                    <View style={styles.linkField}>
-                      <Text style={styles.small}>Uma embalagem tem</Text>
-                      <TextInput style={styles.linkInput} value={l.pack} onChangeText={(v) => patchLink(key, { pack: v })} keyboardType="decimal-pad" />
-                      <Text style={styles.small}>{h.unit === 'dose' ? 'doses' : 'un'}</Text>
-                    </View>
-                    <Text style={styles.small}>Quanto resta agora? (se o produto ainda não existir)</Text>
+                    <Text variant="label" style={styles.small}>Gasta por vez ({unitWord(h.unit)})</Text>
+                    <TextInput style={styles.linkInput} value={l.perUse} onChangeText={(v) => patchLink(key, { perUse: v })} keyboardType="decimal-pad" accessibilityLabel="Gasta por vez" />
+                    <Text variant="label" style={styles.small}>Uma embalagem tem ({unitWord(h.unit)})</Text>
+                    <TextInput style={styles.linkInput} value={l.pack} onChangeText={(v) => patchLink(key, { pack: v })} keyboardType="decimal-pad" accessibilityLabel="Uma embalagem tem" />
+                    <Text variant="label" style={styles.small}>Quanto resta agora? (se o produto ainda não existir)</Text>
                     <View style={styles.levels}>
                       {(['full', 'half', 'low'] as Level[]).map((lv) => (
-                        <Pressable key={lv} style={[styles.levelChip, { borderColor: LEVEL_COLOR[lv] }, l.level === lv && { backgroundColor: LEVEL_COLOR[lv] }]} onPress={() => patchLink(key, { level: lv })}>
-                          <Text style={{ color: l.level === lv ? colors.white : LEVEL_COLOR[lv], fontSize: 13 }}>{LEVEL_LABEL[lv]}</Text>
+                        <Pressable key={lv} accessibilityRole="button" style={[styles.levelChip, { borderColor: LEVEL_COLOR[lv] }, l.level === lv && { backgroundColor: LEVEL_COLOR[lv] }]} onPress={() => patchLink(key, { level: lv })}>
+                          <Text variant="label" style={{ color: l.level === lv ? colors.white : LEVEL_COLOR[lv] }}>{l.level === lv ? '✓ ' : ''}{LEVEL_LABEL[lv]}</Text>
                         </Pressable>
                       ))}
                     </View>
@@ -180,7 +175,7 @@ export default function StarterScreen() {
               </View>
             );
           })}
-          {error && <Text style={styles.error}>{error}</Text>}
+          {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
         </ScrollView>
         <View style={styles.footer}>
           <Button title={saving ? 'A ligar…' : 'Ligar'} disabled={saving} onPress={applyLinks} />
@@ -192,21 +187,25 @@ export default function StarterScreen() {
 
   if (step === 'done') {
     return (
-      <View style={styles.container}>
+      <View style={styles.flex}>
         <Stack.Screen options={{ title: 'Tudo pronto' }} />
-        <Text style={styles.title}>Tarefas criadas ✅</Text>
-        <Text style={styles.hint}>
-          {created} {created === 1 ? 'tarefa já aparece' : 'tarefas já aparecem'} no ecrã «Hoje». Podes ajustar a frequência ou quem faz, a qualquer momento, em cada tarefa.
-        </Text>
-        <View style={styles.tip}>
-          <Text style={styles.tipTitle}>💡 O truque da app</Text>
-          <Text style={styles.tipText}>
-            Abre uma tarefa (por exemplo «Lavar roupa») e, em «Gasta produtos», liga o detergente. Quando a marcares como feita, o stock desce e, se estiver a acabar, o produto vai sozinho para as compras.
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+          <Text variant="title" style={styles.title}>Tarefas criadas ✅</Text>
+          <Text variant="body" style={styles.hint}>
+            {created} {created === 1 ? 'tarefa já aparece' : 'tarefas já aparecem'} no ecrã «Hoje». Podes ajustar a frequência ou quem faz, a qualquer momento, em cada tarefa.
           </Text>
+          <View style={styles.tip}>
+            <Text variant="button" style={styles.tipTitle}>💡 O truque da app</Text>
+            <Text variant="label" style={styles.tipText}>
+              Abre uma tarefa (por exemplo «Lavar roupa») e, em «Mais opções → Gasta produtos», liga o detergente. Quando a marcares como feita, o stock desce e, se estiver a acabar, o produto vai sozinho para as compras.
+            </Text>
+          </View>
+          {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button title="Ver as minhas tarefas" onPress={() => router.dismissTo('/')} />
+          <Button title="Escolher produtos a vigiar" variant="secondary" onPress={() => router.replace('/onboarding')} />
         </View>
-        {error && <Text style={styles.error}>{error}</Text>}
-        <Button title="Ver as minhas tarefas" onPress={() => router.dismissTo('/')} />
-        <Button title="Escolher produtos a vigiar" variant="secondary" onPress={() => router.replace('/onboarding')} />
       </View>
     );
   }
@@ -215,18 +214,18 @@ export default function StarterScreen() {
     return (
       <View style={styles.flex}>
         <Stack.Screen options={{ title: 'As tuas tarefas' }} />
-        <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>Confirma a lista</Text>
-          <Text style={styles.hint}>Tira o visto às que não fazem sentido. Ficam com uma frequência normal, que podes mudar depois.</Text>
-          {tasks.length === 0 && <Text style={styles.hint}>Já tens todas as tarefas destes temas. Volta atrás e escolhe outros.</Text>}
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+          <Text variant="title" style={styles.title}>Confirma a lista</Text>
+          <Text variant="body" style={styles.hint}>Tira o visto às que não fazem sentido. Ficam com uma frequência normal, que podes mudar depois.</Text>
+          {tasks.length === 0 && <Text variant="body" style={styles.hint}>Já tens todas as tarefas destes temas. Volta atrás e escolhe outros.</Text>}
           {tasks.map((s) => {
             const on = !off.has(s.key);
             return (
-              <Pressable key={s.key} style={[styles.row, on && styles.rowOn]} onPress={() => toggle(off, s.key, setOff)}>
-                <Text style={styles.check}>{on ? '☑' : '☐'}</Text>
+              <Pressable key={s.key} style={[styles.row, on && styles.rowOn]} onPress={() => toggle(off, s.key, setOff)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
+                <CheckCircle on={on} />
                 <View style={styles.flex}>
-                  <Text style={styles.rowTitle}>{s.form.title}</Text>
-                  <Text style={styles.small}>{describeForm(s.form)}</Text>
+                  <Text variant="button" style={styles.rowTitle}>{s.form.title}</Text>
+                  <Text variant="label" style={styles.small}>{describeForm(s.form)}</Text>
                 </View>
               </Pressable>
             );
@@ -243,19 +242,19 @@ export default function StarterScreen() {
   return (
     <View style={styles.flex}>
       <Stack.Screen options={{ title: 'Começar' }} />
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>O que fazem em casa?</Text>
-        <Text style={styles.hint}>Escolhe os temas que servem à vossa casa. Depois confirmas as tarefas, uma a uma.</Text>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+        <Text variant="title" style={styles.title}>O que fazem em casa?</Text>
+        <Text variant="body" style={styles.hint}>Escolhe os temas que servem à vossa casa. Depois confirmas as tarefas, uma a uma.</Text>
         {PACKS.map((p) => {
           const on = packs.has(p.key);
           return (
-            <Pressable key={p.key} style={[styles.row, on && styles.rowOn]} onPress={() => toggle(packs, p.key, setPacks)}>
-              <Text style={styles.emoji}>{p.emoji}</Text>
+            <Pressable key={p.key} style={[styles.row, on && styles.rowOn]} onPress={() => toggle(packs, p.key, setPacks)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
+              <Text variant="section" style={styles.emoji}>{p.emoji}</Text>
               <View style={styles.flex}>
-                <Text style={styles.rowTitle}>{p.title}</Text>
-                <Text style={styles.small}>{p.detail}</Text>
+                <Text variant="button" style={styles.rowTitle}>{p.title}</Text>
+                <Text variant="label" style={styles.small}>{p.detail}</Text>
               </View>
-              <Text style={styles.check}>{on ? '☑' : '☐'}</Text>
+              <CheckCircle on={on} />
             </Pressable>
           );
         })}
@@ -269,27 +268,25 @@ export default function StarterScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 10, paddingBottom: 24 },
-  title: { fontSize: 22, color: colors.ink },
-  hint: { color: colors.muted, fontSize: 14 },
-  small: { color: colors.muted, fontSize: 13 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  flex: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  title: { color: colors.ink, textAlign: 'center' },
+  hint: { color: colors.muted, textAlign: 'center' },
+  small: { color: colors.muted },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   rowOn: { backgroundColor: colors.lavender },
-  rowTitle: { fontSize: 16, color: colors.ink },
-  emoji: { fontSize: 26 },
-  check: { fontSize: 22, color: colors.primary, width: 28, textAlign: 'center' },
-  tip: { gap: 4, padding: 14, borderRadius: radius.card, backgroundColor: colors.lavender },
-  tipTitle: { fontSize: 16, color: colors.ink },
-  tipText: { fontSize: 14, color: colors.muted },
+  rowTitle: { color: colors.ink },
+  emoji: { color: colors.ink },
+  tip: { gap: 4, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.lavender },
+  tipTitle: { color: colors.ink },
+  tipText: { color: colors.muted },
   error: { color: colors.pink, textAlign: 'center' },
-  linkCard: { gap: 8, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
-  linkHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  linkBody: { gap: 8, paddingLeft: 40 },
-  linkField: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  linkInput: { minWidth: 64, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.white, paddingVertical: 6, paddingHorizontal: 8, textAlign: 'center', fontSize: 15, color: colors.ink },
+  linkCard: { gap: 12, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  linkHead: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
+  linkBody: { gap: 8 },
+  linkInput: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, color: colors.ink },
   levels: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  levelChip: { borderWidth: 2, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
-  footer: { gap: 8, padding: 16, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.white },
+  levelChip: { minHeight: 48, justifyContent: 'center', borderWidth: 2, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
+  footer: { gap: 8, padding: spacing.md, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.white },
 });
