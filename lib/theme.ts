@@ -40,6 +40,7 @@ export const radius = { card: 20, button: 14, sheet: 28, chip: 14 };
 
 // Escala de tipos: tamanhos mínimos da app (legibilidade); ver DESIGN.md
 export const type = {
+  display: { fontFamily: fonts.heading, fontSize: 40, lineHeight: 48 }, // números grandes (stock)
   title: { fontFamily: fonts.heading, fontSize: 28, lineHeight: 35 },
   section: { fontFamily: fonts.headingSemi, fontSize: 21, lineHeight: 27 },
   body: { fontFamily: fonts.body, fontSize: 17, lineHeight: 26 },

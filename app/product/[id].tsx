@@ -1,4 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
@@ -23,7 +24,7 @@ import { saveErrorText } from '@/lib/notifications';
 import { useShowExpiry } from '@/lib/settings';
 import { ExpiryCard } from '@/components/ExpiryCard';
 import { supabase } from '@/lib/supabase';
-import { colors } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 import { devHint } from '@/lib/errors';
 
 const LEVELS: StockLevel[] = ['full', 'half', 'low', 'empty'];
@@ -39,6 +40,7 @@ export default function ProductScreen() {
   const [sizeUnit, setSizeUnit] = useState<'g' | 'ml'>('g');
   const { showExpiry } = useShowExpiry();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [packText, setPackText] = useState(''); // quantas doses (ou unidades) tem uma embalagem
   const [packSaved, setPackSaved] = useState<number | null>(null);
   const [more, setMore] = useState(false); // «Mais»: mínimo, unidade e tamanho, local, essencial, deitei fora
@@ -226,27 +228,30 @@ export default function ProductScreen() {
   const isLevel = product.tracking_mode === 'level';
   const unitName = (u: string) => (u === 'dose' ? 'doses' : u === 'rolo' ? 'rolos' : u === 'un' ? 'unidades' : u);
 
+  const unitOnly = product.base_unit !== 'g' && product.base_unit !== 'ml';
+  const stepBtn = (label: string, disabled: boolean, onPress: () => void) => (
+    <Pressable accessibilityRole="button" accessibilityLabel={label === '−' ? 'Menos' : 'Mais'} style={[styles.stepButton, disabled && styles.disabled]} disabled={disabled} onPress={onPress}>
+      <Text variant="section" style={styles.stepText}>{label}</Text>
+    </Pressable>
+  );
+
   return (
     <View style={styles.flex}>
       <Stack.Screen options={{ title: product.name }} />
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         {isLevel ? (
           <>
-            <Text style={styles.label}>Quanto resta?</Text>
+            <Text variant="label" style={styles.label}>Quanto resta?</Text>
             {LEVELS.map((l) => {
               const selected = product.level === l;
               return (
                 <Pressable
                   key={l}
                   disabled={busy}
-                  style={[
-                    styles.levelButton,
-                    { borderColor: LEVEL_COLOR[l] },
-                    selected && { backgroundColor: LEVEL_COLOR[l] },
-                  ]}
+                  style={[styles.levelButton, { borderColor: LEVEL_COLOR[l] }, selected && { backgroundColor: LEVEL_COLOR[l] }]}
                   onPress={() => setLevel(l)}>
-                  <Text style={[styles.levelText, { color: selected ? colors.white : LEVEL_COLOR[l] }]}>
-                    {LEVEL_LABEL[l]}
+                  <Text variant="button" style={{ color: selected ? colors.white : LEVEL_COLOR[l] }}>
+                    {selected ? '✓ ' : ''}{LEVEL_LABEL[l]}
                   </Text>
                 </Pressable>
               );
@@ -261,39 +266,29 @@ export default function ProductScreen() {
                 { key: 'out', label: 'Acabou', color: LEVEL_COLOR.low, on: product.total <= 0, onPress: markOut },
               ] as const).map((o) => (
                 <Pressable key={o.key} disabled={busy} style={[styles.statusChip, { borderColor: o.color }, o.on && { backgroundColor: o.color }]} onPress={o.onPress}>
-                  <Text style={[styles.statusText, { color: o.on ? colors.white : o.color }]}>{o.label}</Text>
+                  <Text variant="button" style={{ color: o.on ? colors.white : o.color, textAlign: 'center' }}>{o.on ? '✓ ' : ''}{o.label}</Text>
                 </Pressable>
               ))}
             </View>
-            <Text style={styles.essentialHint}>«A acabar» põe o produto na lista de compras; «Acabou» zera o stock e põe-no na lista.</Text>
+            <Text variant="label" style={styles.hint}>«A acabar» e «Acabou» põem o produto na lista de compras.</Text>
 
-            <Text style={styles.label}>Em stock</Text>
+            <Text variant="label" style={styles.label}>Em stock</Text>
             <View style={styles.stepper}>
-              <Pressable
-                style={[styles.stepButton, (busy || product.total <= 0) && styles.disabled]}
-                disabled={busy || product.total <= 0}
-                onPress={minus}>
-                <Text style={styles.stepText}>−</Text>
-              </Pressable>
-              <Text style={styles.big}>
-                {formatAmount(product.total, product.base_unit)}
-              </Text>
-              <Pressable style={[styles.stepButton, busy && styles.disabled]} disabled={busy} onPress={plus}>
-                <Text style={styles.stepText}>+</Text>
-              </Pressable>
+              {stepBtn('−', busy || product.total <= 0, minus)}
+              <Text variant="display" style={styles.big}>{formatAmount(product.total, product.base_unit)}</Text>
+              {stepBtn('+', busy, plus)}
             </View>
-
           </>
         )}
 
-        <View style={styles.usedBox}>
-          <Text style={styles.essentialTitle}>Usado em</Text>
+        <View style={styles.card}>
+          <Text variant="button" style={styles.cardTitle}>Usado em</Text>
           {usedIn.length === 0 ? (
-            <Text style={styles.essentialHint}>Nenhuma tarefa gasta este produto. Numa tarefa, em «Gasta produtos», podes ligá-lo: ao marcá-la como feita, desconta daqui.</Text>
+            <Text variant="label" style={styles.hint}>Nenhuma tarefa gasta este produto. Numa tarefa, em «Mais opções → Gasta produtos», podes ligá-lo.</Text>
           ) : (
             usedIn.map((u) => (
-              <Pressable key={u.task_id} onPress={() => router.push({ pathname: '/task/[id]', params: { id: u.task_id } })}>
-                <Text style={styles.linkText}>
+              <Pressable key={u.task_id} style={styles.linkRow} onPress={() => router.push({ pathname: '/task/[id]', params: { id: u.task_id } })}>
+                <Text variant="body" style={styles.linkText}>
                   {u.title} · {formatAmount(u.quantity, product.base_unit)}
                 </Text>
               </Pressable>
@@ -303,135 +298,127 @@ export default function ProductScreen() {
 
         {showExpiry && <ExpiryCard productId={id} refreshKey={product.total} onMessage={setToast} />}
 
-        <Pressable onPress={() => setMore(!more)}>
-          <Text style={styles.linkText}>{more ? '▲ Menos' : '▼ Mais (mínimo, unidade e tamanho, local, essencial…)'}</Text>
+        <Pressable style={styles.linkRow} onPress={() => setMore(!more)}>
+          <Text variant="button" style={styles.linkText}>{more ? '▲ Menos' : '▼ Mais (mínimo, embalagem, local…)'}</Text>
         </Pressable>
 
         {more && (
           <>
             {!isLevel && (
-              <>
-                <Text style={styles.label}>Avisar quando houver menos de</Text>
+              <View style={styles.card}>
+                <Text variant="button" style={styles.cardTitle}>Avisar quando houver menos de</Text>
                 <View style={styles.stepper}>
-                  <Pressable
-                    style={[styles.stepButtonSmall, (busy || product.min_stock <= 0) && styles.disabled]}
-                    disabled={busy || product.min_stock <= 0}
-                    onPress={() => changeMin(-1)}>
-                    <Text style={styles.stepText}>−</Text>
-                  </Pressable>
-                  <Text style={styles.mid}>
+                  {stepBtn('−', busy || product.min_stock <= 0, () => changeMin(-1))}
+                  <Text variant="section" style={styles.mid}>
                     {product.min_stock > 0 ? formatAmount(product.min_stock, product.base_unit) : 'não avisar'}
                   </Text>
-                  <Pressable style={[styles.stepButtonSmall, busy && styles.disabled]} disabled={busy} onPress={() => changeMin(1)}>
-                    <Text style={styles.stepText}>+</Text>
-                  </Pressable>
+                  {stepBtn('+', busy, () => changeMin(1))}
                 </View>
-              </>
+              </View>
             )}
-        {product.base_unit !== 'g' && product.base_unit !== 'ml' && (
-          <View style={styles.sizeBox}>
-            <Text style={styles.label}>Embalagem</Text>
-            <Text style={styles.essentialHint}>
-              Quantas {unitName(product.base_unit)} tem uma embalagem? É opcional (pode não vir no talão), mas ajuda a controlar o gasto:{' '}
-              {isLevel ? 'é o que vale «Cheio», e cada tarefa gasta uma parte.' : 'ao registares «1 embalagem» numa compra, entram todas de uma vez.'}
-            </Text>
-            <View style={styles.sizeRow}>
-              <TextInput style={styles.sizeInput} value={packText} onChangeText={setPackText} placeholder="40" keyboardType="decimal-pad" />
-              <Text style={styles.placeText}>{unitName(product.base_unit)}</Text>
-              <View style={styles.flex}>
-                <Button title="Guardar" variant="secondary" disabled={!packOk || busy || parsedPack === packSaved} onPress={savePack} />
-              </View>
-            </View>
-          </View>
-        )}
 
-        <Text style={styles.label}>Unidade e tamanho</Text>
-        {product.base_unit === 'un' ? (
-          <View style={styles.sizeBox}>
-            <Text style={styles.essentialHint}>
-              Conta-se em unidades. Se cada unidade tem um peso ou volume (ex.: 200 g), indica-o: as receitas passam a saber quanto tens.
-            </Text>
-            <View style={styles.sizeRow}>
-              <TextInput style={styles.sizeInput} value={sizeText} onChangeText={setSizeText} placeholder="200" keyboardType="decimal-pad" />
-              {(['g', 'ml'] as const).map((u) => (
-                <Pressable key={u} style={[styles.place, sizeUnit === u && styles.placeOn]} onPress={() => setSizeUnit(u)}>
-                  <Text style={[styles.placeText, sizeUnit === u && styles.placeTextOn]}>{u}</Text>
-                </Pressable>
-              ))}
+            {unitOnly && (
+              <View style={styles.card}>
+                <Text variant="button" style={styles.cardTitle}>Embalagem</Text>
+                <Text variant="label" style={styles.hint}>
+                  Quantas {unitName(product.base_unit)} tem uma embalagem? Opcional, ajuda a controlar o gasto.{' '}
+                  {isLevel ? 'Vale «Cheio».' : '«1 embalagem» numa compra soma todas.'}
+                </Text>
+                <TextInput style={styles.input} value={packText} onChangeText={setPackText} placeholder="Ex.: 40" keyboardType="decimal-pad" accessibilityLabel={`${unitName(product.base_unit)} por embalagem`} />
+                <Button title="Guardar embalagem" variant="secondary" disabled={!packOk || busy || parsedPack === packSaved} onPress={savePack} />
+              </View>
+            )}
+
+            <View style={styles.card}>
+              <Text variant="button" style={styles.cardTitle}>Unidade e tamanho</Text>
+              {product.base_unit === 'un' ? (
+                <>
+                  <Text variant="label" style={styles.hint}>
+                    Conta-se em unidades. Se cada uma tem peso ou volume (ex.: 200 g), indica-o: as receitas passam a saber quanto tens.
+                  </Text>
+                  <TextInput style={styles.input} value={sizeText} onChangeText={setSizeText} placeholder="Ex.: 200" keyboardType="decimal-pad" accessibilityLabel="Tamanho de cada unidade" />
+                  <View style={styles.places}>
+                    {(['g', 'ml'] as const).map((u) => (
+                      <Pressable key={u} style={[styles.place, sizeUnit === u && styles.placeOn]} onPress={() => setSizeUnit(u)}>
+                        <Text variant="button" style={sizeUnit === u ? styles.placeTextOn : styles.placeText}>{u}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  <Button
+                    title={sizeOk ? `Cada unidade tem ${sizeText} ${sizeUnit}: converter` : 'Escreve o tamanho de cada unidade'}
+                    variant="secondary"
+                    disabled={!sizeOk || busy}
+                    onPress={() =>
+                      changeUnit(
+                        sizeUnit,
+                        parsedSize,
+                        `${formatAmount(product.total, 'un')} passam a ${formatAmount(product.total * parsedSize, sizeUnit)}, e as compras seguintes ao talão também serão contadas em ${sizeUnit}.`,
+                      )
+                    }
+                  />
+                </>
+              ) : product.base_unit === 'g' || product.base_unit === 'ml' ? (
+                <>
+                  <Text variant="label" style={styles.hint}>Conta-se em {product.base_unit}. Tamanho de cada unidade comprada (ex.: 200), para os talões que só dizem «3 un».</Text>
+                  <View style={styles.sizeRow}>
+                    <TextInput style={[styles.input, styles.flex]} value={sizeText} onChangeText={setSizeText} placeholder="Ex.: 200" keyboardType="decimal-pad" accessibilityLabel="Tamanho de cada unidade" />
+                    <Text variant="body" style={styles.hint}>{product.base_unit}</Text>
+                  </View>
+                  <Button title="Guardar tamanho" variant="secondary" disabled={!sizeOk || busy || parsedSize === unitSize} onPress={saveSize} />
+                  {unitSize ? (
+                    <Pressable
+                      style={styles.linkRow}
+                      onPress={() =>
+                        changeUnit('un', Math.round((1 / unitSize) * 1e6) / 1e6, `${formatAmount(product.total, product.base_unit)} passam a ${formatAmount(product.total / unitSize, 'un')}.`)
+                      }>
+                      <Text variant="body" style={styles.linkText}>Voltar a contar em unidades</Text>
+                    </Pressable>
+                  ) : null}
+                </>
+              ) : (
+                <Text variant="label" style={styles.hint}>Conta-se em {product.base_unit}.</Text>
+              )}
             </View>
-            <Button
-              title={sizeOk ? `Cada unidade tem ${sizeText} ${sizeUnit}: converter o stock` : 'Escreve o tamanho de cada unidade'}
-              variant="secondary"
-              disabled={!sizeOk || busy}
-              onPress={() =>
-                changeUnit(
-                  sizeUnit,
-                  parsedSize,
-                  `${formatAmount(product.total, 'un')} passam a ${formatAmount(product.total * parsedSize, sizeUnit)}, e as compras seguintes ao talão também serão contadas em ${sizeUnit}.`,
-                )
-              }
-            />
-          </View>
-        ) : product.base_unit === 'g' || product.base_unit === 'ml' ? (
-          <View style={styles.sizeBox}>
-            <Text style={styles.essentialHint}>Conta-se em {product.base_unit}. Tamanho de cada unidade comprada (ex.: 200), para os talões que só dizem «3 un»:</Text>
-            <View style={styles.sizeRow}>
-              <TextInput style={styles.sizeInput} value={sizeText} onChangeText={setSizeText} placeholder="200" keyboardType="decimal-pad" />
-              <Text style={styles.placeText}>{product.base_unit}</Text>
-              <View style={styles.flex}>
-                <Button title="Guardar" variant="secondary" disabled={!sizeOk || busy || parsedSize === unitSize} onPress={saveSize} />
+
+            <View style={styles.card}>
+              <Text variant="button" style={styles.cardTitle}>Onde fica?</Text>
+              <View style={styles.places}>
+                {PLACES.map((pl) => {
+                  const on = placeOf(product.location) === pl.key;
+                  return (
+                    <Pressable key={pl.key} style={[styles.place, on && styles.placeOn]} onPress={() => moveTo(pl.key)}>
+                      <Text variant="button" style={on ? styles.placeTextOn : styles.placeText}>
+                        {pl.emoji} {pl.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
-            {(product.base_unit === 'g' || product.base_unit === 'ml') && unitSize ? (
-              <Pressable
-                onPress={() =>
-                  changeUnit('un', Math.round((1 / unitSize) * 1e6) / 1e6, `${formatAmount(product.total, product.base_unit)} passam a ${formatAmount(product.total / unitSize, 'un')}.`)
-                }>
-                <Text style={styles.linkText}>Voltar a contar em unidades</Text>
+
+            <View style={[styles.card, styles.essentialRow]}>
+              <View style={styles.flex}>
+                <Text variant="button" style={styles.cardTitle}>Essencial</Text>
+                <Text variant="label" style={styles.hint}>Se faltar, aparece nos lembretes diários (ex.: leite).</Text>
+              </View>
+              <Switch value={essential} onValueChange={toggleEssential} />
+            </View>
+
+            {!isLevel && Number(product.total) > 0 ? (
+              <Pressable style={styles.linkRow} onPress={askDiscard} disabled={busy}>
+                <Text variant="body" style={styles.linkText}>🗑️ Deitei fora</Text>
               </Pressable>
             ) : null}
-          </View>
-        ) : (
-          <Text style={styles.essentialHint}>Conta-se em {product.base_unit}.</Text>
-        )}
-
-        <Text style={styles.label}>Onde fica?</Text>
-        <View style={styles.places}>
-          {PLACES.map((pl) => {
-            const on = placeOf(product.location) === pl.key;
-            return (
-              <Pressable key={pl.key} style={[styles.place, on && styles.placeOn]} onPress={() => moveTo(pl.key)}>
-                <Text style={[styles.placeText, on && styles.placeTextOn]}>
-                  {pl.emoji} {pl.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View style={styles.essentialRow}>
-          <View style={styles.flex}>
-            <Text style={styles.essentialTitle}>Essencial</Text>
-            <Text style={styles.essentialHint}>Se faltar, aparece nos lembretes diários (ex.: leite, iogurtes).</Text>
-          </View>
-          <Switch value={essential} onValueChange={toggleEssential} />
-        </View>
-
-        {!isLevel && Number(product.total) > 0 ? (
-          <Pressable style={styles.discard} onPress={askDiscard} disabled={busy}>
-            <Text style={styles.linkText}>🗑️ Deitei fora</Text>
-          </Pressable>
-        ) : null}
           </>
         )}
-
-        <View style={styles.spacer} />
+      </ScrollView>
+      <View style={[styles.footer, { paddingBottom: spacing.sm + insets.bottom }]}>
         {listItemId ? (
           <Button title="🛒 Está na lista — tirar" variant="secondary" disabled={busy} onPress={removeFromList} />
         ) : (
           <Button title="🛒 Pôr na lista de compras" disabled={busy} onPress={addToList} />
         )}
-      </ScrollView>
+      </View>
       <Toast message={toast} onHide={hideToast} />
     </View>
   );
@@ -440,34 +427,29 @@ export default function ProductScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 20, gap: 12, paddingBottom: 80 },
-  sizeBox: { gap: 8 },
-  sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sizeInput: { minWidth: 84, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.white, padding: 10, fontSize: 17, textAlign: 'center', color: colors.ink },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  footer: { padding: spacing.md, paddingTop: spacing.sm, backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.border },
+  card: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, ...shadow },
+  cardTitle: { color: colors.ink },
+  hint: { color: colors.muted },
+  label: { color: colors.muted, marginTop: 4 },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   linkText: { color: colors.primary },
-  usedBox: { gap: 4, marginTop: 8 },
-  statusRow: { flexDirection: 'row', gap: 8 },
-  statusChip: { flex: 1, borderWidth: 2, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
-  statusText: { fontSize: 16, fontWeight: '600' },
-  discard: { alignSelf: 'flex-start', paddingVertical: 8 },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  statusChip: { flexGrow: 1, flexBasis: 100, minHeight: fieldMinHeight, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderRadius: radius.button, paddingVertical: 12, paddingHorizontal: 8 },
   places: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  place: { borderWidth: 1, borderColor: colors.primary, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
+  place: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
   placeOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   placeText: { color: colors.primary },
   placeTextOn: { color: colors.white },
-  essentialRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
-  essentialTitle: { fontSize: 16, color: colors.ink },
-  essentialHint: { fontSize: 13, color: colors.muted },
-  label: { fontSize: 14, color: colors.muted, textTransform: 'uppercase', marginTop: 4 },
-  levelButton: { borderWidth: 2, borderRadius: 12, padding: 18, alignItems: 'center' },
-  levelText: { fontSize: 19, fontWeight: '600' },
+  essentialRow: { flexDirection: 'row', alignItems: 'center' },
+  levelButton: { minHeight: fieldMinHeight, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderRadius: radius.button, paddingVertical: 14 },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  stepButton: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepButtonSmall: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: colors.white, fontSize: 32, fontWeight: '600', lineHeight: 36 },
-  big: { fontSize: 44, fontWeight: '700' },
-  unit: { fontSize: 20, fontWeight: '400', color: colors.muted },
-  mid: { fontSize: 20, fontWeight: '600' },
+  stepButton: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: colors.white },
+  big: { color: colors.ink, flexShrink: 1, textAlign: 'center' },
+  mid: { color: colors.ink, flexShrink: 1, textAlign: 'center' },
   disabled: { opacity: 0.35 },
-  spacer: { height: 16 },
 });
