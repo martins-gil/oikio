@@ -10,7 +10,7 @@ import { rememberAuthUrl } from '@/lib/authLink';
 import { getNotifications, setupNotificationHandler } from '@/lib/notifications';
 import { SessionProvider } from '@/lib/session';
 import { SettingsProvider } from '@/lib/settings';
-import { colors, fonts } from '@/lib/theme';
+import { colors, type } from '@/lib/theme';
 
 // O ecrã de arranque fica até os tipos de letra estarem carregados
 SplashScreen.preventAutoHideAsync();
@@ -57,7 +57,7 @@ export default function RootLayout() {
           screenOptions={{
             headerStyle: { backgroundColor: colors.primary },
             headerTintColor: colors.white,
-            headerTitleStyle: { fontFamily: fonts.heading, fontSize: 18 },
+            headerTitleStyle: { fontFamily: type.section.fontFamily, fontSize: type.section.fontSize },
             headerShadowVisible: false,
             headerBackButtonDisplayMode: 'minimal',
             contentStyle: { backgroundColor: colors.bg },

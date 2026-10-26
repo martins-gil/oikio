@@ -86,6 +86,25 @@ ActionSheet, DatePicker, DateSheet, Toast, ProgressRing, ExpiryCard...). Antes
 de criar um componente novo, ver se um existente serve. Componentes novos usam
 as variantes de tipografia e os valores do tema.
 
+Componentes partilhados do redesenho (usar em vez de repetir código):
+- `Text` com `variant` (`display` 40, `title` 28, `section` 21, `body` 17,
+  `input` 18, `label` 15, `button` 17): nunca escrever fontSize nos ecrãs.
+  Sem `variant`, o texto fica em 17 e nunca abaixo de 15 (campos de escrita: 18).
+- `AuthScreen`, `Field`, `ErrorText` (components/AuthScreen): ecrãs de entrada e
+  de conta, com logótipo, etiqueta sempre visível por cima do campo e erros com ⚠.
+- `CheckCircle`: visto redondo de 32 nas listas de escolha (cor + sinal ✓).
+- `FavoriteStar`: estrela das favoritas com alvo de 48.
+- Cabeçalho do sistema (Stack): título na variante `section` (21).
+
+Padrões de ecrã adotados:
+- Botão principal fixo no rodapé (formulários, talão, ficha do produto,
+  refeições e plano, arranque), fora do scroll e acima da barra do sistema.
+- Informação extra em secções que abrem e fecham (Resumo da semana, Feitas,
+  detalhes do talão) ou em «Mais opções».
+- O assistente do perfil de cozinha mantém-se em passos (uma pergunta por
+  ecrã) em vez de cartões numa só página.
+- Estados vazios com uma ação sugerida; avisos com cor + ícone + texto.
+
 ## 9. Evitar
 Texto abaixo de 15, tabelas densas, menus escondidos, ecrãs cheios de métricas,
 mais de 3 cores de acento no mesmo ecrã, ícones inconsistentes, gradientes
