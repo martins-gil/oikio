@@ -58,6 +58,19 @@ function Stepper({ value, min, max, onChange, label }: { value: number; min: num
   );
 }
 
+// Frequências rápidas (o essencial); o resto fica em «Mais opções»
+const PRESETS: { key: string; label: string; patch: Partial<TaskForm> }[] = [
+  { key: 'day', label: 'Todos os dias', patch: { kind: 'times', times: 1, period: 'day' } },
+  { key: 'week', label: 'Todas as semanas', patch: { kind: 'times', times: 1, period: 'week' } },
+  { key: 'month', label: 'Todos os meses', patch: { kind: 'times', times: 1, period: 'month' } },
+  { key: 'none', label: 'Quando for preciso', patch: { kind: 'none' } },
+];
+function presetKey(f: TaskForm): string | null {
+  if (f.kind === 'none') return 'none';
+  if (f.kind === 'times' && f.times === 1) return f.period === 'day' ? 'day' : f.period === 'week' ? 'week' : f.period === 'month' ? 'month' : null;
+  return null;
+}
+
 function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return (
     <Pressable style={[styles.chip, on && styles.chipOn]} onPress={onPress}>
@@ -73,7 +86,9 @@ export default function TaskEditScreen() {
   const { household, members } = useHousehold();
   const me = session?.user.id ?? null;
 
-  const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
+  // Tarefa nova: começa «todas as semanas» (uma tarefa sem frequência nunca aparece sozinha)
+  const [form, setForm] = useState<TaskForm>(id ? EMPTY_FORM : { ...EMPTY_FORM, kind: 'times', times: 1, period: 'week' });
+  const [advanced, setAdvanced] = useState(false); // «Mais opções»: frequência detalhada, dia de início, esforço, alternar…
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,8 +107,11 @@ export default function TaskEditScreen() {
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
-          setForm(formFromTask(data as TaskRow));
+          const f = formFromTask(data as TaskRow);
+          setForm(f);
           setCurrentStart((data as TaskRow).schedule_start);
+          // Se a tarefa já usa opções avançadas, abre-as para não as esconder
+          setAdvanced(presetKey(f) === null || f.effort !== 1 || f.assignment === 'rotation' || f.assignment === 'free' || (data as TaskRow).schedule_start > localDate());
         }
         setLoading(false);
       });
@@ -215,6 +233,21 @@ export default function TaskEditScreen() {
           maxLength={100}
         />
 
+        {!advanced ? (
+          <>
+            <Text style={styles.label}>Com que frequência?</Text>
+            <View style={styles.chips}>
+              {PRESETS.map((p) => (
+                <Chip key={p.key} label={p.label} on={presetKey(form) === p.key} onPress={() => set(p.patch)} />
+              ))}
+              <Chip label="Outra…" on={false} onPress={() => setAdvanced(true)} />
+            </View>
+            <Text style={styles.hint}>
+              {presetKey(form) === 'none' ? 'Fica à mão: marcas como feita quando a fizeres.' : 'Aparece sozinha quando chegar a altura.'}
+            </Text>
+          </>
+        ) : (
+          <>
         <Text style={styles.label}>Quando</Text>
         <View style={styles.options}>
           {KINDS.map((k) => (
@@ -281,7 +314,36 @@ export default function TaskEditScreen() {
             <Stepper value={form.monthDay < 1 ? 1 : form.monthDay} min={1} max={31} onChange={(monthDay) => set({ monthDay })} label={`${form.monthDay < 1 ? 1 : form.monthDay} de ${MONTHS[form.month - 1]}`} />
           </View>
         )}
+          </>
+        )}
 
+        {members.length > 1 && (
+          <>
+        <Text style={styles.label}>Quem faz</Text>
+        <View style={styles.chips}>
+          <Chip label="Equilibrada" on={who === 'balanced'} onPress={() => set({ assignment: 'balanced', assignee: null })} />
+          {me && <Chip label="Eu" on={who === `fixed:${me}`} onPress={() => set({ assignment: 'fixed', assignee: me })} />}
+          {others.map((m) => (
+            <Chip key={m.user_id} label={m.display_name} on={who === `fixed:${m.user_id}`} onPress={() => set({ assignment: 'fixed', assignee: m.user_id })} />
+          ))}
+          {advanced && <Chip label="Alternar" on={who === 'rotation'} onPress={() => set({ assignment: 'rotation', assignee: null })} />}
+          {advanced && <Chip label="Qualquer um" on={who === 'free'} onPress={() => set({ assignment: 'free', assignee: null })} />}
+        </View>
+          </>
+        )}
+
+        <Text style={styles.label}>Gasta produtos (opcional)</Text>
+        <TaskProducts
+          items={products}
+          onChange={(next) => {
+            setProducts(next);
+            setProductsTouched(true);
+          }}
+        />
+        <Text style={styles.hint}>Ao marcar a tarefa como feita, desconta do stock e, se estiver a acabar, o produto vai para as compras.</Text>
+
+        {advanced && (
+          <>
         <Text style={styles.label}>{form.kind === 'once' ? 'Quando' : 'Começa em'}</Text>
         <Pressable style={styles.dateRow} onPress={() => setShowStart(true)}>
           <Text style={styles.dateIcon}>📅</Text>
@@ -302,28 +364,11 @@ export default function TaskEditScreen() {
           onClose={() => setShowStart(false)}
           onConfirm={(date) => set(form.kind === 'once' ? { firstDate: date } : { startDate: date })}
         />
+          </>
+        )}
 
-        <Text style={styles.label}>Quem faz</Text>
-        <View style={styles.chips}>
-          <Chip label="Equilibrada" on={who === 'balanced'} onPress={() => set({ assignment: 'balanced', assignee: null })} />
-          {me && <Chip label="Eu" on={who === `fixed:${me}`} onPress={() => set({ assignment: 'fixed', assignee: me })} />}
-          {others.map((m) => (
-            <Chip key={m.user_id} label={m.display_name} on={who === `fixed:${m.user_id}`} onPress={() => set({ assignment: 'fixed', assignee: m.user_id })} />
-          ))}
-          <Chip label="Alternar" on={who === 'rotation'} onPress={() => set({ assignment: 'rotation', assignee: null })} />
-          <Chip label="Qualquer um" on={who === 'free'} onPress={() => set({ assignment: 'free', assignee: null })} />
-        </View>
-
-        <Text style={styles.label}>Gasta produtos (opcional)</Text>
-        <TaskProducts
-          items={products}
-          onChange={(next) => {
-            setProducts(next);
-            setProductsTouched(true);
-          }}
-        />
-        <Text style={styles.hint}>Ao marcar a tarefa como feita, desconta do stock e, se estiver a acabar, o produto vai para as compras.</Text>
-
+        {advanced && (
+          <>
         <Text style={styles.label}>Esforço</Text>
         <View style={styles.chips}>
           {[1, 2, 3, 4, 5].map((e) => (
@@ -331,6 +376,12 @@ export default function TaskEditScreen() {
           ))}
         </View>
         <Text style={styles.hint}>Quanto custa fazê-la. Conta para repartir a casa por igual.</Text>
+          </>
+        )}
+
+        <Pressable onPress={() => setAdvanced(!advanced)}>
+          <Text style={styles.link}>{advanced ? '▲ Menos opções' : '▼ Mais opções (dia de início, esforço…)'}</Text>
+        </Pressable>
 
         {error && <Text style={styles.error}>{error}</Text>}
         <Button title={saving ? 'A guardar…' : 'Guardar'} disabled={!valid || saving} onPress={save} />
