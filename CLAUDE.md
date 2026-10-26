@@ -15,7 +15,7 @@ Qualquer ação diária em ≤ 2 toques. Nenhum campo obrigatório além do nome
 - App: Expo (React Native) + TypeScript + Expo Router
 - Backend: Supabase (Postgres, Auth, Storage, Edge Functions), região UE
 - IA: Claude API, chamada APENAS a partir de Supabase Edge Functions
-- Testes: Jest para a app; SQL de teste em `supabase/tests/`
+- Testes: SQL em `supabase/tests/` e das Edge Functions (`*.test.ts`); ainda não há testes automáticos da app
 
 ## Estrutura
 - `app/` — ecrãs (Expo Router)
@@ -30,6 +30,32 @@ Qualquer ação diária em ≤ 2 toques. Nenhum campo obrigatório além do nome
 - Letras: Montserrat (títulos) e Ubuntu (texto), em `assets/fonts/`. Usar `Text`/`TextInput` de `components/Text` (não os do React Native).
 - Cada separador usa `components/Screen` (cabeçalho roxo + folha branca arredondada); a barra de baixo é `components/TabBar`.
 - Ícones e logótipo gerados em `design/` (ver `design/README.md`); cores de urgência: verde → amarelo → rosa (em atraso).
+
+### Legibilidade (prioridade máxima: utilizador cansado ou atarefado)
+Tamanhos mínimos, nunca abaixo:
+- Texto corrente e itens de lista: 17
+- Texto escrito nos campos de formulário: 18
+- Etiquetas dos campos e texto secundário: 15 (nunca 12–14)
+- Botões: 17, Montserrat SemiBold
+- Títulos de ecrã: 28; títulos de secção: 21
+- Altura de linha 1.5 no corpo; contraste mínimo 4.5:1
+- Os ecrãs têm de aguentar a letra do sistema a 130% sem cortar texto: nada de alturas fixas em contentores com texto.
+
+### Formulários e painéis de preenchimento
+- Um campo por linha, largura total, altura mínima 56.
+- Etiqueta sempre visível acima do campo (não só placeholder).
+- Folhas (bottom sheets) com o botão principal fixo em baixo, ao alcance do polegar.
+- Máximo 3 a 4 campos visíveis; o resto em "Mais opções".
+- Quantidades com botões − e + de pelo menos 48, além de poder escrever.
+
+### Elegância (público principal feminino)
+- Cantos generosos (cartões 20, botões e chips arredondados), sombras suaves, espaço entre cartões 16 e margens de ecrã 20.
+- Poucas cores por ecrã: roxo como base; rosa e amarelo só como acento e para estados.
+- Ícones de linha, todos do mesmo conjunto.
+
+### Regra de código
+Nunca escrever fontSize, fontFamily ou cores diretamente nos ecrãs. Usar as variantes de Text e os valores de lib/theme.ts. O botão secundário tem de se distinguir do primário.
+Antes de criar ou alterar ecrãs, ler `DESIGN.md` (guia de design completo).
 
 ## Convenções
 - Interface em português de Portugal (PT-PT): "ecrã", "utilizador", "telemóvel", "registar".
@@ -91,7 +117,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 ## Comandos
 - `npx expo start` — arrancar a app (ler o QR code com o Expo Go)
 - `npx supabase db push` — aplicar migrações ao projeto Supabase
-- `npx supabase gen types typescript --linked > lib/database.types.ts` — gerar tipos
+- `npx supabase gen types typescript --linked > lib/database.types.ts` — gerar tipos (ainda não foi gerado; a app não o usa)
 - `npx supabase functions deploy <nome>` — publicar uma Edge Function
 
 ## Roteiro (atualizar à medida que avança)
@@ -113,8 +139,8 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M16 Validades reais (USDA FoodKeeper) como definição pessoal «Mostrar validades sugeridas»; ver `docs/validades.md`
 - [x] M17 «Explica-me» com IA na Análise de despesas: `explain-spending`, definição pessoal «Explicações com IA», números verificados; ver `docs/analise-de-despesas.md`
 - [x] M18 Várias casas por conta: seletor no cabeçalho, casa ativa por telemóvel, sair da casa e passar a administração; ver `docs/varias-casas.md`
-- [ ] M19 Módulos opcionais por pessoa (Refeições, Dinheiro, Pessoal; só o núcleo numa conta nova), ecrã Casa reorganizado e mensagens sem texto técnico; ver `docs/modulos.md`
-- [ ] M20 Tarefas primeiro: tarefa ↔ produtos no formulário, «Hoje» primeiro, arranque por tarefas, formulário e produtos mais simples; ver `docs/tarefas-primeiro.md`
+- [x] M19 Módulos opcionais por pessoa (Refeições, Dinheiro, Pessoal; só o núcleo numa conta nova), ecrã Casa reorganizado e mensagens sem texto técnico; ver `docs/modulos.md`
+- [x] M20 Tarefas primeiro: tarefa ↔ produtos no formulário, «Hoje» primeiro, arranque por tarefas, formulário e produtos mais simples; ver `docs/tarefas-primeiro.md`
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas
