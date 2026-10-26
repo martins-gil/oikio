@@ -21,7 +21,7 @@ import { formatEuros } from '@/lib/money';
 import { useSession } from '@/lib/session';
 import { useShowCosts } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 import { devHint } from '@/lib/errors';
 
 const STEPS = ['schedule', 'people', 'budget', 'cravings', 'style', 'equipment', 'restrictions'] as const;
@@ -104,19 +104,19 @@ export default function KitchenScreen() {
         ))}
       </View>
 
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {id === 'schedule' && (
           <>
-            <Text style={styles.title}>Quando vão comer?</Text>
-            <Text style={styles.hint}>Escolhe o mais parecido. Serve para a IA planear o número certo de refeições.</Text>
+            <Text variant="title" style={styles.title}>Quando vão comer?</Text>
+            <Text variant="body" style={styles.hint}>Escolhe o mais parecido. Serve para a IA planear o número certo de refeições.</Text>
             {SCHEDULES.map((o) => (
               <Pressable key={o.key} style={[styles.option, profile.schedule === o.key && styles.optionOn]} onPress={() => set({ schedule: o.key })}>
-                <Text style={styles.optionEmoji}>{o.emoji}</Text>
+                <Text variant="section" style={styles.optionEmoji}>{o.emoji}</Text>
                 <View style={styles.flex}>
-                  <Text style={styles.optionTitle}>{o.title}</Text>
-                  <Text style={styles.small}>{o.detail}</Text>
+                  <Text variant="button" style={styles.optionTitle}>{o.title}</Text>
+                  <Text variant="label" style={styles.small}>{o.detail}</Text>
                 </View>
-                {profile.schedule === o.key && <Text style={styles.tick}>✓</Text>}
+                {profile.schedule === o.key && <Text variant="section" style={styles.tick}>✓</Text>}
               </Pressable>
             ))}
           </>
@@ -124,15 +124,15 @@ export default function KitchenScreen() {
 
         {id === 'people' && (
           <>
-            <Text style={styles.title}>Quantas pessoas vão comer?</Text>
-            <Text style={styles.hint}>Para ajustar as quantidades das receitas.</Text>
+            <Text variant="title" style={styles.title}>Quantas pessoas vão comer?</Text>
+            <Text variant="body" style={styles.hint}>Para ajustar as quantidades das receitas.</Text>
             <View style={styles.stepper}>
-              <Pressable style={styles.step} onPress={() => set({ diners: Math.max(1, profile.diners - 1) })}>
-                <Text style={styles.stepText}>−</Text>
+              <Pressable style={styles.step} accessibilityRole="button" accessibilityLabel="Menos" onPress={() => set({ diners: Math.max(1, profile.diners - 1) })}>
+                <Text variant="section" style={styles.stepText}>−</Text>
               </Pressable>
-              <Text style={styles.big}>{profile.diners}</Text>
-              <Pressable style={styles.step} onPress={() => set({ diners: Math.min(12, profile.diners + 1) })}>
-                <Text style={styles.stepText}>＋</Text>
+              <Text variant="display" style={styles.big}>{profile.diners}</Text>
+              <Pressable style={styles.step} accessibilityRole="button" accessibilityLabel="Mais" onPress={() => set({ diners: Math.min(12, profile.diners + 1) })}>
+                <Text variant="section" style={styles.stepText}>＋</Text>
               </Pressable>
             </View>
           </>
@@ -140,31 +140,31 @@ export default function KitchenScreen() {
 
         {id === 'budget' && (
           <>
-            <Text style={styles.title}>Qual é o orçamento semanal para comida?</Text>
-            <Text style={styles.hint}>A IA tenta ficar dentro deste valor e usa primeiro o que já tens.</Text>
-            <Text style={styles.big}>{budget === null ? 'Sem limite' : `€ ${budget}`}</Text>
-            {budget !== null && <Text style={styles.centerSmall}>esta semana</Text>}
+            <Text variant="title" style={styles.title}>Qual é o orçamento semanal para comida?</Text>
+            <Text variant="body" style={styles.hint}>A IA tenta ficar dentro deste valor e usa primeiro o que já tens.</Text>
+            <Text variant="display" style={styles.big}>{budget === null ? 'Sem limite' : `€ ${budget}`}</Text>
+            {budget !== null && <Text variant="label" style={styles.centerSmall}>esta semana</Text>}
             <View style={styles.stepper}>
               <Pressable style={styles.step} onPress={() => setBudget(Math.max(0, (budget ?? 60) - 5))}>
-                <Text style={styles.stepText}>−</Text>
+                <Text variant="section" style={styles.stepText}>−</Text>
               </Pressable>
               <Pressable style={styles.step} onPress={() => setBudget((budget ?? 55) + 5)}>
-                <Text style={styles.stepText}>＋</Text>
+                <Text variant="section" style={styles.stepText}>＋</Text>
               </Pressable>
             </View>
             <View style={styles.chips}>
               {BUDGET_CHOICES.map((v) => (
                 <Pressable key={v} style={[styles.chip, budget === v && styles.chipOn]} onPress={() => setBudget(v)}>
-                  <Text style={[styles.chipText, budget === v && styles.chipTextOn]}>€ {v}</Text>
+                  <Text variant="button" style={budget === v ? styles.chipTextOn : styles.chipText}>€ {v}</Text>
                 </Pressable>
               ))}
               <Pressable style={[styles.chip, budget === null && styles.chipOn]} onPress={() => setBudget(null)}>
-                <Text style={[styles.chipText, budget === null && styles.chipTextOn]}>Sem limite</Text>
+                <Text variant="button" style={budget === null ? styles.chipTextOn : styles.chipText}>Sem limite</Text>
               </Pressable>
             </View>
             {moneyWeekly !== null && (
               <Pressable style={styles.suggest} onPress={() => setBudget(Math.round(moneyWeekly / 100))}>
-                <Text style={styles.suggestText}>
+                <Text variant="body" style={styles.suggestText}>
                   Usar o orçamento de Supermercado do Dinheiro: ≈ {formatEuros(moneyWeekly)} por semana
                 </Text>
               </Pressable>
@@ -174,8 +174,8 @@ export default function KitchenScreen() {
 
         {id === 'cravings' && (
           <>
-            <Text style={styles.title}>Do que estão com vontade?</Text>
-            <Text style={styles.hint}>
+            <Text variant="title" style={styles.title}>Do que estão com vontade?</Text>
+            <Text variant="body" style={styles.hint}>
               Escolhe até {MAX_CRAVINGS} ({profile.cravings.length}/{MAX_CRAVINGS}).
             </Text>
             <View style={styles.grid}>
@@ -183,8 +183,8 @@ export default function KitchenScreen() {
                 const on = profile.cravings.includes(c.key);
                 return (
                   <Pressable key={c.key} style={[styles.tile, on && styles.tileOn]} onPress={() => set({ cravings: toggle(profile.cravings, c.key, MAX_CRAVINGS) })}>
-                    <Text style={styles.tileEmoji}>{c.emoji}</Text>
-                    <Text style={styles.tileLabel}>{c.label}</Text>
+                    <Text variant="display" style={styles.tileEmoji}>{c.emoji}</Text>
+                    <Text variant="body" style={styles.tileLabel}>{c.label}</Text>
                   </Pressable>
                 );
               })}
@@ -194,15 +194,15 @@ export default function KitchenScreen() {
 
         {id === 'style' && (
           <>
-            <Text style={styles.title}>Como gostam de cozinhar?</Text>
+            <Text variant="title" style={styles.title}>Como gostam de cozinhar?</Text>
             {COOK_STYLES.map((o) => (
               <Pressable key={o.key} style={[styles.option, profile.cook_style === o.key && styles.optionOn]} onPress={() => set({ cook_style: o.key })}>
-                <Text style={styles.optionEmoji}>{o.emoji}</Text>
+                <Text variant="section" style={styles.optionEmoji}>{o.emoji}</Text>
                 <View style={styles.flex}>
-                  <Text style={styles.optionTitle}>{o.title}</Text>
-                  <Text style={styles.small}>{o.detail}</Text>
+                  <Text variant="button" style={styles.optionTitle}>{o.title}</Text>
+                  <Text variant="label" style={styles.small}>{o.detail}</Text>
                 </View>
-                {profile.cook_style === o.key && <Text style={styles.tick}>✓</Text>}
+                {profile.cook_style === o.key && <Text variant="section" style={styles.tick}>✓</Text>}
               </Pressable>
             ))}
           </>
@@ -210,16 +210,16 @@ export default function KitchenScreen() {
 
         {id === 'equipment' && (
           <>
-            <Text style={styles.title}>O que têm na cozinha?</Text>
-            <Text style={styles.hint}>A IA só sugere receitas que consigas fazer com isto.</Text>
+            <Text variant="title" style={styles.title}>O que têm na cozinha?</Text>
+            <Text variant="body" style={styles.hint}>A IA só sugere receitas que consigas fazer com isto.</Text>
             <View style={styles.grid3}>
               {EQUIPMENT.map((e) => {
                 const on = profile.equipment.includes(e.key);
                 return (
                   <Pressable key={e.key} style={[styles.eq, on && styles.eqOn]} onPress={() => set({ equipment: toggle(profile.equipment, e.key) })}>
                     <Image source={e.image} style={styles.eqImage} />
-                    <Text style={styles.eqLabel}>{e.label}</Text>
-                    {on && <Text style={styles.eqTick}>✓</Text>}
+                    <Text variant="label" style={styles.eqLabel}>{e.label}</Text>
+                    {on && <Text variant="body" style={styles.eqTick}>✓</Text>}
                   </Pressable>
                 );
               })}
@@ -229,21 +229,22 @@ export default function KitchenScreen() {
 
         {id === 'restrictions' && (
           <>
-            <Text style={styles.title}>Alguma alergia ou restrição?</Text>
-            <Text style={styles.hint}>A IA nunca sugere algo que contrarie isto. Podes não escolher nenhuma.</Text>
+            <Text variant="title" style={styles.title}>Alguma alergia ou restrição?</Text>
+            <Text variant="body" style={styles.hint}>A IA nunca sugere algo que contrarie isto. Podes não escolher nenhuma.</Text>
             <View style={styles.chips}>
               {RESTRICTIONS.map((r) => {
                 const on = profile.restrictions.includes(r.key);
                 return (
                   <Pressable key={r.key} style={[styles.chip, on && styles.chipOn]} onPress={() => set({ restrictions: toggle(profile.restrictions, r.key) })}>
-                    <Text style={[styles.chipText, on && styles.chipTextOn]}>{r.label}</Text>
+                    <Text variant="button" style={on ? styles.chipTextOn : styles.chipText}>{r.label}</Text>
                   </Pressable>
                 );
               })}
             </View>
-            <Text style={styles.label}>Outra alergia (opcional)</Text>
+            <Text variant="label" style={styles.label}>Outra alergia (opcional)</Text>
             <TextInput
               style={styles.input}
+              accessibilityLabel="Outra alergia"
               value={profile.restrictions_note ?? ''}
               onChangeText={(t) => set({ restrictions_note: t.slice(0, 200) })}
               placeholder="Ex.: alergia a kiwi"
@@ -269,44 +270,44 @@ export default function KitchenScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  flex: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  progress: { flexDirection: 'row', gap: 4, paddingHorizontal: 16, paddingTop: 12 },
-  progressBar: { flex: 1, height: 5, borderRadius: 3, backgroundColor: colors.lavender },
+  progress: { flexDirection: 'row', gap: 4, paddingHorizontal: spacing.md, paddingTop: 12 },
+  progressBar: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.lavender },
   progressOn: { backgroundColor: colors.primary },
-  container: { padding: 16, gap: 12, paddingBottom: 24 },
-  title: { fontSize: 24, color: colors.ink },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  title: { color: colors.ink },
   hint: { color: colors.muted, marginBottom: 4 },
-  small: { color: colors.muted, fontSize: 13 },
+  small: { color: colors.muted },
   centerSmall: { color: colors.muted, textAlign: 'center' },
-  label: { color: colors.muted, fontSize: 13, marginTop: 6 },
-  big: { fontSize: 44, color: colors.ink, textAlign: 'center', minWidth: 90 },
-  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, borderWidth: 2, borderColor: 'transparent', ...shadow },
+  label: { color: colors.muted, marginTop: 6 },
+  big: { color: colors.ink, textAlign: 'center', minWidth: 90 },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, borderWidth: 2, borderColor: 'transparent', ...shadow },
   optionOn: { borderColor: colors.pink },
-  optionEmoji: { fontSize: 30 },
-  optionTitle: { fontSize: 17, color: colors.ink },
-  tick: { color: colors.pink, fontSize: 22 },
+  optionEmoji: { color: colors.ink },
+  optionTitle: { color: colors.ink },
+  tick: { color: colors.pink },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28, marginVertical: 8 },
   step: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: colors.accent, fontSize: 30 },
+  stepText: { color: colors.white },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 7, paddingHorizontal: 14 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
   chipTextOn: { color: colors.white },
-  suggest: { padding: 12, borderRadius: radius.card, backgroundColor: colors.lavender },
+  suggest: { minHeight: 56, justifyContent: 'center', padding: 14, borderRadius: radius.card, backgroundColor: colors.lavender },
   suggestText: { color: colors.primary },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  tile: { width: '48%', alignItems: 'center', gap: 6, paddingVertical: 18, paddingHorizontal: 8, borderRadius: radius.card, backgroundColor: colors.card, borderWidth: 2, borderColor: 'transparent', ...shadow },
+  tile: { flexGrow: 1, flexBasis: '45%', alignItems: 'center', gap: 6, paddingVertical: 18, paddingHorizontal: 8, borderRadius: radius.card, backgroundColor: colors.card, borderWidth: 2, borderColor: 'transparent', ...shadow },
   tileOn: { borderColor: colors.pink },
-  tileEmoji: { fontSize: 34 },
+  tileEmoji: { color: colors.ink },
   tileLabel: { color: colors.ink, textAlign: 'center' },
   grid3: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  eq: { width: '31%', alignItems: 'center', gap: 4, paddingVertical: 10, paddingHorizontal: 4, borderRadius: radius.card, backgroundColor: colors.lavender, borderWidth: 2, borderColor: 'transparent' },
+  eq: { flexGrow: 1, flexBasis: '45%', alignItems: 'center', gap: 4, paddingVertical: 12, paddingHorizontal: 6, borderRadius: radius.card, backgroundColor: colors.lavender, borderWidth: 2, borderColor: 'transparent' },
   eqOn: { borderColor: colors.pink, backgroundColor: colors.white },
   eqImage: { width: 64, height: 64 },
-  eqLabel: { color: colors.ink, fontSize: 12, textAlign: 'center' },
-  eqTick: { position: 'absolute', top: 4, right: 8, color: colors.pink, fontSize: 16 },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 12, fontSize: 16, color: colors.ink },
-  footer: { flexDirection: 'row', gap: 10, padding: 16, paddingTop: 8, backgroundColor: colors.bg },
+  eqLabel: { color: colors.ink, textAlign: 'center' },
+  eqTick: { position: 'absolute', top: 6, right: 10, color: colors.pink },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  footer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: spacing.md, paddingTop: spacing.sm, backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.border },
 });

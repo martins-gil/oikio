@@ -15,7 +15,7 @@ import { FavoriteStar } from '@/components/FavoriteStar';
 import { useFavorites } from '@/lib/favorites';
 import { useShowCosts } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 type Profile = { schedule: string; diners: number; weekly_budget_cents: number | null; equipment: string[] };
 const equipmentName = (key: string) => EQUIPMENT.find((e) => e.key === key)?.label ?? key;
@@ -146,8 +146,8 @@ export default function MealsScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.card}>
-          <Text style={styles.title}>Primeiro, o perfil de cozinha</Text>
-          <Text style={styles.hint}>Preciso de saber quantas pessoas são, o que têm na cozinha e as alergias, para sugerir só o que serve.</Text>
+          <Text variant="title" style={styles.title}>Primeiro, o perfil de cozinha</Text>
+          <Text variant="label" style={styles.hint}>Preciso de saber quantas pessoas são, o que têm na cozinha e as alergias, para sugerir só o que serve.</Text>
           <Button title="🍽️ Preencher o perfil" onPress={() => router.push('/kitchen')} />
         </View>
         <Toast message={toast} onHide={hideToast} />
@@ -159,29 +159,27 @@ export default function MealsScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
-          <Text style={styles.summary}>
+          <Text variant="body" style={styles.summary}>
             {profile.diners} {profile.diners === 1 ? 'pessoa' : 'pessoas'} · {schedule}
             {showCosts && profile.weekly_budget_cents ? ` · até ${formatEuros(profile.weekly_budget_cents)}/semana` : ''} · {profile.equipment.length} equipamentos
           </Text>
-          <Pressable onPress={() => router.push('/kitchen')}>
-            <Text style={styles.link}>Mudar o perfil</Text>
+          <Pressable style={styles.linkRow} onPress={() => router.push('/kitchen')} accessibilityRole="button">
+            <Text variant="button" style={styles.link}>Mudar o perfil</Text>
           </Pressable>
-          <View style={styles.chips}>
-            {(['almoço', 'jantar'] as const).map((m) => (
-              <Pressable key={m} style={[styles.chip, meal === m && styles.chipOn]} onPress={() => setMeal(m)}>
-                <Text style={[styles.chipText, meal === m && styles.chipTextOn]}>{m === 'almoço' ? '🍝 Almoço' : '🌙 Jantar'}</Text>
-              </Pressable>
-            ))}
+          <View style={styles.row}>
+            <View style={styles.rowButton}>
+              <Button title="📅 Plano da semana" variant="secondary" onPress={() => router.push('/plan')} />
+            </View>
+            <View style={styles.rowButton}>
+              <Button title="⭐ Favoritas" variant="secondary" onPress={() => router.push('/favorites')} />
+            </View>
           </View>
-          <Button title={loading ? 'A pensar…' : '✨ Sugerir'} disabled={loading} onPress={suggest} />
-          <Button title="📅 Plano da semana" variant="secondary" onPress={() => router.push('/plan')} />
-          <Button title="⭐ Favoritas" variant="secondary" onPress={() => router.push('/favorites')} />
           {loading && (
             <View style={styles.reading}>
               <ActivityIndicator color={colors.primary} />
-              <Text style={styles.small}>A ver o que tens em casa… pode demorar até 40 segundos.</Text>
+              <Text variant="label" style={styles.small}>A ver o que tens em casa… pode demorar até 40 segundos.</Text>
             </View>
           )}
         </View>
@@ -191,17 +189,17 @@ export default function MealsScreen() {
           return (
             <View key={`${suggestionId}-${i}`} style={styles.card}>
               <View style={styles.titleRow}>
-                <Text style={[styles.mealTitle, styles.flex]}>{m.title}</Text>
+                <Text variant="section" style={[styles.mealTitle, styles.flex]}>{m.title}</Text>
                 <FavoriteStar on={!!fav.find(m.title)} onPress={async () => setToast((await fav.toggle(m)) ?? 'Não foi possível guardar.')} />
               </View>
-              {m.why && <Text style={styles.why}>{m.why}</Text>}
-              <Text style={styles.small}>
+              {m.why && <Text variant="label" style={styles.why}>{m.why}</Text>}
+              <Text variant="label" style={styles.small}>
                 {[m.time_minutes ? `⏱ ${m.time_minutes} min` : null, m.difficulty, `${m.servings} ${m.servings === 1 ? 'pessoa' : 'pessoas'}`, ...m.equipment.map(equipmentName)].filter(Boolean).join(' · ')}
               </Text>
 
               {m.uses_stock.length > 0 && (
                 <View style={styles.block}>
-                  <Text style={styles.blockTitle}>Já tens</Text>
+                  <Text variant="button" style={styles.blockTitle}>Já tens</Text>
                   {m.uses_stock.map((u) => (
                     <Text key={u.product_id} style={styles.line}>
                       ✓ {u.name} — {formatAmount(u.quantity, u.unit)}
@@ -211,7 +209,7 @@ export default function MealsScreen() {
               )}
               {m.missing.length > 0 && (
                 <View style={styles.block}>
-                  <Text style={styles.blockTitle}>Falta comprar</Text>
+                  <Text variant="button" style={styles.blockTitle}>Falta comprar</Text>
                   {m.missing.map((x, k) => (
                     <Text key={k} style={styles.line}>
                       • {x.name}
@@ -220,7 +218,7 @@ export default function MealsScreen() {
                     </Text>
                   ))}
                   {showCosts && (
-                    <Text style={styles.small}>
+                    <Text variant="label" style={styles.small}>
                       {m.est_missing_cost_cents > 0 ? `≈ ${formatEuros(m.est_missing_cost_cents)} (pelos teus talões)` : 'Sem preços nos teus talões'}
                       {m.unpriced_count > 0 && m.est_missing_cost_cents > 0 ? ` + ${m.unpriced_count} sem preço` : ''}
                     </Text>
@@ -228,8 +226,8 @@ export default function MealsScreen() {
                 </View>
               )}
 
-              <Pressable onPress={() => setOpen(open === i ? null : i)}>
-                <Text style={styles.link}>{open === i ? 'Esconder os passos' : 'Ver os passos'}</Text>
+              <Pressable style={styles.linkRow} onPress={() => setOpen(open === i ? null : i)} accessibilityRole="button">
+                <Text variant="button" style={styles.link}>{open === i ? 'Esconder os passos' : 'Ver os passos'}</Text>
               </Pressable>
               {open === i &&
                 m.steps.map((s, k) => (
@@ -240,29 +238,31 @@ export default function MealsScreen() {
 
               {isCooking ? (
                 <View style={styles.block}>
-                  <Text style={styles.blockTitle}>O que usaste? Ajusta e confirma</Text>
+                  <Text variant="button" style={styles.blockTitle}>O que usaste? Ajusta e confirma</Text>
                   {m.uses_stock.map((u) => (
-                    <View key={u.product_id} style={styles.qtyRow}>
-                      <Text style={[styles.line, styles.flex]}>{u.name}</Text>
-                      <TextInput style={styles.qtyInput} value={qty[u.product_id] ?? ''} onChangeText={(t) => setQty((prev) => ({ ...prev, [u.product_id]: t }))} keyboardType="decimal-pad" />
-                      <Text style={styles.small}>{u.unit}</Text>
+                    <View key={u.product_id} style={styles.qtyBlock}>
+                      <Text variant="body" style={styles.line}>{u.name}</Text>
+                      <View style={styles.qtyRow}>
+                        <TextInput style={styles.qtyInput} value={qty[u.product_id] ?? ''} onChangeText={(t) => setQty((prev) => ({ ...prev, [u.product_id]: t }))} keyboardType="decimal-pad" accessibilityLabel={`Quantidade de ${u.name}`} />
+                        <Text variant="label" style={styles.small}>{u.unit}</Text>
+                      </View>
                     </View>
                   ))}
                   <View style={styles.row}>
-                    <View style={styles.flex}>
+                    <View style={styles.rowButton}>
                       <Button title="Cancelar" variant="secondary" onPress={() => setCooking(null)} />
                     </View>
-                    <View style={styles.flex}>
+                    <View style={styles.rowButton}>
                       <Button title={busy ? 'A guardar…' : 'Confirmar'} disabled={busy} onPress={() => confirmCooked(i)} />
                     </View>
                   </View>
                 </View>
               ) : (
                 <View style={styles.row}>
-                  <View style={styles.flex}>
+                  <View style={styles.rowButton}>
                     <Button title="🛒 Pôr na lista" variant="secondary" disabled={busy || m.missing.length === 0} onPress={() => addMissing(m)} />
                   </View>
-                  <View style={styles.flex}>
+                  <View style={styles.rowButton}>
                     <Button title={cooked ? '✅ Registado' : 'Cozinhei'} disabled={cooked || busy || m.uses_stock.length === 0} onPress={() => startCooking(i)} />
                   </View>
                 </View>
@@ -272,26 +272,38 @@ export default function MealsScreen() {
         })}
 
         {meals.length > 0 && (
-          <Text style={styles.disclaimer}>
-            A IA pode enganar-se. Confirma sempre os ingredientes e os rótulos, sobretudo se alguém tiver alergias.
-          </Text>
+          <View style={styles.disclaimerBox}>
+            <Text variant="label" style={styles.disclaimer}>
+              ⚠ A IA pode enganar-se. Confirma sempre os ingredientes e os rótulos, sobretudo se alguém tiver alergias.
+            </Text>
+          </View>
         )}
 
         {history.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.blockTitle}>Sugestões recentes</Text>
+            <Text variant="button" style={styles.blockTitle}>Sugestões recentes</Text>
             {history.map((h) => (
-              <Pressable key={h.id} style={styles.historyRow} onPress={() => openHistory(h)}>
-                <Text style={styles.line}>
+              <Pressable key={h.id} style={styles.historyRow} onPress={() => openHistory(h)} accessibilityRole="button">
+                <Text variant="body" style={styles.line}>
                   {h.meal === 'almoço' ? '🍝' : '🌙'} {new Date(h.created_at).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })} ·{' '}
                   {(h.response?.meals ?? []).map((x) => x.title).join(', ') || '—'}
                 </Text>
-                {h.cooked_at && <Text style={styles.small}>✅ cozinhada</Text>}
+                {h.cooked_at && <Text variant="label" style={styles.small}>✅ cozinhada</Text>}
               </Pressable>
             ))}
           </View>
         )}
       </ScrollView>
+      <View style={styles.footer}>
+        <View style={styles.chips}>
+          {(['almoço', 'jantar'] as const).map((m) => (
+            <Pressable key={m} accessibilityRole="button" style={[styles.chip, meal === m && styles.chipOn]} onPress={() => setMeal(m)}>
+              <Text variant="button" style={meal === m ? styles.chipTextOn : styles.chipText}>{m === 'almoço' ? '🍝 Almoço' : '🌙 Jantar'}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <Button title={loading ? 'A pensar…' : '✨ Sugerir'} disabled={loading} onPress={suggest} />
+      </View>
       <Toast message={toast} onHide={hideToast} />
     </KeyboardAvoidingView>
   );
@@ -300,29 +312,34 @@ export default function MealsScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 12, paddingBottom: 90 },
-  card: { gap: 10, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
-  title: { fontSize: 22, color: colors.ink },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  footer: { gap: 10, padding: spacing.md, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.white },
+  card: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  title: { color: colors.ink },
   hint: { color: colors.muted },
   summary: { color: colors.ink },
-  link: { color: colors.primary, fontSize: 15 },
-  chips: { flexDirection: 'row', gap: 8 },
-  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 7, paddingHorizontal: 16 },
+  link: { color: colors.primary },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 20, backgroundColor: colors.white },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
   chipTextOn: { color: colors.white },
   reading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  small: { color: colors.muted, fontSize: 13 },
-  mealTitle: { fontSize: 20, color: colors.ink },
+  small: { color: colors.muted, flexShrink: 1 },
+  mealTitle: { color: colors.ink },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   why: { color: colors.muted },
-  block: { gap: 4, padding: 12, borderRadius: 14, backgroundColor: colors.bg },
-  blockTitle: { fontSize: 15, color: colors.ink },
-  line: { color: colors.ink, fontSize: 14 },
-  step: { color: colors.ink, fontSize: 14 },
-  row: { flexDirection: 'row', gap: 10 },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  qtyInput: { minWidth: 76, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 8, textAlign: 'center', fontSize: 16, color: colors.ink },
-  disclaimer: { color: colors.muted, fontSize: 12, textAlign: 'center' },
-  historyRow: { paddingVertical: 6, gap: 2 },
+  block: { gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: colors.panel },
+  blockTitle: { color: colors.ink },
+  line: { color: colors.ink },
+  step: { color: colors.ink },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  rowButton: { flexGrow: 1, flexBasis: 140 },
+  qtyBlock: { gap: 6 },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  qtyInput: { minWidth: 100, minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 12, textAlign: 'center', color: colors.ink },
+  disclaimerBox: { padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.warnBg },
+  disclaimer: { color: colors.warnText },
+  historyRow: { minHeight: 48, justifyContent: 'center', paddingVertical: 6, gap: 2 },
 });

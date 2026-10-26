@@ -11,7 +11,7 @@ import { EQUIPMENT } from '@/lib/kitchen';
 import { useFavorites, type Favorite } from '@/lib/favorites';
 import { formatAmount } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, radius, shadow, spacing } from '@/lib/theme';
 
 const equipmentName = (key: string) => EQUIPMENT.find((e) => e.key === key)?.label ?? key;
 
@@ -40,26 +40,26 @@ export default function FavoritesScreen() {
 
   return (
     <View style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         {favorites.length === 0 ? (
           <View style={styles.card}>
-            <Text style={styles.title}>Ainda sem favoritas</Text>
-            <Text style={styles.hint}>Toca na ☆ numa refeição que gostes (no plano ou em «O que cozinhar») e ela fica aqui, para repetires quando quiseres.</Text>
+            <Text variant="section" style={styles.title}>Ainda sem favoritas</Text>
+            <Text variant="label" style={styles.hint}>Guarda uma sugestão com a ☆ (no plano ou em «O que cozinhar») e ela fica aqui, para repetires quando quiseres.</Text>
             <Button title="🍽️ O que cozinhar" variant="secondary" onPress={() => router.push('/meals')} />
           </View>
         ) : (
           favorites.map((f) => (
             <View key={f.id} style={styles.card}>
               <View style={styles.head}>
-                <Text style={[styles.mealTitle, styles.flex]}>{f.title}</Text>
+                <Text variant="section" style={[styles.mealTitle, styles.flex]}>{f.title}</Text>
                 <FavoriteStar on onPress={() => remove(f)} />
               </View>
-              {f.meal.why ? <Text style={styles.hint}>{f.meal.why}</Text> : null}
-              <Text style={styles.small}>
+              {f.meal.why ? <Text variant="label" style={styles.hint}>{f.meal.why}</Text> : null}
+              <Text variant="label" style={styles.small}>
                 {[f.meal.time_minutes ? `⏱ ${f.meal.time_minutes} min` : null, f.meal.difficulty, ...(f.meal.equipment ?? []).map(equipmentName)].filter(Boolean).join(' · ')}
               </Text>
               <View style={styles.block}>
-                <Text style={styles.blockTitle}>Ingredientes</Text>
+                <Text variant="button" style={styles.blockTitle}>Ingredientes</Text>
                 {f.ingredients.map((x, k) => (
                   <Text key={k} style={styles.line}>
                     • {x.name}
@@ -67,8 +67,8 @@ export default function FavoritesScreen() {
                   </Text>
                 ))}
               </View>
-              <Pressable onPress={() => setOpen(open === f.id ? null : f.id)}>
-                <Text style={styles.link}>{open === f.id ? 'Esconder os passos' : 'Ver os passos'}</Text>
+              <Pressable style={styles.linkRow} onPress={() => setOpen(open === f.id ? null : f.id)} accessibilityRole="button">
+                <Text variant="button" style={styles.link}>{open === f.id ? 'Esconder os passos' : 'Ver os passos'}</Text>
               </Pressable>
               {open === f.id && (f.meal.steps ?? []).map((st, k) => <Text key={k} style={styles.line}>{k + 1}. {st}</Text>)}
               <Button title="🛒 Quero repetir (o que falta)" disabled={busy} onPress={() => repeat(f)} />
@@ -82,16 +82,17 @@ export default function FavoritesScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  container: { padding: 16, gap: 12, paddingBottom: 90 },
-  card: { gap: 10, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  flex: { flex: 1, backgroundColor: colors.bg },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  card: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  title: { fontSize: 22, color: colors.ink },
-  mealTitle: { fontSize: 20, color: colors.ink },
+  title: { color: colors.ink },
+  mealTitle: { color: colors.ink },
   hint: { color: colors.muted },
-  small: { color: colors.muted, fontSize: 13 },
-  link: { color: colors.primary, fontSize: 15 },
-  block: { gap: 4, padding: 12, borderRadius: 14, backgroundColor: colors.bg },
-  blockTitle: { fontSize: 15, color: colors.ink },
-  line: { color: colors.ink, fontSize: 14 },
+  small: { color: colors.muted },
+  link: { color: colors.primary },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
+  block: { gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: colors.panel },
+  blockTitle: { color: colors.ink },
+  line: { color: colors.ink },
 });
