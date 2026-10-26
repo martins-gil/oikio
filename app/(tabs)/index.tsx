@@ -296,7 +296,11 @@ export default function HomeScreen() {
   const menuOptions = (o: Occurrence): SheetOption[] => {
     const title = o.tasks?.title ?? 'Tarefa';
     const outgoing = swaps.find((s) => s.occurrence_id === o.id && s.from_user === me);
-    const options: SheetOption[] = [{ label: '📅 Mudar a data', onPress: () => setDateFor(o) }];
+    const options: SheetOption[] = [];
+    // Editar a tarefa (frequência, quem faz, produtos que gasta…) — só quem gere as tarefas da casa
+    if (canManage) options.push({ label: '✏️ Editar a tarefa', onPress: () => router.push({ pathname: '/task/edit', params: { id: o.task_id } }) });
+    options.push({ label: 'ℹ️ Ver a tarefa', onPress: () => router.push({ pathname: '/task/[id]', params: { id: o.task_id } }) });
+    options.push({ label: '📅 Mudar a data', onPress: () => setDateFor(o) });
     if (o.assigned_to === me) {
       if (members.length < 2) {
         options.push({ label: 'ℹ️ Não há mais ninguém na casa', onPress: () => setToast('Convida o parceiro em ⚙️ para poderes passar tarefas.') });
@@ -590,7 +594,7 @@ export default function HomeScreen() {
               g.items.length > 0 && (
                 <View key={g.title} style={styles.group}>
                   <Text style={styles.section}>{g.title}</Text>
-                  {g.title === 'As minhas' && <Text style={styles.tip}>mantém premida uma tarefa para mudar a data, passá-la ou saltá-la</Text>}
+                  {g.title === 'As minhas' && <Text style={styles.tip}>mantém premida uma tarefa para a editar, mudar a data, passá-la ou saltá-la</Text>}
                   {g.items.map((o) => renderTask(o, false))}
                 </View>
               ),
