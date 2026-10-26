@@ -11,3 +11,7 @@ Origem: avaliação do produto. A gestão da casa (tarefas) é o centro; os prod
 
 ## Testes
 `supabase/tests/task_products.sql` (16 verificações, incluindo o desconto ao marcar como feita).
+
+## Barra da semana e previsão (adicionado ao passo 2)
+- O ecrã «Hoje» abre sempre **em hoje**. A barra da semana, logo por baixo da saudação, deixa tocar noutro dia desta semana: dias passados mostram o que ficou por fazer e o que foi feito; dias futuros mostram as tarefas já marcadas e as **previstas** (um número por baixo do dia). «Voltar a hoje» regressa.
+- A geração cria cada ocorrência só no próprio dia, por isso a previsão vem de `week_forecast(casa, de, até)`, que simula as mesmas regras (calendário, X por período, de N em N dias) **sem criar nada**. São previsões: o dia real pode mudar conforme se fazem as anteriores. Tarefas pessoais e «quando for preciso» não entram. Teste: `supabase/tests/week_forecast.sql`.

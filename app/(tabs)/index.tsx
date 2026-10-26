@@ -92,6 +92,8 @@ export default function HomeScreen() {
   const [thanking, setThanking] = useState<string | null>(null);
   const [scheduled, setScheduled] = useState<Occurrence[]>([]);
   const [showScheduled, setShowScheduled] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null); // null = hoje; escolhe-se um dia desta semana na barra
+  const [forecast, setForecast] = useState<{ task_id: string; title: string; due_date: string }[]>([]); // previsão dos dias que faltam
   const [menuFor, setMenuFor] = useState<Occurrence | null>(null);
   const [dateFor, setDateFor] = useState<Occurrence | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -172,6 +174,17 @@ export default function HomeScreen() {
     } else {
       setThanked(new Set());
       setUnseen([]);
+    }
+
+    // Previsão das tarefas que se repetem nos dias que faltam desta semana (a app abre em hoje; a barra deixa espreitar os outros)
+    const tomorrow = addDaysIso(today, 1);
+    const weekLast = addDaysIso(mondayOf(0), 6);
+    if (tomorrow <= weekLast) {
+      supabase
+        .rpc('week_forecast', { p_household: household.id, p_from: tomorrow, p_to: weekLast })
+        .then(({ data: fc }) => setForecast((fc ?? []) as { task_id: string; title: string; due_date: string }[]));
+    } else {
+      setForecast([]);
     }
 
     // Tarefas já agendadas para os próximos dias (pendentes, depois de hoje)
@@ -343,11 +356,17 @@ export default function HomeScreen() {
 
   const pending = occurrences;
   const current = weekOffset === 0;
-  const others = pending.filter((o) => o.assigned_to !== null && o.assigned_to !== me);
+  // O dia que está à vista: hoje (por defeito) ou outro dia desta semana escolhido na barra
+  const day = current && selectedDay ? selectedDay : todayStr;
+  const isToday = day === todayStr;
+  const shown = isToday ? pending : day < todayStr ? pending.filter((o) => o.due_date === day) : scheduled.filter((o) => o.due_date === day);
+  const dayForecast = !isToday && day > todayStr ? forecast.filter((f) => f.due_date === day) : [];
+  const doneOnSelected = isToday ? doneWeek : doneWeek.filter((o) => o.completed_at && localDate(new Date(o.completed_at)) === day);
+  const others = shown.filter((o) => o.assigned_to !== null && o.assigned_to !== me);
   const otherIds = [...new Set(others.map((o) => o.assigned_to as string))];
   const groups = [
-    { title: 'As minhas', items: pending.filter((o) => o.assigned_to === me) },
-    { title: 'Para qualquer um', items: pending.filter((o) => o.assigned_to === null) },
+    { title: 'As minhas', items: shown.filter((o) => o.assigned_to === me) },
+    { title: 'Para qualquer um', items: shown.filter((o) => o.assigned_to === null) },
     ...otherIds.map((id) => ({ title: `De ${nameOf(id)}`, items: others.filter((o) => o.assigned_to === id) })),
   ];
 
@@ -378,6 +397,8 @@ export default function HomeScreen() {
   const weekPercent = weekTotal === 0 ? 0 : (doneWeek.length / weekTotal) * 100;
   const weekDays = Array.from({ length: 7 }, (_, i) => addDaysIso(weekStart, i));
   const DAY_LETTERS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+  const WEEKDAY_NAMES = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo'];
+  const dayName = (d: string) => `${WEEKDAY_NAMES[weekDays.indexOf(d)] ?? ''} ${Number(d.slice(8))}/${Number(d.slice(5, 7))}`;
   const doneOnDay = new Set(doneWeek.filter((o) => o.completed_at).map((o) => localDate(new Date(o.completed_at!))));
 
   const renderTask = (o: Occurrence, isDone: boolean) => {
@@ -447,6 +468,26 @@ export default function HomeScreen() {
     );
   };
 
+  // A barra da semana: toca num dia para ver as tarefas desse dia (a app abre sempre em hoje)
+  const upcomingCount = (d: string) => (d > todayStr ? scheduled.filter((o) => o.due_date === d).length + forecast.filter((f) => f.due_date === d).length : 0);
+  const renderStrip = (selectable: boolean) => (
+    <View style={styles.strip}>
+      {weekDays.map((d, i) => {
+        const selected = selectable && d === day;
+        const n = upcomingCount(d);
+        return (
+          <Pressable key={d} disabled={!selectable} style={styles.stripDay} onPress={() => setSelectedDay(d === todayStr ? null : d)}>
+            <Text style={styles.stripLetter}>{DAY_LETTERS[i]}</Text>
+            <View style={[styles.stripCircle, d === todayStr && styles.stripToday, selected && styles.stripSelected]}>
+              <Text style={[styles.stripNum, d === todayStr && styles.stripNumToday]}>{Number(d.slice(8))}</Text>
+            </View>
+            {n > 0 ? <Text style={styles.stripCount}>{n}</Text> : <View style={[styles.stripDot, doneOnDay.has(d) && styles.stripDotOn]} />}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+
   return (
     <Screen title="Resumo" logo>
     <View style={styles.flex}>
@@ -472,6 +513,8 @@ export default function HomeScreen() {
           </View>
           <ProgressRing percent={weekPercent} />
         </View>
+
+        {current && renderStrip(true)}
 
         {incoming.map((sw) => (
           <View key={sw.id} style={styles.banner}>
@@ -503,22 +546,43 @@ export default function HomeScreen() {
         )}
 
         {/* ----- Por fazer (primeiro: o que importa hoje) ----- */}
-        {current && pending.length > 0 && (
+        {current && (isToday ? pending.length > 0 : true) && (
           <View style={styles.headerRow}>
-            <Text style={styles.sectionBig}>📋 Por fazer</Text>
-            <Text style={styles.small}>
-              {pending.length} {pending.length === 1 ? 'tarefa' : 'tarefas'}
-            </Text>
+            <Text style={styles.sectionBig}>{isToday ? '📋 Por fazer' : `📅 ${dayName(day)}`}</Text>
+            {isToday ? (
+              <Text style={styles.small}>
+                {pending.length} {pending.length === 1 ? 'tarefa' : 'tarefas'}
+              </Text>
+            ) : (
+              <Pressable onPress={() => setSelectedDay(null)}>
+                <Text style={styles.link}>Voltar a hoje</Text>
+              </Pressable>
+            )}
           </View>
         )}
-        {current && pending.length === 0 && doneWeek.length === 0 && !error && (
+        {current && !isToday && shown.length === 0 && dayForecast.length === 0 && (
+          <Text style={styles.hint}>{day < todayStr ? 'Sem tarefas por fazer neste dia.' : 'Sem tarefas marcadas para este dia.'}</Text>
+        )}
+        {current && dayForecast.length > 0 && (
+          <View style={styles.group}>
+            <Text style={styles.section}>Previstas</Text>
+            {dayForecast.map((f) => (
+              <Pressable key={`${f.task_id}-${f.due_date}`} style={styles.forecastRow} onPress={() => router.push({ pathname: '/task/[id]', params: { id: f.task_id } })}>
+                <Text style={styles.forecastTitle}>{f.title}</Text>
+                <Text style={styles.small}>prevista</Text>
+              </Pressable>
+            ))}
+            <Text style={styles.tip}>Previsão pelas regras da tarefa: o dia real pode mudar conforme fizeres as anteriores.</Text>
+          </View>
+        )}
+        {current && isToday && pending.length === 0 && doneWeek.length === 0 && !error && (
           <View style={styles.empty}>
             <Text style={styles.hint}>Ainda não há tarefas. Diz-nos o que fazem em casa e a app organiza a rotina.</Text>
             {canManage && <Button title="Começar com tarefas" onPress={() => router.push('/starter')} />}
             <Button title="Escolher produtos" variant="secondary" onPress={() => router.push('/onboarding')} />
           </View>
         )}
-        {current && pending.length === 0 && doneWeek.length > 0 && <Text style={styles.allDone}>Está tudo feito por agora 🎉</Text>}
+        {current && isToday && pending.length === 0 && doneWeek.length > 0 && <Text style={styles.allDone}>Está tudo feito por agora 🎉</Text>}
 
         {current &&
           groups.map(
@@ -532,7 +596,7 @@ export default function HomeScreen() {
               ),
           )}
 
-        {current && scheduled.length > 0 && (
+        {current && isToday && scheduled.length > 0 && (
           <View style={styles.group}>
             <Pressable onPress={() => setShowScheduled(!showScheduled)}>
               <Text style={styles.section}>
@@ -607,17 +671,7 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.strip}>
-          {weekDays.map((d, i) => (
-            <View key={d} style={styles.stripDay}>
-              <Text style={styles.stripLetter}>{DAY_LETTERS[i]}</Text>
-              <View style={[styles.stripCircle, d === todayStr && styles.stripToday]}>
-                <Text style={[styles.stripNum, d === todayStr && styles.stripNumToday]}>{Number(d.slice(8))}</Text>
-              </View>
-              <View style={[styles.stripDot, doneOnDay.has(d) && styles.stripDotOn]} />
-            </View>
-          ))}
-        </View>
+        {!current && renderStrip(false)}
 
         {social && (
           <View style={styles.group}>
@@ -652,12 +706,12 @@ export default function HomeScreen() {
         )}
 
         {/* ----- Feitas na semana, com quem as fez ----- */}
-        {doneWeek.length > 0 && (
+        {doneOnSelected.length > 0 && (
           <View style={styles.group}>
             <Text style={styles.section}>
-              {current ? 'Feitas esta semana' : 'Feitas nesta semana'} ({doneWeek.length})
+              {!current ? 'Feitas nesta semana' : isToday ? 'Feitas esta semana' : 'Feitas neste dia'} ({doneOnSelected.length})
             </Text>
-            {doneWeek.map((o) => renderDone(o))}
+            {doneOnSelected.map((o) => renderDone(o))}
           </View>
         )}
         {!current && doneWeek.length === 0 && <Text style={styles.hint}>Nenhuma tarefa feita nesta semana.</Text>}
@@ -735,6 +789,10 @@ const styles = StyleSheet.create({
   stripLetter: { color: colors.faint, fontSize: 12 },
   stripCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   stripToday: { backgroundColor: colors.accent },
+  stripSelected: { borderWidth: 2, borderColor: colors.primary },
+  stripCount: { fontSize: 11, color: colors.primary, fontWeight: '700', height: 8 + 4, lineHeight: 12 },
+  forecastRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow, opacity: 0.85 },
+  forecastTitle: { fontSize: 16, color: colors.ink },
   stripNum: { color: colors.ink, fontSize: 15 },
   stripNumToday: { color: colors.ink },
   stripDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'transparent' },

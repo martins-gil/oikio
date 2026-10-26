@@ -5,7 +5,7 @@ import { useSession } from './session';
 import { supabase } from './supabase';
 
 export type GamificationMode = 'off' | 'weekly_summary' | 'competition';
-export type Household = { id: string; name: string; gamification: GamificationMode };
+export type Household = { id: string; name: string; gamification: GamificationMode; role?: Member['role'] };
 export type Member = {
   user_id: string;
   display_name: string;
@@ -20,7 +20,8 @@ type HouseholdState = {
   loading: boolean;
   error: string | null;
   reload: (preferId?: string) => Promise<void>; // recarrega; `preferId` torna essa casa a ativa (ex.: a que acabou de criar)
-  setActiveHousehold: (id: string) => Promise<void>;
+  setActiveHousehold: (id: string) => Promise<void>; // escolhe a casa (e dá a escolha por feita)
+  needsPick: boolean; // várias casas e ainda não escolheu nesta abertura da app: mostra o menu «Escolhe a casa»
 };
 
 const HouseholdContext = createContext<HouseholdState>({
@@ -31,6 +32,7 @@ const HouseholdContext = createContext<HouseholdState>({
   error: null,
   reload: async () => {},
   setActiveHousehold: async () => {},
+  needsPick: false,
 });
 
 // Chave onde cada telemóvel guarda a casa ativa de cada pessoa
@@ -47,6 +49,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const activeRef = useRef<string | null>(null);
+  const [selected, setSelected] = useState(false); // já escolheu a casa nesta abertura da app
 
   const loadMembers = useCallback(async (id: string | null) => {
     if (!id) return setMembers([]);
@@ -69,14 +72,18 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       if (!userId) return;
       const { data, error: err } = await supabase
         .from('household_members')
-        .select('joined_at, households(id, name, gamification)')
+        .select('role, joined_at, households(id, name, gamification)')
         .eq('user_id', userId)
         .order('joined_at');
       setError(err ? 'Não foi possível carregar a casa.' : null);
-      const list = ((data ?? []) as unknown as { households: Household | Household[] | null }[])
-        .map((r) => (Array.isArray(r.households) ? r.households[0] : r.households))
-        .filter((h): h is Household => !!h);
+      const list = ((data ?? []) as unknown as { role: Member['role']; households: Household | Household[] | null }[])
+        .flatMap((r): Household[] => {
+          const h = Array.isArray(r.households) ? r.households[0] : r.households;
+          return h ? [{ ...h, role: r.role }] : [];
+        });
       setHouseholds(list);
+      // Só uma casa: vai direto para a app. Com várias, pergunta qual (a menos que acabe de criar ou entrar numa).
+      if (list.length <= 1 || preferId) setSelected(true);
 
       let stored: string | null = null;
       try {
@@ -95,7 +102,9 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
   const setActiveHousehold = useCallback(
     async (id: string) => {
-      if (id === activeRef.current || !households.some((h) => h.id === id)) return;
+      if (!households.some((h) => h.id === id)) return;
+      setSelected(true);
+      if (id === activeRef.current) return;
       setLoading(true);
       await choose(id);
       setLoading(false);
@@ -108,6 +117,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     setHouseholds([]);
     setMembers([]);
     setActiveId(null);
+    setSelected(false);
     activeRef.current = null;
     if (userId) {
       setLoading(true);
@@ -118,7 +128,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const household = households.find((h) => h.id === activeId) ?? null;
 
   return (
-    <HouseholdContext.Provider value={{ household, households, members, loading, error, reload, setActiveHousehold }}>
+    <HouseholdContext.Provider value={{ household, households, members, loading, error, reload, setActiveHousehold, needsPick: !loading && households.length > 1 && !selected }}>
       {children}
     </HouseholdContext.Provider>
   );

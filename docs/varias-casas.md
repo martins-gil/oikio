@@ -3,7 +3,7 @@
 Uma pessoa pode pertencer a várias casas (no máximo 10). A app trabalha sempre com **uma casa ativa**.
 
 ## Na app
-- **Seletor:** no cabeçalho roxo de cada separador, o nome da casa («🏠 Casa da cidade ▾»). Ao tocar abre «As tuas casas»: escolhes outra, ou «➕ Criar outra casa» / «🔑 Tenho um convite».
+- **Menu «Em que casa estás?»** (`app/houses.tsx`): cartões com as tuas casas, mais «➕ Criar outra casa» e «🔑 Tenho um convite». Aparece **ao abrir a app a quem tem várias casas**; com uma só casa, a app entra direto. Também abre ao tocar no nome da casa no cabeçalho roxo («🏠 Casa da cidade ▾»).
 - **Casa ativa:** guardada no próprio telemóvel (por pessoa). Ao mudar, os ecrãs recomeçam do zero para nunca mostrarem dados da casa anterior. Criar ou entrar numa casa torna-a a ativa.
 - **Casa → «Sair desta casa»** (com confirmação): o histórico fica na casa; o que estava atribuído a ti fica livre (tarefas fixas passam a «equilibradas»). Não podes sair se fores a única pessoa, nem se fores o único administrador: primeiro «Tornar administrador» a outra pessoa (`make_admin()`).
 - **Convites:** aceitar um convite já não recusa quem tem outra casa com dados. A única exceção automática é uma conta nova cuja única casa está vazia e é só dela (criada por engano): essa é apagada, como antes.

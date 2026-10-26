@@ -13,7 +13,7 @@ import { colors } from '@/lib/theme';
 
 export default function TabsLayout() {
   const { session, loading: sessionLoading, error: sessionError } = useSession();
-  const { household, loading } = useHousehold();
+  const { household, loading, needsPick } = useHousehold();
   const { has } = useModules();
 
   // Mantém o telemóvel registado para os lembretes (só se a permissão já foi dada)
@@ -39,6 +39,7 @@ export default function TabsLayout() {
   }
 
   if (!household) return <Redirect href="/create-house" />;
+  if (needsPick) return <Redirect href="/houses" />; // várias casas: escolhe antes de entrar
 
   // Cada ecrã desenha o seu próprio cabeçalho (componente Screen); a barra de baixo é a nossa
   return (
