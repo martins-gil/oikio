@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
-  chipTextOn: { color: '#fff' },
+  chipTextOn: { color: colors.white },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   switchLabel: { fontSize: 16, color: colors.ink },
   monthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8 },

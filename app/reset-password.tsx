@@ -104,6 +104,6 @@ const styles = StyleSheet.create({
   container: { padding: 24, gap: 12, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 22, textAlign: 'center', color: colors.ink },
   hint: { color: colors.muted, textAlign: 'center', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 14, fontSize: 17 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 14, fontSize: 17 },
   error: { color: colors.pink, textAlign: 'center' },
 });

@@ -245,7 +245,7 @@ export default function ProductScreen() {
                     selected && { backgroundColor: LEVEL_COLOR[l] },
                   ]}
                   onPress={() => setLevel(l)}>
-                  <Text style={[styles.levelText, { color: selected ? '#fff' : LEVEL_COLOR[l] }]}>
+                  <Text style={[styles.levelText, { color: selected ? colors.white : LEVEL_COLOR[l] }]}>
                     {LEVEL_LABEL[l]}
                   </Text>
                 </Pressable>
@@ -261,7 +261,7 @@ export default function ProductScreen() {
                 { key: 'out', label: 'Acabou', color: LEVEL_COLOR.low, on: product.total <= 0, onPress: markOut },
               ] as const).map((o) => (
                 <Pressable key={o.key} disabled={busy} style={[styles.statusChip, { borderColor: o.color }, o.on && { backgroundColor: o.color }]} onPress={o.onPress}>
-                  <Text style={[styles.statusText, { color: o.on ? '#fff' : o.color }]}>{o.label}</Text>
+                  <Text style={[styles.statusText, { color: o.on ? colors.white : o.color }]}>{o.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   container: { padding: 20, gap: 12, paddingBottom: 80 },
   sizeBox: { gap: 8 },
   sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sizeInput: { minWidth: 84, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: '#fff', padding: 10, fontSize: 17, textAlign: 'center', color: colors.ink },
+  sizeInput: { minWidth: 84, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.white, padding: 10, fontSize: 17, textAlign: 'center', color: colors.ink },
   linkText: { color: colors.primary },
   usedBox: { gap: 4, marginTop: 8 },
   statusRow: { flexDirection: 'row', gap: 8 },
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   place: { borderWidth: 1, borderColor: colors.primary, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
   placeOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   placeText: { color: colors.primary },
-  placeTextOn: { color: '#fff' },
+  placeTextOn: { color: colors.white },
   essentialRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   essentialTitle: { fontSize: 16, color: colors.ink },
   essentialHint: { fontSize: 13, color: colors.muted },
@@ -462,9 +462,9 @@ const styles = StyleSheet.create({
   levelButton: { borderWidth: 2, borderRadius: 12, padding: 18, alignItems: 'center' },
   levelText: { fontSize: 19, fontWeight: '600' },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  stepButton: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
-  stepButtonSmall: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: '#fff', fontSize: 32, fontWeight: '600', lineHeight: 36 },
+  stepButton: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepButtonSmall: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: colors.white, fontSize: 32, fontWeight: '600', lineHeight: 36 },
   big: { fontSize: 44, fontWeight: '700' },
   unit: { fontSize: 20, fontWeight: '400', color: colors.muted },
   mid: { fontSize: 20, fontWeight: '600' },

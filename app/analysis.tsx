@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   insightIcon: { fontSize: 20 },
   suggestion: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   apply: { borderRadius: radius.chip, backgroundColor: colors.primary, paddingVertical: 8, paddingHorizontal: 12 },
-  applyText: { color: '#fff', fontSize: 14 },
+  applyText: { color: colors.white, fontSize: 14 },
   source: { color: colors.faint, fontSize: 12 },
   explainButton: { alignSelf: 'flex-start', borderRadius: radius.chip, backgroundColor: colors.primary, paddingVertical: 9, paddingHorizontal: 16 },
   explainOff: { opacity: 0.5 },

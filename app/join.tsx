@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   container: { padding: 24, gap: 12, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '600', textAlign: 'center', marginBottom: 8 },
   label: { fontSize: 14, color: colors.muted, textTransform: 'uppercase' },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 14, fontSize: 17 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 14, fontSize: 17 },
   code: { fontSize: 22, letterSpacing: 2, textAlign: 'center' },
-  error: { color: '#DC4F89', textAlign: 'center' },
+  error: { color: colors.pink, textAlign: 'center' },
 });

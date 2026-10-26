@@ -44,14 +44,14 @@ export function ActionSheet({ visible, title, subtitle, options, onClose }: Prop
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, paddingBottom: 28, gap: 8 },
+  backdrop: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
+  sheet: { backgroundColor: colors.white, borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, paddingBottom: 28, gap: 8 },
   title: { fontSize: 18, fontWeight: '700' },
   subtitle: { color: colors.muted, fontSize: 14 },
   options: { gap: 2, marginTop: 4 },
   option: { paddingVertical: 14, paddingHorizontal: 8, borderRadius: 10 },
   optionText: { fontSize: 17 },
-  destructive: { color: '#DC4F89' },
-  cancel: { marginTop: 4, backgroundColor: '#f2f2f2', alignItems: 'center' },
+  destructive: { color: colors.pink },
+  cancel: { marginTop: 4, backgroundColor: colors.panel, alignItems: 'center' },
   cancelText: { fontSize: 17, fontWeight: '600' },
 });

@@ -82,7 +82,7 @@ export default function HousesScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#E9E8F4' },
+  root: { flex: 1, backgroundColor: colors.backdrop },
   scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   card: {
     alignSelf: 'stretch',
@@ -90,8 +90,8 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 28,
     borderRadius: radius.card,
-    backgroundColor: '#fff',
-    shadowColor: '#1F1B4D',
+    backgroundColor: colors.white,
+    shadowColor: colors.ink,
     shadowOpacity: 0.14,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 8 },
@@ -101,9 +101,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontFamily: fonts.heading, color: colors.ink, textAlign: 'center' },
   subtitle: { fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: 6 },
   list: { gap: 10 },
-  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#C9C6E6', backgroundColor: '#fff' },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.white },
   optionOn: { borderColor: colors.primary, backgroundColor: colors.lavender },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#A8A3D6', alignItems: 'center', justifyContent: 'center' },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.placeholder, alignItems: 'center', justifyContent: 'center' },
   radioOn: { borderColor: colors.primary },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
   optionText: { flex: 1, gap: 1 },
@@ -112,6 +112,6 @@ const styles = StyleSheet.create({
   links: { gap: 8, marginTop: 8 },
   linkLine: { fontSize: 13, color: colors.muted },
   link: { color: colors.primary, fontFamily: fonts.bodyBold },
-  close: { position: 'absolute', right: 16, zIndex: 2, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(31,27,77,0.08)', alignItems: 'center', justifyContent: 'center' },
+  close: { position: 'absolute', right: 16, zIndex: 2, width: 38, height: 38, borderRadius: 19, backgroundColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   closeText: { color: colors.ink, fontSize: 16 },
 });

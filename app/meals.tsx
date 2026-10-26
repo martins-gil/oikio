@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 7, paddingHorizontal: 16 },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
-  chipTextOn: { color: '#fff' },
+  chipTextOn: { color: colors.white },
   reading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   small: { color: colors.muted, fontSize: 13 },
   mealTitle: { fontSize: 20, color: colors.ink },
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   step: { color: colors.ink, fontSize: 14 },
   row: { flexDirection: 'row', gap: 10 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  qtyInput: { minWidth: 76, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 8, textAlign: 'center', fontSize: 16, color: colors.ink },
+  qtyInput: { minWidth: 76, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 8, textAlign: 'center', fontSize: 16, color: colors.ink },
   disclaimer: { color: colors.muted, fontSize: 12, textAlign: 'center' },
   historyRow: { paddingVertical: 6, gap: 2 },
 });

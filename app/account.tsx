@@ -149,6 +149,6 @@ const styles = StyleSheet.create({
   container: { padding: 24, gap: 14, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '600', textAlign: 'center' },
   hint: { color: colors.muted, textAlign: 'center', lineHeight: 22 },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 14, fontSize: 17 },
-  error: { color: '#DC4F89', textAlign: 'center' },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 14, fontSize: 17 },
+  error: { color: colors.pink, textAlign: 'center' },
 });

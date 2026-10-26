@@ -46,10 +46,10 @@ const styles = StyleSheet.create({
   hero: { backgroundColor: colors.primary, paddingHorizontal: 20, paddingBottom: 34 },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   titleBox: { flex: 1, paddingRight: 12 },
-  title: { color: '#fff', fontSize: 24, fontFamily: fonts.heading },
+  title: { color: colors.white, fontSize: 24, fontFamily: fonts.heading },
   subtitle: { color: colors.lavender, fontSize: 14, marginTop: 2 },
   logo: { width: 150, height: 40 },
-  gear: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  gear: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.onPrimarySoft, alignItems: 'center', justifyContent: 'center' },
   gearText: { fontSize: 18 },
   sheet: { flex: 1, backgroundColor: colors.bg, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, marginTop: -26, overflow: 'hidden' },
 });

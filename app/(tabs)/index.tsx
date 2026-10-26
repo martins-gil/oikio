@@ -694,7 +694,7 @@ export default function HomeScreen() {
                         {whoName(r.user_id)}
                       </Text>
                       <View style={styles.track}>
-                        <View style={[styles.fill, { width: `${share}%`, backgroundColor: '#5C4DB1' }]} />
+                        <View style={[styles.fill, { width: `${share}%`, backgroundColor: colors.primary }]} />
                       </View>
                       <Text style={styles.taskLine}>
                         {r.tasks_done} {r.tasks_done === 1 ? 'tarefa' : 'tarefas'} · {share}% do esforço
@@ -750,33 +750,33 @@ const styles = StyleSheet.create({
   group: { gap: 8 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionBig: { fontSize: 18, fontWeight: '700' },
-  section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 4 },
-  hint: { color: '#666', textAlign: 'center' },
-  small: { color: '#666', fontSize: 13 },
-  tip: { color: '#888', fontSize: 12, marginBottom: 2 },
-  link: { color: '#5C4DB1', fontSize: 15, fontWeight: '600' },
+  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 4 },
+  hint: { color: colors.muted, textAlign: 'center' },
+  small: { color: colors.muted, fontSize: 13 },
+  tip: { color: colors.muted, fontSize: 12, marginBottom: 2 },
+  link: { color: colors.primary, fontSize: 15, fontWeight: '600' },
   // Estado da casa
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   dotSmall: { width: 16, height: 16, borderRadius: 8 },
   statusText: { flex: 1, gap: 6 },
   statusTitle: { fontSize: 16, fontWeight: '600' },
-  statusSince: { color: '#666', fontSize: 12, maxWidth: 110, textAlign: 'right' },
-  track: { height: 8, borderRadius: 4, backgroundColor: '#eee', overflow: 'hidden' },
+  statusSince: { color: colors.muted, fontSize: 12, maxWidth: 110, textAlign: 'right' },
+  track: { height: 8, borderRadius: 4, backgroundColor: colors.border, overflow: 'hidden' },
   fill: { height: 8, borderRadius: 4 },
   // Resumo da semana
   weekRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8, marginTop: 6 },
   week: { fontSize: 18, fontWeight: '700' },
-  arrow: { fontSize: 20, color: '#5C4DB1' },
+  arrow: { fontSize: 20, color: colors.primary },
   arrowOff: { opacity: 0.25 },
   total: { fontSize: 24, fontWeight: '700', textAlign: 'center' },
-  personCard: { gap: 6, padding: 12, borderWidth: 1, borderColor: '#E7E5F7', borderRadius: 12, backgroundColor: '#fff' },
+  personCard: { gap: 6, padding: 12, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 12, backgroundColor: colors.white },
   personName: { fontSize: 16, fontWeight: '600' },
   // Tarefas (como em "Hoje")
   task: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   taskDone: { opacity: 0.6 },
   check: { width: 30, height: 30, borderRadius: 15, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
   checkDone: { backgroundColor: colors.success, borderColor: colors.success },
-  checkMark: { color: '#fff', fontSize: 16 },
+  checkMark: { color: colors.white, fontSize: 16 },
   protect: { gap: 2, padding: 14, borderRadius: radius.card, backgroundColor: colors.peach },
   protectTitle: { fontSize: 15, color: colors.ink },
   protectText: { fontSize: 13, color: colors.ink },
@@ -804,15 +804,15 @@ const styles = StyleSheet.create({
   taskText: { flex: 1, gap: 2 },
   taskTitle: { fontSize: 18 },
   strike: { textDecorationLine: 'line-through' },
-  taskLine: { color: '#666', fontSize: 14 },
-  doneBy: { color: '#777', fontSize: 12 },
-  late: { color: '#DC4F89', fontSize: 14, fontWeight: '600' },
+  taskLine: { color: colors.muted, fontSize: 14 },
+  doneBy: { color: colors.muted, fontSize: 12 },
+  late: { color: colors.pink, fontSize: 14, fontWeight: '600' },
   doneWrap: { gap: 8 },
-  thanked: { color: '#666', fontSize: 14, paddingLeft: 4 },
-  banner: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: '#ECEBFF', borderWidth: 1, borderColor: '#5C4DB1' },
+  thanked: { color: colors.muted, fontSize: 14, paddingLeft: 4 },
+  banner: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: colors.lavender, borderWidth: 1, borderColor: colors.primary },
   bannerText: { fontSize: 16 },
   bannerButtons: { flexDirection: 'row', gap: 10 },
   empty: { gap: 16, marginTop: 12 },
   allDone: { fontSize: 18, textAlign: 'center', marginTop: 8 },
-  error: { color: '#DC4F89', textAlign: 'center' },
+  error: { color: colors.pink, textAlign: 'center' },
 });

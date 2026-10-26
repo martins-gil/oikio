@@ -49,13 +49,13 @@ export function KudosForm({ name, onSend, onCancel }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  box: { gap: 10, padding: 14, borderWidth: 1, borderColor: '#5C4DB1', borderRadius: 12, backgroundColor: '#F4F3FF' },
+  box: { gap: 10, padding: 14, borderWidth: 1, borderColor: colors.primary, borderRadius: 12, backgroundColor: colors.panel },
   title: { fontSize: 16, fontWeight: '600' },
   chips: { flexDirection: 'row', gap: 8 },
-  chip: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: '#5C4DB1', alignItems: 'center', justifyContent: 'center' },
-  chipOn: { backgroundColor: '#DC4F89', borderColor: '#DC4F89' },
-  chipText: { color: '#5C4DB1', fontSize: 18, fontWeight: '600' },
-  chipTextOn: { color: '#fff' },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, padding: 12, fontSize: 16, backgroundColor: '#fff' },
+  chip: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
+  chipText: { color: colors.primary, fontSize: 18, fontWeight: '600' },
+  chipTextOn: { color: colors.white },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, padding: 12, fontSize: 16, backgroundColor: colors.white },
   buttons: { flexDirection: 'row', gap: 10 },
 });

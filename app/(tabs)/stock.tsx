@@ -162,7 +162,7 @@ export default function StockScreen() {
                   <Text
                     style={[
                       styles.itemValue,
-                      { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : '#1F1B4D' },
+                      { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : colors.ink },
                     ]}>
                     {p.tracking_mode === 'level' && p.level ? LEVEL_LABEL[p.level] : formatAmount(p.total, p.base_unit)}
                     {p.below_min ? '  🛒' : ''}
@@ -207,26 +207,26 @@ const styles = StyleSheet.create({
   offerRow: { flexDirection: 'row', gap: 10 },
   offerBtn: { flex: 1 },
   addRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: '#5C4DB1', borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
-  addText: { color: '#fff', fontSize: 26, fontWeight: '600' },
+  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 12, fontSize: 16 },
+  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
+  addText: { color: colors.white, fontSize: 26, fontWeight: '600' },
   disabled: { opacity: 0.4 },
   filters: { gap: 8, paddingVertical: 2 },
   chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
-  chipTextOn: { color: '#fff' },
+  chipTextOn: { color: colors.white },
   section: { gap: 8, marginTop: 6 },
   sectionTitle: { fontSize: 18, color: colors.ink },
   hint: { color: colors.muted },
-  error: { color: '#DC4F89' },
+  error: { color: colors.pink },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderRadius: radius.card, ...shadow,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   itemName: { fontSize: 17, flexShrink: 1, flex: 1 },
   remove: { fontSize: 18, color: colors.faint, paddingLeft: 12 },

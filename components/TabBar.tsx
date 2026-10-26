@@ -62,7 +62,7 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
 
 const styles = StyleSheet.create({
   wrap: { backgroundColor: colors.bg, paddingHorizontal: 12, paddingTop: 6 },
-  bar: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#fff', borderRadius: 26, paddingVertical: 8, paddingHorizontal: 6, ...shadow, shadowOpacity: 0.16, shadowRadius: 14 },
+  bar: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: colors.white, borderRadius: 26, paddingVertical: 8, paddingHorizontal: 6, ...shadow, shadowOpacity: 0.16, shadowRadius: 14 },
   item: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 6, marginHorizontal: 2, borderRadius: 18 },
   itemOn: { backgroundColor: colors.lavender },
   icon: { width: 28, height: 28 },

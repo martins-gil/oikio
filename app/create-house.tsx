@@ -68,11 +68,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     padding: 12,
     fontSize: 16,
   },
-  error: { color: '#DC4F89', textAlign: 'center' },
+  error: { color: colors.pink, textAlign: 'center' },
   or: { alignItems: 'center' },
   orText: { color: colors.muted },
 });

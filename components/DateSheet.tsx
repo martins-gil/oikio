@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { DatePicker } from '@/components/DatePicker';
+import { colors } from '@/lib/theme';
 
 type Props = {
   visible: boolean;
@@ -53,8 +54,8 @@ export function DateSheet({ visible, title, initial, confirmPrefix = 'Passar par
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 18, borderTopRightRadius: 18, maxHeight: '88%' },
+  backdrop: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
+  sheet: { backgroundColor: colors.white, borderTopLeftRadius: 18, borderTopRightRadius: 18, maxHeight: '88%' },
   content: { padding: 16, gap: 12, paddingBottom: 28 },
   title: { fontSize: 18, fontWeight: '700' },
   buttons: { gap: 10 },

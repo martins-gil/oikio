@@ -171,7 +171,7 @@ export default function StarterScreen() {
                     <View style={styles.levels}>
                       {(['full', 'half', 'low'] as Level[]).map((lv) => (
                         <Pressable key={lv} style={[styles.levelChip, { borderColor: LEVEL_COLOR[lv] }, l.level === lv && { backgroundColor: LEVEL_COLOR[lv] }]} onPress={() => patchLink(key, { level: lv })}>
-                          <Text style={{ color: l.level === lv ? '#fff' : LEVEL_COLOR[lv], fontSize: 13 }}>{LEVEL_LABEL[lv]}</Text>
+                          <Text style={{ color: l.level === lv ? colors.white : LEVEL_COLOR[lv], fontSize: 13 }}>{LEVEL_LABEL[lv]}</Text>
                         </Pressable>
                       ))}
                     </View>
@@ -288,8 +288,8 @@ const styles = StyleSheet.create({
   linkHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   linkBody: { gap: 8, paddingLeft: 40 },
   linkField: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  linkInput: { minWidth: 64, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: '#fff', paddingVertical: 6, paddingHorizontal: 8, textAlign: 'center', fontSize: 15, color: colors.ink },
+  linkInput: { minWidth: 64, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.white, paddingVertical: 6, paddingHorizontal: 8, textAlign: 'center', fontSize: 15, color: colors.ink },
   levels: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   levelChip: { borderWidth: 2, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
-  footer: { gap: 8, padding: 16, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: '#fff' },
+  footer: { gap: 8, padding: 16, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.white },
 });

@@ -76,6 +76,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, textAlign: 'center', color: colors.ink },
   hint: { color: colors.muted, textAlign: 'center', marginBottom: 8 },
   bold: { color: colors.ink },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 14, fontSize: 17 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 14, fontSize: 17 },
   error: { color: colors.pink, textAlign: 'center' },
 });

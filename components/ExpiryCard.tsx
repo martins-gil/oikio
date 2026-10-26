@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 16, alignItems: 'center' },
   link: { color: colors.primary, fontSize: 15 },
   panel: { gap: 8, padding: 12, borderRadius: 14, backgroundColor: colors.bg },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 10, fontSize: 16, color: colors.ink },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 10, fontSize: 16, color: colors.ink },
   option: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
   optionText: { color: colors.ink, fontSize: 14 },
 });
