@@ -17,7 +17,7 @@ import { friendlyTaskError } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
 import { useModules } from '@/lib/settings';
 import { formatAmount } from '@/lib/stock';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 import { sinceText, urgencyColor, urgencyFill, type TaskStatus } from '@/lib/urgency';
 import { supabase } from '@/lib/supabase';
 
@@ -92,6 +92,8 @@ export default function HomeScreen() {
   const [thanking, setThanking] = useState<string | null>(null);
   const [scheduled, setScheduled] = useState<Occurrence[]>([]);
   const [showScheduled, setShowScheduled] = useState(false);
+  const [showWeek, setShowWeek] = useState(false); // «Resumo da semana» recolhido por defeito
+  const [showDone, setShowDone] = useState(false); // «Feitas» recolhido por defeito
   const [selectedDay, setSelectedDay] = useState<string | null>(null); // null = hoje; escolhe-se um dia desta semana na barra
   const [forecast, setForecast] = useState<{ task_id: string; title: string; due_date: string }[]>([]); // previsão dos dias que faltam
   const [menuFor, setMenuFor] = useState<Occurrence | null>(null);
@@ -415,35 +417,35 @@ export default function HomeScreen() {
         onLongPress={!isDone && (o.assigned_to === me || o.assigned_to === null) ? () => setMenuFor(o) : undefined}>
         {isDone ? (
           <View style={[styles.check, styles.checkDone]}>
-            <Text style={styles.checkMark}>✓</Text>
+            <Text variant="body" style={styles.checkMark}>✓</Text>
           </View>
         ) : (
           <View style={[styles.check, { borderColor: urgencyColor(urgency[o.task_id]) }]} />
         )}
         <View style={styles.taskText}>
-          <Text style={[styles.taskTitle, isDone && styles.strike]}>{o.tasks?.title ?? 'Tarefa'}</Text>
+          <Text variant="body" style={[styles.taskTitle, isDone && styles.strike]}>{o.tasks?.title ?? 'Tarefa'}</Text>
           {!isDone && daysLate(todayStr, o.due_date) > 0 && (
-            <Text style={styles.late}>
-              em atraso há {daysLate(todayStr, o.due_date)} {daysLate(todayStr, o.due_date) === 1 ? 'dia' : 'dias'}
+            <Text variant="label" style={styles.late}>
+              ⏰ em atraso há {daysLate(todayStr, o.due_date)} {daysLate(todayStr, o.due_date) === 1 ? 'dia' : 'dias'}
             </Text>
           )}
           {!isDone && o.due_date > todayStr && (
-            <Text style={styles.taskLine}>
+            <Text variant="label" style={styles.taskLine}>
               📅 {new Date(`${o.due_date}T12:00:00`).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })}
               {o.assigned_to && o.assigned_to !== me ? ` · ${nameOf(o.assigned_to)}` : ''}
             </Text>
           )}
-          {consumptionText(o) && <Text style={styles.taskLine}>{consumptionText(o)}</Text>}
+          {consumptionText(o) && <Text variant="label" style={styles.taskLine}>{consumptionText(o)}</Text>}
           {!isDone && outgoingTo.has(o.id) && (
-            <Text style={styles.taskLine}>🔄 pedido enviado a {nameOf(outgoingTo.get(o.id)!)}</Text>
+            <Text variant="label" style={styles.taskLine}>🔄 pedido enviado a {nameOf(outgoingTo.get(o.id)!)}</Text>
           )}
           {isDone && (
-            <Text style={styles.doneBy}>
+            <Text variant="label" style={styles.doneBy}>
               feito por: {whoName(o.completed_by)}
               {o.completed_at ? ` · ${new Date(o.completed_at).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric' })}` : ''}
             </Text>
           )}
-          {doneToday && <Text style={styles.taskLine}>toca para desfazer</Text>}
+          {doneToday && <Text variant="label" style={styles.taskLine}>toca para desfazer</Text>}
         </View>
       </Pressable>
     );
@@ -456,7 +458,7 @@ export default function HomeScreen() {
         {renderTask(o, true)}
         {canThank &&
           (thanked.has(o.id) ? (
-            <Text style={styles.thanked}>👏 agradecido</Text>
+            <Text variant="label" style={styles.thanked}>👏 agradecido</Text>
           ) : thanking === o.id ? (
             <KudosForm
               name={nameOf(o.completed_by)}
@@ -465,7 +467,7 @@ export default function HomeScreen() {
             />
           ) : (
             <Pressable onPress={() => setThanking(o.id)}>
-              <Text style={styles.link}>👏 Agradecer a {nameOf(o.completed_by)}</Text>
+              <Text variant="button" style={styles.link}>👏 Agradecer a {nameOf(o.completed_by)}</Text>
             </Pressable>
           ))}
       </View>
@@ -481,11 +483,11 @@ export default function HomeScreen() {
         const n = upcomingCount(d);
         return (
           <Pressable key={d} disabled={!selectable} style={styles.stripDay} onPress={() => setSelectedDay(d === todayStr ? null : d)}>
-            <Text style={styles.stripLetter}>{DAY_LETTERS[i]}</Text>
+            <Text variant="label" style={styles.stripLetter}>{DAY_LETTERS[i]}</Text>
             <View style={[styles.stripCircle, d === todayStr && styles.stripToday, selected && styles.stripSelected]}>
-              <Text style={[styles.stripNum, d === todayStr && styles.stripNumToday]}>{Number(d.slice(8))}</Text>
+              <Text variant="body" style={[styles.stripNum, d === todayStr && styles.stripNumToday]}>{Number(d.slice(8))}</Text>
             </View>
-            {n > 0 ? <Text style={styles.stripCount}>{n}</Text> : <View style={[styles.stripDot, doneOnDay.has(d) && styles.stripDotOn]} />}
+            {n > 0 ? <Text variant="label" style={styles.stripCount}>{n}</Text> : <View style={[styles.stripDot, doneOnDay.has(d) && styles.stripDotOn]} />}
           </Pressable>
         );
       })}
@@ -496,20 +498,20 @@ export default function HomeScreen() {
     <Screen title="Resumo" logo>
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <Text variant="label" style={styles.error}>{error}</Text>}
 
         {session?.user.is_anonymous && (
           <Pressable style={styles.protect} onPress={() => router.push('/account')}>
-            <Text style={styles.protectTitle}>⚠️ Protege a tua conta</Text>
-            <Text style={styles.protectText}>Sem e-mail, perdes o acesso se mudares de telemóvel. Toca para guardar.</Text>
+            <Text variant="button" style={styles.protectTitle}>⚠️ Protege a tua conta</Text>
+            <Text variant="label" style={styles.protectText}>Sem e-mail, perdes o acesso se mudares de telemóvel. Toca para guardar.</Text>
           </Pressable>
         )}
 
         {/* ----- Saudação e progresso da semana ----- */}
         <View style={styles.hero}>
           <View style={styles.heroText}>
-            <Text style={styles.hello}>Olá{myName ? `, ${myName}` : ''} 👋</Text>
-            <Text style={styles.heroLine}>
+            <Text variant="section" style={styles.hello}>Olá{myName ? `, ${myName}` : ''} 👋</Text>
+            <Text variant="label" style={styles.heroLine}>
               {weekTotal === 0
                 ? 'Ainda sem tarefas esta semana'
                 : `${doneWeek.length} de ${weekTotal} tarefas feitas${current ? ' esta semana' : ' nessa semana'}`}
@@ -522,7 +524,7 @@ export default function HomeScreen() {
 
         {incoming.map((sw) => (
           <View key={sw.id} style={styles.banner}>
-            <Text style={styles.bannerText}>
+            <Text variant="body" style={styles.bannerText}>
               🔄 {nameOf(sw.from_user)} quer passar-te «{sw.task_occurrences?.tasks?.title ?? 'uma tarefa'}»
             </Text>
             <View style={styles.bannerButtons}>
@@ -552,49 +554,49 @@ export default function HomeScreen() {
         {/* ----- Por fazer (primeiro: o que importa hoje) ----- */}
         {current && (isToday ? pending.length > 0 : true) && (
           <View style={styles.headerRow}>
-            <Text style={styles.sectionBig}>{isToday ? '📋 Por fazer' : `📅 ${dayName(day)}`}</Text>
+            <Text variant="section" style={styles.sectionBig}>{isToday ? '📋 Por fazer' : `📅 ${dayName(day)}`}</Text>
             {isToday ? (
-              <Text style={styles.small}>
+              <Text variant="label" style={styles.small}>
                 {pending.length} {pending.length === 1 ? 'tarefa' : 'tarefas'}
               </Text>
             ) : (
               <Pressable onPress={() => setSelectedDay(null)}>
-                <Text style={styles.link}>Voltar a hoje</Text>
+                <Text variant="button" style={styles.link}>Voltar a hoje</Text>
               </Pressable>
             )}
           </View>
         )}
         {current && !isToday && shown.length === 0 && dayForecast.length === 0 && (
-          <Text style={styles.hint}>{day < todayStr ? 'Sem tarefas por fazer neste dia.' : 'Sem tarefas marcadas para este dia.'}</Text>
+          <Text variant="label" style={styles.hint}>{day < todayStr ? 'Sem tarefas por fazer neste dia.' : 'Sem tarefas marcadas para este dia.'}</Text>
         )}
         {current && dayForecast.length > 0 && (
           <View style={styles.group}>
-            <Text style={styles.section}>Previstas</Text>
+            <Text variant="section" style={styles.section}>Previstas</Text>
             {dayForecast.map((f) => (
               <Pressable key={`${f.task_id}-${f.due_date}`} style={styles.forecastRow} onPress={() => router.push({ pathname: '/task/[id]', params: { id: f.task_id } })}>
-                <Text style={styles.forecastTitle}>{f.title}</Text>
-                <Text style={styles.small}>prevista</Text>
+                <Text variant="body" style={styles.forecastTitle}>{f.title}</Text>
+                <Text variant="label" style={styles.small}>prevista</Text>
               </Pressable>
             ))}
-            <Text style={styles.tip}>Previsão pelas regras da tarefa: o dia real pode mudar conforme fizeres as anteriores.</Text>
+            <Text variant="label" style={styles.tip}>Previsão pelas regras da tarefa: o dia real pode mudar conforme fizeres as anteriores.</Text>
           </View>
         )}
         {current && isToday && pending.length === 0 && doneWeek.length === 0 && !error && (
           <View style={styles.empty}>
-            <Text style={styles.hint}>Ainda não há tarefas. Diz-nos o que fazem em casa e a app organiza a rotina.</Text>
+            <Text variant="label" style={styles.hint}>Ainda não há tarefas. Diz-nos o que fazem em casa e a app organiza a rotina.</Text>
             {canManage && <Button title="Começar com tarefas" onPress={() => router.push('/starter')} />}
             <Button title="Escolher produtos" variant="secondary" onPress={() => router.push('/onboarding')} />
           </View>
         )}
-        {current && isToday && pending.length === 0 && doneWeek.length > 0 && <Text style={styles.allDone}>Está tudo feito por agora 🎉</Text>}
+        {current && isToday && pending.length === 0 && doneWeek.length > 0 && <Text variant="section" style={styles.allDone}>Está tudo feito por agora 🎉</Text>}
 
         {current &&
           groups.map(
             (g) =>
               g.items.length > 0 && (
                 <View key={g.title} style={styles.group}>
-                  <Text style={styles.section}>{g.title}</Text>
-                  {g.title === 'As minhas' && <Text style={styles.tip}>mantém premida uma tarefa para a editar, mudar a data, passá-la ou saltá-la</Text>}
+                  <Text variant="section" style={styles.section}>{g.title}</Text>
+                  {g.title === 'As minhas' && <Text variant="label" style={styles.tip}>Prime uma tarefa durante um segundo para ver mais opções</Text>}
                   {g.items.map((o) => renderTask(o, false))}
                 </View>
               ),
@@ -603,7 +605,7 @@ export default function HomeScreen() {
         {current && isToday && scheduled.length > 0 && (
           <View style={styles.group}>
             <Pressable onPress={() => setShowScheduled(!showScheduled)}>
-              <Text style={styles.section}>
+              <Text variant="section" style={styles.section}>
                 📅 Agendadas ({scheduled.length}) {showScheduled ? '▲' : '▼'}
               </Text>
             </Pressable>
@@ -611,67 +613,71 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <View style={styles.tiles}>
-          {canManage && (
-            <Pressable style={styles.tile} onPress={() => router.push('/task/edit')}>
-              <Text style={styles.tileIcon}>＋</Text>
-              <Text style={styles.tileText}>Nova tarefa</Text>
-            </Pressable>
-          )}
-          {canManage && (
-            <Pressable style={styles.tile} onPress={() => router.push('/task/suggestions')}>
-              <Text style={styles.tileIcon}>💡</Text>
-              <Text style={styles.tileText}>Sugestões</Text>
-            </Pressable>
-          )}
-          {hasModule('meals') && (
-            <Pressable style={styles.tile} onPress={() => router.push('/meals')}>
-              <Text style={styles.tileIcon}>🍽️</Text>
-              <Text style={styles.tileText}>Refeições</Text>
-            </Pressable>
-          )}
-          {current && scheduled.length > 0 && (
-            <Pressable style={styles.tile} onPress={() => setShowScheduled(!showScheduled)}>
-              <Text style={styles.tileIcon}>📅</Text>
-              <Text style={styles.tileText}>Agendadas ({scheduled.length})</Text>
-            </Pressable>
-          )}
-        </View>
+        {canManage && (
+          <View style={styles.actions}>
+            <View style={styles.actionButton}>
+              <Button title="＋ Nova tarefa" onPress={() => router.push('/task/edit')} />
+            </View>
+            <View style={styles.actionButton}>
+              <Button title="💡 Sugestões" variant="secondary" onPress={() => router.push('/task/suggestions')} />
+            </View>
+          </View>
+        )}
+        {(hasModule('meals') || (current && scheduled.length > 0)) && (
+          <View style={styles.linksRow}>
+            {hasModule('meals') && (
+              <Pressable style={styles.linkRow} onPress={() => router.push('/meals')}>
+                <Text variant="button" style={styles.link}>🍽️ Refeições</Text>
+              </Pressable>
+            )}
+            {current && scheduled.length > 0 && (
+              <Pressable style={styles.linkRow} onPress={() => setShowScheduled(!showScheduled)}>
+                <Text variant="button" style={styles.link}>📅 Agendadas ({scheduled.length})</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
 
         {/* ----- Estado da casa ----- */}
         <View style={styles.group}>
           <View style={styles.headerRow}>
-            <Text style={styles.sectionBig}>🚦 Estado da casa</Text>
+            <Text variant="section" style={styles.sectionBig}>🚦 Estado da casa</Text>
             <Pressable onPress={() => router.push('/status')}>
-              <Text style={styles.link}>Ver todas e gerir ›</Text>
+              <Text variant="button" style={styles.link}>Ver todas e gerir ›</Text>
             </Pressable>
           </View>
-          {worst.length === 0 && <Text style={styles.hint}>Ainda não há tarefas da casa.</Text>}
+          {worst.length === 0 && <Text variant="label" style={styles.hint}>Ainda não há tarefas da casa.</Text>}
           {worst.map((r) => {
             const color = urgencyColor(r.urgency_ratio);
             return (
               <Pressable key={r.task_id} style={styles.statusRow} onPress={() => router.push({ pathname: '/task/[id]', params: { id: r.task_id } })}>
                 <View style={[styles.dotSmall, { backgroundColor: color }]} />
                 <View style={styles.statusText}>
-                  <Text style={styles.statusTitle}>{r.title}</Text>
+                  <Text variant="body" style={styles.statusTitle}>{r.title}</Text>
                   <View style={styles.track}>
                     <View style={[styles.fill, { width: `${urgencyFill(r.urgency_ratio) * 100}%`, backgroundColor: color }]} />
                   </View>
                 </View>
-                <Text style={[styles.statusSince, r.urgency_ratio != null && r.urgency_ratio > 1 && { color }]}>{sinceText(r.days_since_last)}</Text>
+                <Text variant="label" style={[styles.statusSince, r.urgency_ratio != null && r.urgency_ratio > 1 && { color }]}>{sinceText(r.days_since_last)}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        {/* ----- Resumo da semana ----- */}
+        {/* ----- Resumo da semana (recolhido por defeito) ----- */}
+        <Pressable style={styles.headerRow} onPress={() => setShowWeek(!showWeek)} accessibilityRole="button">
+          <Text variant="section" style={styles.sectionBig}>📊 Resumo da semana</Text>
+          <Text variant="button" style={styles.link}>{showWeek || !current ? '▲' : '▼'}</Text>
+        </Pressable>
+        {(showWeek || !current) && (
+          <>
         <View style={styles.weekRow}>
           <Pressable hitSlop={12} onPress={() => setWeekOffset(weekOffset - 1)}>
-            <Text style={styles.arrow}>◀</Text>
+            <Text variant="section" style={styles.arrow}>◀</Text>
           </Pressable>
-          <Text style={styles.week}>📊 {current ? 'Esta semana' : `${dm(weekStart)} – ${dm(weekEnd)}`}</Text>
+          <Text variant="section" style={styles.week}>📊 {current ? 'Esta semana' : `${dm(weekStart)} – ${dm(weekEnd)}`}</Text>
           <Pressable hitSlop={12} disabled={current} onPress={() => setWeekOffset(weekOffset + 1)}>
-            <Text style={[styles.arrow, current && styles.arrowOff]}>▶</Text>
+            <Text variant="section" style={[styles.arrow, current && styles.arrowOff]}>▶</Text>
           </Pressable>
         </View>
 
@@ -680,23 +686,23 @@ export default function HomeScreen() {
         {social && (
           <View style={styles.group}>
             {totalTasks === 0 ? (
-              <Text style={styles.hint}>Sem tarefas feitas nesta semana.</Text>
+              <Text variant="label" style={styles.hint}>Sem tarefas feitas nesta semana.</Text>
             ) : (
               <>
-                <Text style={styles.total}>{totalTasks} tarefas feitas</Text>
+                <Text variant="section" style={styles.total}>{totalTasks} tarefas feitas</Text>
                 {people.map((r) => {
                   const share = totalEffort > 0 ? Math.round((r.effort_points / totalEffort) * 100) : 0;
                   const leader = competition && score(r) === best && best > 0;
                   return (
                     <View key={r.user_id} style={styles.personCard}>
-                      <Text style={styles.personName}>
+                      <Text variant="body" style={styles.personName}>
                         {leader ? '🏆 ' : ''}
                         {whoName(r.user_id)}
                       </Text>
                       <View style={styles.track}>
                         <View style={[styles.fill, { width: `${share}%`, backgroundColor: colors.primary }]} />
                       </View>
-                      <Text style={styles.taskLine}>
+                      <Text variant="label" style={styles.taskLine}>
                         {r.tasks_done} {r.tasks_done === 1 ? 'tarefa' : 'tarefas'} · {share}% do esforço
                         {competition ? ` · ${score(r)} pontos` : ''}
                         {!competition && r.kudos_points > 0 ? ` · 👏 ${r.kudos_points}` : ''}
@@ -708,17 +714,22 @@ export default function HomeScreen() {
             )}
           </View>
         )}
+          </>
+        )}
 
         {/* ----- Feitas na semana, com quem as fez ----- */}
         {doneOnSelected.length > 0 && (
           <View style={styles.group}>
-            <Text style={styles.section}>
-              {!current ? 'Feitas nesta semana' : isToday ? 'Feitas esta semana' : 'Feitas neste dia'} ({doneOnSelected.length})
-            </Text>
-            {doneOnSelected.map((o) => renderDone(o))}
+            <Pressable style={styles.headerRow} onPress={() => setShowDone(!showDone)} accessibilityRole="button">
+              <Text variant="section" style={styles.section}>
+                ✅ {!current ? 'Feitas nesta semana' : isToday ? 'Feitas esta semana' : 'Feitas neste dia'} ({doneOnSelected.length})
+              </Text>
+              <Text variant="button" style={styles.link}>{showDone || !current ? '▲' : '▼'}</Text>
+            </Pressable>
+            {(showDone || !current) && doneOnSelected.map((o) => renderDone(o))}
           </View>
         )}
-        {!current && doneWeek.length === 0 && <Text style={styles.hint}>Nenhuma tarefa feita nesta semana.</Text>}
+        {!current && doneWeek.length === 0 && <Text variant="label" style={styles.hint}>Nenhuma tarefa feita nesta semana.</Text>}
       </ScrollView>
 
       <ActionSheet
@@ -746,73 +757,73 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 14, paddingBottom: 80 },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 80 },
   group: { gap: 8 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionBig: { fontSize: 18, fontWeight: '700' },
-  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 4 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 48, gap: 12 },
+  sectionBig: { color: colors.ink, flexShrink: 1 },
+  section: { color: colors.ink, flexShrink: 1, marginTop: 4 },
   hint: { color: colors.muted, textAlign: 'center' },
-  small: { color: colors.muted, fontSize: 13 },
-  tip: { color: colors.muted, fontSize: 12, marginBottom: 2 },
-  link: { color: colors.primary, fontSize: 15, fontWeight: '600' },
+  small: { color: colors.muted },
+  tip: { color: colors.muted },
+  link: { color: colors.primary },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
+  linksRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.md },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  actionButton: { flexGrow: 1, flexBasis: 150 },
   // Estado da casa
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: fieldMinHeight, padding: 12, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   dotSmall: { width: 16, height: 16, borderRadius: 8 },
   statusText: { flex: 1, gap: 6 },
-  statusTitle: { fontSize: 16, fontWeight: '600' },
-  statusSince: { color: colors.muted, fontSize: 12, maxWidth: 110, textAlign: 'right' },
-  track: { height: 8, borderRadius: 4, backgroundColor: colors.border, overflow: 'hidden' },
-  fill: { height: 8, borderRadius: 4 },
+  statusTitle: { color: colors.ink },
+  statusSince: { color: colors.muted, maxWidth: 120, textAlign: 'right' },
+  track: { height: 10, borderRadius: 5, backgroundColor: colors.border, overflow: 'hidden' },
+  fill: { height: 10, borderRadius: 5 },
   // Resumo da semana
-  weekRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8, marginTop: 6 },
-  week: { fontSize: 18, fontWeight: '700' },
-  arrow: { fontSize: 20, color: colors.primary },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8 },
+  week: { color: colors.ink },
+  arrow: { color: colors.primary, paddingHorizontal: 12, paddingVertical: 8 },
   arrowOff: { opacity: 0.25 },
-  total: { fontSize: 24, fontWeight: '700', textAlign: 'center' },
-  personCard: { gap: 6, padding: 12, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 12, backgroundColor: colors.white },
-  personName: { fontSize: 16, fontWeight: '600' },
-  // Tarefas (como em "Hoje")
-  task: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
-  taskDone: { opacity: 0.6 },
-  check: { width: 30, height: 30, borderRadius: 15, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  total: { color: colors.ink, textAlign: 'center' },
+  personCard: { gap: 8, padding: 14, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.card, backgroundColor: colors.white },
+  personName: { color: colors.ink },
+  // Tarefas
+  task: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 64, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  taskDone: { opacity: 0.7 },
+  check: { width: 32, height: 32, borderRadius: 16, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
   checkDone: { backgroundColor: colors.success, borderColor: colors.success },
-  checkMark: { color: colors.white, fontSize: 16 },
-  protect: { gap: 2, padding: 14, borderRadius: radius.card, backgroundColor: colors.peach },
-  protectTitle: { fontSize: 15, color: colors.ink },
-  protectText: { fontSize: 13, color: colors.ink },
-  hero: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  checkMark: { color: colors.white },
+  protect: { gap: 4, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.peach },
+  protectTitle: { color: colors.ink },
+  protectText: { color: colors.ink },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   heroText: { flex: 1, gap: 4 },
-  hello: { fontSize: 22, color: colors.ink },
-  heroLine: { color: colors.muted, fontSize: 14 },
-  tiles: { flexDirection: 'row', gap: 10 },
-  tile: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 14, paddingHorizontal: 6, borderRadius: radius.card, backgroundColor: colors.primary },
-  tileIcon: { fontSize: 22, color: colors.accent },
-  tileText: { fontSize: 13, color: colors.accent, textAlign: 'center' },
+  hello: { color: colors.ink },
+  heroLine: { color: colors.muted },
   strip: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
-  stripDay: { alignItems: 'center', gap: 4, flex: 1 },
-  stripLetter: { color: colors.faint, fontSize: 12 },
-  stripCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  stripDay: { alignItems: 'center', gap: 4, flex: 1, minHeight: 48 },
+  stripLetter: { color: colors.muted },
+  stripCircle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   stripToday: { backgroundColor: colors.accent },
   stripSelected: { borderWidth: 2, borderColor: colors.primary },
-  stripCount: { fontSize: 11, color: colors.primary, fontWeight: '700', height: 8 + 4, lineHeight: 12 },
-  forecastRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow, opacity: 0.85 },
-  forecastTitle: { fontSize: 16, color: colors.ink },
-  stripNum: { color: colors.ink, fontSize: 15 },
+  stripCount: { color: colors.primary },
+  forecastRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 56, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow, opacity: 0.85 },
+  forecastTitle: { color: colors.ink, flexShrink: 1 },
+  stripNum: { color: colors.ink },
   stripNumToday: { color: colors.ink },
-  stripDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'transparent' },
+  stripDot: { width: 6, height: 6, borderRadius: 3, marginTop: 8, backgroundColor: 'transparent' },
   stripDotOn: { backgroundColor: colors.success },
   taskText: { flex: 1, gap: 2 },
-  taskTitle: { fontSize: 18 },
+  taskTitle: { color: colors.ink },
   strike: { textDecorationLine: 'line-through' },
-  taskLine: { color: colors.muted, fontSize: 14 },
-  doneBy: { color: colors.muted, fontSize: 12 },
-  late: { color: colors.pink, fontSize: 14, fontWeight: '600' },
+  taskLine: { color: colors.muted },
+  doneBy: { color: colors.muted },
+  late: { color: colors.pink },
   doneWrap: { gap: 8 },
-  thanked: { color: colors.muted, fontSize: 14, paddingLeft: 4 },
-  banner: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: colors.lavender, borderWidth: 1, borderColor: colors.primary },
-  bannerText: { fontSize: 16 },
-  bannerButtons: { flexDirection: 'row', gap: 10 },
+  thanked: { color: colors.muted, paddingLeft: 4 },
+  banner: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.lavender, borderWidth: 1, borderColor: colors.primary },
+  bannerText: { color: colors.ink },
+  bannerButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   empty: { gap: 16, marginTop: 12 },
-  allDone: { fontSize: 18, textAlign: 'center', marginTop: 8 },
+  allDone: { color: colors.ink, textAlign: 'center', marginTop: 8 },
   error: { color: colors.pink, textAlign: 'center' },
 });
