@@ -12,6 +12,8 @@ function withFont(style: TextProps['style'], minSize: number, variant?: TypeVari
   const wanted = flat.fontSize ?? defaultSize;
   const size = Math.max(wanted, minSize);
   const out = { ...flat, fontSize: size, fontWeight: 'normal' as const };
+  // Sem altura de linha própria, o texto corrente respira (1,5)
+  if (!flat.lineHeight && !variant) out.lineHeight = Math.round(size * 1.5);
   if (flat.lineHeight && size !== wanted) out.lineHeight = Math.round((flat.lineHeight / wanted) * size);
   if (!flat.fontFamily || !variant) out.fontFamily = size >= TITLE_MIN_SIZE ? fonts.heading : fonts.body;
   if (variant && !StyleSheet.flatten(style)?.fontFamily) out.fontFamily = base!.fontFamily;
@@ -22,7 +24,7 @@ type Props = TextProps & { variant?: TypeVariant };
 
 // Texto da app: Ubuntu Regular; Montserrat nos títulos grandes
 export function Text({ style, variant, ...props }: Props) {
-  return <RNText {...props} style={withFont(style, minFontSize.text, variant)} />;
+  return <RNText {...props} style={withFont(style, minFontSize.text, variant, type.body.fontSize)} />;
 }
 
 export function TextInput({ style, ...props }: TextInputProps) {

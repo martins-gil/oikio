@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
-import { colors, radius } from '@/lib/theme';
+import { colors, fieldMinHeight, radius } from '@/lib/theme';
 
 export type TaskProduct = { product_id: string; name: string; unit: string; quantity: number };
 type Option = { product_id: string; name: string; base_unit: string };
@@ -63,11 +63,11 @@ export function TaskProducts({ items, onChange }: { items: TaskProduct[]; onChan
     <View style={styles.wrap}>
       {items.map((i) => (
         <View key={i.product_id} style={styles.row}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text variant="body" style={styles.name} numberOfLines={2}>
             {i.name}
           </Text>
-          <Pressable style={styles.step} hitSlop={6} onPress={() => setQty(i.product_id, i.quantity - stepOf(i.unit))}>
-            <Text style={styles.stepText}>−</Text>
+          <Pressable style={styles.step} onPress={() => setQty(i.product_id, i.quantity - stepOf(i.unit))}>
+            <Text variant="section" style={styles.stepText}>−</Text>
           </Pressable>
           <TextInput
             style={styles.qtyInput}
@@ -80,12 +80,12 @@ export function TaskProducts({ items, onChange }: { items: TaskProduct[]; onChan
             }}
             onBlur={() => setDrafts((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== i.product_id)))}
           />
-          <Text style={styles.unit}>{i.unit}</Text>
-          <Pressable style={styles.step} hitSlop={6} onPress={() => setQty(i.product_id, i.quantity + stepOf(i.unit))}>
-            <Text style={styles.stepText}>＋</Text>
+          <Text variant="label" style={styles.unit}>{i.unit}</Text>
+          <Pressable style={styles.step} onPress={() => setQty(i.product_id, i.quantity + stepOf(i.unit))}>
+            <Text variant="section" style={styles.stepText}>＋</Text>
           </Pressable>
           <Pressable hitSlop={10} onPress={() => onChange(items.filter((x) => x.product_id !== i.product_id))}>
-            <Text style={styles.remove}>✕</Text>
+            <Text variant="section" style={styles.remove}>✕</Text>
           </Pressable>
         </View>
       ))}
@@ -95,23 +95,23 @@ export function TaskProducts({ items, onChange }: { items: TaskProduct[]; onChan
           <TextInput style={styles.input} value={query} onChangeText={setQuery} placeholder="Procurar produto (ex.: detergente)" autoFocus />
           {matches.map((o) => (
             <Pressable key={o.product_id} style={styles.option} onPress={() => add(o)}>
-              <Text style={styles.optionText}>{o.name}</Text>
+              <Text variant="body" style={styles.optionText}>{o.name}</Text>
             </Pressable>
           ))}
           {query.trim() !== '' && !exact && (
             <Pressable style={styles.option} onPress={create}>
-              <Text style={styles.create}>➕ Criar «{query.trim()}»</Text>
+              <Text variant="body" style={styles.create}>➕ Criar «{query.trim()}»</Text>
             </Pressable>
           )}
-          {error && <Text style={styles.error}>{error}</Text>}
+          {error && <Text variant="label" style={styles.error}>{error}</Text>}
           <Pressable onPress={() => { setAdding(false); setQuery(''); }}>
-            <Text style={styles.link}>Fechar</Text>
+            <Text variant="button" style={styles.link}>Fechar</Text>
           </Pressable>
         </View>
       ) : (
         items.length < 8 && (
           <Pressable onPress={() => setAdding(true)}>
-            <Text style={styles.link}>➕ Juntar produto</Text>
+            <Text variant="button" style={styles.link}>➕ Juntar produto</Text>
           </Pressable>
         )
       )}
@@ -120,19 +120,19 @@ export function TaskProducts({ items, onChange }: { items: TaskProduct[]; onChan
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: radius.button, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
-  name: { flex: 1, fontSize: 15, color: colors.ink },
-  step: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: colors.white, fontSize: 18, lineHeight: 22 },
-  qtyInput: { minWidth: 56, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.white, paddingVertical: 4, paddingHorizontal: 6, textAlign: 'center', fontSize: 15, color: colors.ink },
-  unit: { fontSize: 13, color: colors.muted, minWidth: 28 },
-  remove: { fontSize: 16, color: colors.faint, paddingLeft: 4 },
-  panel: { gap: 6, padding: 10, borderRadius: radius.button, backgroundColor: colors.panel },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 10, fontSize: 16, color: colors.ink },
-  option: { paddingVertical: 9 },
-  optionText: { fontSize: 15, color: colors.ink },
-  create: { fontSize: 15, color: colors.primary },
-  link: { color: colors.primary, fontSize: 15 },
-  error: { color: colors.pink, fontSize: 13 },
+  wrap: { gap: 12 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, padding: 12, borderRadius: radius.card, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
+  name: { flexBasis: '100%', color: colors.ink },
+  step: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: colors.white },
+  qtyInput: { minWidth: 72, minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 8, textAlign: 'center', color: colors.ink },
+  unit: { color: colors.muted, minWidth: 32 },
+  remove: { color: colors.faint, paddingHorizontal: 10, paddingVertical: 10 },
+  panel: { gap: 8, padding: 12, borderRadius: radius.card, backgroundColor: colors.panel },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, color: colors.ink },
+  option: { minHeight: 48, justifyContent: 'center', paddingVertical: 8 },
+  optionText: { color: colors.ink },
+  create: { color: colors.primary },
+  link: { color: colors.primary, paddingVertical: 8 },
+  error: { color: colors.pink },
 });
