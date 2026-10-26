@@ -44,7 +44,7 @@ export default function ResetPasswordScreen() {
     const timer = setTimeout(() => {
       if (!getAuthUrl()) {
         setState('invalid');
-        setMessage('A app não recebeu a ligação. Abre o e-mail neste telemóvel e toca outra vez em «Reset password».');
+        setMessage('A app não recebeu a ligação. Abre o e-mail neste telemóvel e toca outra vez no botão.');
       }
     }, 8000);
     return () => clearTimeout(timer);

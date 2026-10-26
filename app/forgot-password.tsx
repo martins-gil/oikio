@@ -41,7 +41,7 @@ export default function ForgotPasswordScreen() {
         <>
           <Text variant="body" style={styles.hint}>
             Se existir uma conta com {email.trim()}, enviámos um e-mail (vê também o spam).{'\n\n'}
-            Abre-o neste telemóvel e toca em «Reset password». A app abre e podes escolher a nova palavra-passe.
+            Abre-o neste telemóvel e toca no botão do e-mail. A app abre e podes escolher a nova palavra-passe.
           </Text>
           <Button title={busy ? 'A enviar…' : 'Enviar outra vez'} variant="secondary" disabled={busy} onPress={send} />
         </>
