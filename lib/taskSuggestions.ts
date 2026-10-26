@@ -23,6 +23,7 @@ export const SUGGESTIONS: Suggestion[] = [
   daily('Lavar a loiça'),
   daily('Fazer as camas'),
   daily('Limpar a areia do gato'),
+  daily('Passear o cão'),
   weekly('Todos os dias', 'Despejar o lixo', 3, 1),
 
   weekly('Todas as semanas', 'Aspirar', 2, 2),
@@ -57,3 +58,21 @@ export const SUGGESTIONS: Suggestion[] = [
 
 export const normalizeTitle = (s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+
+// Pacotes de arranque: grupos de tarefas por tema, para quem começa. Só reutilizam as sugestões acima (pelo nome).
+export type Pack = { key: string; emoji: string; title: string; detail: string; titles: string[]; preselected?: boolean };
+export const PACKS: Pack[] = [
+  {
+    key: 'basic',
+    emoji: '🏠',
+    title: 'Rotina básica',
+    detail: 'Loiça, lixo, aspirar, chão e casa de banho',
+    preselected: true,
+    titles: ['Lavar a loiça', 'Despejar o lixo', 'Aspirar', 'Lavar o chão', 'Limpar a casa de banho', 'Fazer a lista de compras'],
+  },
+  { key: 'laundry', emoji: '🧺', title: 'Roupa', detail: 'Lavar, passar a ferro, toalhas e lençóis', titles: ['Lavar roupa', 'Passar a ferro', 'Mudar as toalhas', 'Mudar os lençóis'] },
+  { key: 'cleaning', emoji: '🧽', title: 'Limpeza regular', detail: 'Pó, cozinha, frigorífico, forno e micro-ondas', titles: ['Limpar o pó', 'Limpar a cozinha a fundo', 'Limpar o frigorífico', 'Limpar o forno', 'Limpar o micro-ondas'] },
+  { key: 'pets', emoji: '🐾', title: 'Animais', detail: 'Passear o cão e a areia do gato', titles: ['Passear o cão', 'Limpar a areia do gato'] },
+  { key: 'green', emoji: '🌿', title: 'Plantas e reciclagem', detail: 'Regar as plantas e despejar a reciclagem', titles: ['Regar as plantas', 'Despejar a reciclagem'] },
+  { key: 'yearly', emoji: '🔧', title: 'Manutenção da casa', detail: 'Caldeira, detetores de fumo e filtros', titles: ['Revisão da caldeira ou do esquentador', 'Verificar detetores de fumo e extintor', 'Limpar o filtro do exaustor', 'Limpar ralos e sifões'] },
+];

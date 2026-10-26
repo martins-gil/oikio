@@ -43,7 +43,7 @@ export default function TabsLayout() {
   // Cada ecrã desenha o seu próprio cabeçalho (componente Screen); a barra de baixo é a nossa
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
-      <Tabs.Screen name="index" options={{ title: 'Resumo' }} />
+      <Tabs.Screen name="index" options={{ title: 'Hoje' }} />
       <Tabs.Screen name="shopping" options={{ title: 'Compras' }} />
       <Tabs.Screen name="stock" options={{ title: 'Produtos' }} />
       <Tabs.Screen name="money" options={{ title: 'Dinheiro', href: has('money') ? undefined : null }} />

@@ -28,9 +28,9 @@ export default function CreateHouseScreen() {
       return;
     }
     await reload((newId as string | null) ?? undefined); // a casa nova passa a ser a ativa
-    // Fica o ecrã "Hoje" por baixo e o onboarding por cima
+    // Fica o ecrã "Hoje" por baixo e, por cima, o arranque por tarefas (o que fazem em casa)
     router.replace('/');
-    router.push('/onboarding');
+    router.push('/starter');
   };
 
   return (

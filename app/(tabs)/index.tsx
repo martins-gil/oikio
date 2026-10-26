@@ -502,6 +502,74 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {/* ----- Por fazer (primeiro: o que importa hoje) ----- */}
+        {current && pending.length > 0 && (
+          <View style={styles.headerRow}>
+            <Text style={styles.sectionBig}>📋 Por fazer</Text>
+            <Text style={styles.small}>
+              {pending.length} {pending.length === 1 ? 'tarefa' : 'tarefas'}
+            </Text>
+          </View>
+        )}
+        {current && pending.length === 0 && doneWeek.length === 0 && !error && (
+          <View style={styles.empty}>
+            <Text style={styles.hint}>Ainda não há tarefas. Diz-nos o que fazem em casa e a app organiza a rotina.</Text>
+            {canManage && <Button title="Começar com tarefas" onPress={() => router.push('/starter')} />}
+            <Button title="Escolher produtos" variant="secondary" onPress={() => router.push('/onboarding')} />
+          </View>
+        )}
+        {current && pending.length === 0 && doneWeek.length > 0 && <Text style={styles.allDone}>Está tudo feito por agora 🎉</Text>}
+
+        {current &&
+          groups.map(
+            (g) =>
+              g.items.length > 0 && (
+                <View key={g.title} style={styles.group}>
+                  <Text style={styles.section}>{g.title}</Text>
+                  {g.title === 'As minhas' && <Text style={styles.tip}>mantém premida uma tarefa para mudar a data, passá-la ou saltá-la</Text>}
+                  {g.items.map((o) => renderTask(o, false))}
+                </View>
+              ),
+          )}
+
+        {current && scheduled.length > 0 && (
+          <View style={styles.group}>
+            <Pressable onPress={() => setShowScheduled(!showScheduled)}>
+              <Text style={styles.section}>
+                📅 Agendadas ({scheduled.length}) {showScheduled ? '▲' : '▼'}
+              </Text>
+            </Pressable>
+            {showScheduled && scheduled.map((o) => renderTask(o, false))}
+          </View>
+        )}
+
+        <View style={styles.tiles}>
+          {canManage && (
+            <Pressable style={styles.tile} onPress={() => router.push('/task/edit')}>
+              <Text style={styles.tileIcon}>＋</Text>
+              <Text style={styles.tileText}>Nova tarefa</Text>
+            </Pressable>
+          )}
+          {canManage && (
+            <Pressable style={styles.tile} onPress={() => router.push('/task/suggestions')}>
+              <Text style={styles.tileIcon}>💡</Text>
+              <Text style={styles.tileText}>Sugestões</Text>
+            </Pressable>
+          )}
+          {hasModule('meals') && (
+            <Pressable style={styles.tile} onPress={() => router.push('/meals')}>
+              <Text style={styles.tileIcon}>🍽️</Text>
+              <Text style={styles.tileText}>Refeições</Text>
+            </Pressable>
+          )}
+          {current && scheduled.length > 0 && (
+            <Pressable style={styles.tile} onPress={() => setShowScheduled(!showScheduled)}>
+              <Text style={styles.tileIcon}>📅</Text>
+              <Text style={styles.tileText}>Agendadas ({scheduled.length})</Text>
+            </Pressable>
+          )}
+        </View>
+
         {/* ----- Estado da casa ----- */}
         <View style={styles.group}>
           <View style={styles.headerRow}>
@@ -526,32 +594,6 @@ export default function HomeScreen() {
               </Pressable>
             );
           })}
-          <View style={styles.tiles}>
-            {canManage && (
-              <Pressable style={styles.tile} onPress={() => router.push('/task/edit')}>
-                <Text style={styles.tileIcon}>＋</Text>
-                <Text style={styles.tileText}>Nova tarefa</Text>
-              </Pressable>
-            )}
-            {canManage && (
-              <Pressable style={styles.tile} onPress={() => router.push('/task/suggestions')}>
-                <Text style={styles.tileIcon}>💡</Text>
-                <Text style={styles.tileText}>Sugestões</Text>
-              </Pressable>
-            )}
-            {hasModule('meals') && (
-              <Pressable style={styles.tile} onPress={() => router.push('/meals')}>
-                <Text style={styles.tileIcon}>🍽️</Text>
-                <Text style={styles.tileText}>Refeições</Text>
-              </Pressable>
-            )}
-            {current && scheduled.length > 0 && (
-              <Pressable style={styles.tile} onPress={() => setShowScheduled(!showScheduled)}>
-                <Text style={styles.tileIcon}>📅</Text>
-                <Text style={styles.tileText}>Agendadas ({scheduled.length})</Text>
-              </Pressable>
-            )}
-          </View>
         </View>
 
         {/* ----- Resumo da semana ----- */}
@@ -609,40 +651,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ----- Tarefas a fazer (só nesta semana) ----- */}
-        {current && pending.length === 0 && doneWeek.length === 0 && !error && (
-          <View style={styles.empty}>
-            <Text style={styles.hint}>
-              Ainda não há tarefas. Escolhe produtos, ou cria tarefas em "Estado da casa", e aparecem aqui.
-            </Text>
-            <Button title="Escolher produtos" onPress={() => router.push('/onboarding')} />
-          </View>
-        )}
-        {current && pending.length === 0 && doneWeek.length > 0 && <Text style={styles.allDone}>Está tudo feito por agora 🎉</Text>}
-
-        {current &&
-          groups.map(
-            (g) =>
-              g.items.length > 0 && (
-                <View key={g.title} style={styles.group}>
-                  <Text style={styles.section}>{g.title}</Text>
-                  {g.title === 'As minhas' && <Text style={styles.tip}>mantém premida uma tarefa para mudar a data, passá-la ou saltá-la</Text>}
-                  {g.items.map((o) => renderTask(o, false))}
-                </View>
-              ),
-          )}
-
-        {current && scheduled.length > 0 && (
-          <View style={styles.group}>
-            <Pressable onPress={() => setShowScheduled(!showScheduled)}>
-              <Text style={styles.section}>
-                📅 Agendadas ({scheduled.length}) {showScheduled ? '▲' : '▼'}
-              </Text>
-            </Pressable>
-            {showScheduled && scheduled.map((o) => renderTask(o, false))}
-          </View>
-        )}
-
         {/* ----- Feitas na semana, com quem as fez ----- */}
         {doneWeek.length > 0 && (
           <View style={styles.group}>
@@ -686,6 +694,7 @@ const styles = StyleSheet.create({
   sectionBig: { fontSize: 18, fontWeight: '700' },
   section: { fontSize: 13, color: '#666', textTransform: 'uppercase', marginTop: 4 },
   hint: { color: '#666', textAlign: 'center' },
+  small: { color: '#666', fontSize: 13 },
   tip: { color: '#888', fontSize: 12, marginBottom: 2 },
   link: { color: '#5C4DB1', fontSize: 15, fontWeight: '600' },
   // Estado da casa
