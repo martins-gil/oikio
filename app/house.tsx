@@ -10,7 +10,7 @@ import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type Ga
 import { useSession } from '@/lib/session';
 import { MODULES, useModules, useShowAiExplain, useShowCosts, useShowExpiry } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 type Invite = { token: string; expires_at: string };
 
@@ -140,46 +140,40 @@ export default function HouseScreen() {
 
   if (!household) return null;
 
+  const saveFlag = (fn: (v: boolean) => Promise<boolean>) => async (v: boolean) => {
+    if (!(await fn(v))) setToast('Não foi possível guardar.');
+  };
+
   return (
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{household.name}</Text>
+        <Text variant="title" style={styles.title}>{household.name}</Text>
 
-        <Text style={styles.section}>Quem vive aqui</Text>
-        {members.map((m) => (
-          <View key={m.user_id} style={styles.card}>
-            <Text style={styles.cardTitle}>
-              {m.display_name}
-              {m.user_id === me?.id ? ' (tu)' : ''}
-            </Text>
-            <Text style={styles.cardLine}>{ROLE_LABEL[m.role]}</Text>
-            {isAdmin && m.user_id !== me?.id && m.role !== 'admin' && (
-              <Pressable onPress={() => askMakeAdmin(m)}>
-                <Text style={styles.linkAction}>Tornar administrador</Text>
-              </Pressable>
-            )}
-          </View>
-        ))}
-
-        <Text style={styles.section}>O teu nome</Text>
-        <View style={styles.row}>
-          <TextInput
-            style={styles.input}
-            value={currentName}
-            onChangeText={setName}
-            returnKeyType="done"
-            onSubmitEditing={saveName}
-          />
+        <View style={styles.card}>
+          <Text variant="section" style={styles.cardHeading}>Quem vive aqui</Text>
+          {members.map((m) => (
+            <View key={m.user_id} style={styles.person}>
+              <Text variant="body" style={styles.personName}>
+                {m.display_name}
+                {m.user_id === me?.id ? ' (tu)' : ''}
+              </Text>
+              <Text variant="label" style={styles.muted}>{ROLE_LABEL[m.role]}</Text>
+              {isAdmin && m.user_id !== me?.id && m.role !== 'admin' && (
+                <Pressable style={styles.linkRow} onPress={() => askMakeAdmin(m)} accessibilityRole="button">
+                  <Text variant="body" style={styles.linkAction}>Tornar administrador</Text>
+                </Pressable>
+              )}
+            </View>
+          ))}
         </View>
-        {nameChanged && <Button title="Guardar nome" onPress={saveName} />}
 
         {isAdmin && (
-          <>
-            <Text style={styles.section}>Convidar</Text>
+          <View style={styles.card}>
+            <Text variant="section" style={styles.cardHeading}>Convidar</Text>
             {invite ? (
               <View style={styles.inviteBox}>
-                <Text style={styles.code}>{formatInviteCode(invite.token)}</Text>
-                <Text style={styles.cardLine}>
+                <Text variant="display" style={styles.code}>{formatInviteCode(invite.token)}</Text>
+                <Text variant="label" style={styles.muted}>
                   Vale até{' '}
                   {new Date(invite.expires_at).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })} e só
                   pode ser usado uma vez.
@@ -189,112 +183,111 @@ export default function HouseScreen() {
             ) : (
               <Button title="Convidar parceiro(a)" disabled={busy} onPress={showInvite} />
             )}
-          </>
+          </View>
         )}
 
-        <Text style={styles.section}>Para ti</Text>
-        <Text style={styles.cardLine}>Escolhe o que queres ver na app. É só teu: o teu parceiro escolhe o que quiser, e os dados da casa continuam partilhados.</Text>
-        {MODULES.map((m) => (
-          <View key={m.key} style={styles.prefRow}>
-            <View style={styles.prefText}>
-              <Text style={styles.prefTitle}>
-                {m.emoji} {m.title}
-              </Text>
-              <Text style={styles.cardLine}>{m.detail}</Text>
+        <View style={styles.card}>
+          <Text variant="section" style={styles.cardHeading}>Para ti</Text>
+          <Text variant="label" style={styles.muted}>Só tu vês estas escolhas: o teu parceiro escolhe o que quiser, e os dados da casa continuam partilhados.</Text>
+
+          <Text variant="label" style={styles.fieldLabel}>O teu nome</Text>
+          <TextInput
+            style={styles.input}
+            value={currentName}
+            onChangeText={setName}
+            returnKeyType="done"
+            onSubmitEditing={saveName}
+            accessibilityLabel="O teu nome"
+          />
+          {nameChanged && <Button title="Guardar nome" onPress={saveName} />}
+
+          {MODULES.map((m) => (
+            <View key={m.key} style={styles.prefRow}>
+              <View style={styles.prefText}>
+                <Text variant="body" style={styles.prefTitle}>
+                  {m.emoji} {m.title}
+                </Text>
+                <Text variant="label" style={styles.muted}>{m.detail}</Text>
+              </View>
+              <Switch accessibilityLabel={m.title} value={hasModule(m.key)} onValueChange={async (v) => { if (!(await setModule(m.key, v))) setToast('Não foi possível guardar.'); }} />
             </View>
-            <Switch
-              value={hasModule(m.key)}
-              onValueChange={async (v) => {
-                if (!(await setModule(m.key, v))) setToast('Não foi possível guardar.');
-              }}
-            />
-          </View>
-        ))}
+          ))}
 
-        {hasModule('meals') && (
-        <View style={styles.prefRow}>
-          <View style={styles.prefText}>
-            <Text style={styles.prefTitle}>Mostrar custos e orçamento</Text>
-            <Text style={styles.cardLine}>Preços e orçamento nas refeições. É só teu: não muda o que o parceiro vê.</Text>
-          </View>
-          <Switch
-            value={showCosts}
-            onValueChange={async (v) => {
-              if (!(await setShowCosts(v))) setToast('Não foi possível guardar.');
-            }}
-          />
-        </View>
-        )}
+          {hasModule('meals') && (
+            <View style={styles.prefRow}>
+              <View style={styles.prefText}>
+                <Text variant="body" style={styles.prefTitle}>Mostrar custos e orçamento</Text>
+                <Text variant="label" style={styles.muted}>Preços e orçamento nas refeições.</Text>
+              </View>
+              <Switch accessibilityLabel="Mostrar custos e orçamento" value={showCosts} onValueChange={saveFlag(setShowCosts)} />
+            </View>
+          )}
 
-        <View style={styles.prefRow}>
-          <View style={styles.prefText}>
-            <Text style={styles.prefTitle}>Mostrar validades sugeridas</Text>
-            <Text style={styles.cardLine}>Prazos de conservação do USDA FoodKeeper nos produtos. É só teu: não muda o que o parceiro vê.</Text>
+          <View style={styles.prefRow}>
+            <View style={styles.prefText}>
+              <Text variant="body" style={styles.prefTitle}>Mostrar validades sugeridas</Text>
+              <Text variant="label" style={styles.muted}>Prazos de conservação (USDA FoodKeeper) nos produtos.</Text>
+            </View>
+            <Switch accessibilityLabel="Mostrar validades sugeridas" value={showExpiry} onValueChange={saveFlag(setShowExpiry)} />
           </View>
-          <Switch
-            value={showExpiry}
-            onValueChange={async (v) => {
-              if (!(await setShowExpiry(v))) setToast('Não foi possível guardar.');
-            }}
-          />
+
+          {hasModule('money') && (
+            <View style={styles.prefRow}>
+              <View style={styles.prefText}>
+                <Text variant="body" style={styles.prefTitle}>Explicações com IA</Text>
+                <Text variant="label" style={styles.muted}>Botão «Explica-me» na análise de despesas: a IA escreve, em linguagem simples, números já calculados.</Text>
+              </View>
+              <Switch accessibilityLabel="Explicações com IA" value={showAiExplain} onValueChange={saveFlag(setShowAiExplain)} />
+            </View>
+          )}
+
+          <Button title="🔔 Horas dos lembretes" variant="secondary" onPress={() => router.push('/notifications')} />
+          {hasModule('meals') && <Button title="🍽️ Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />}
         </View>
 
-        {hasModule('money') && (
-        <View style={styles.prefRow}>
-          <View style={styles.prefText}>
-            <Text style={styles.prefTitle}>Explicações com IA</Text>
-            <Text style={styles.cardLine}>Botão «Explica-me» na análise de despesas: a IA escreve, em linguagem simples, números já calculados. É só teu.</Text>
+        <View style={styles.card}>
+          <Text variant="section" style={styles.cardHeading}>Da casa</Text>
+          <Text variant="label" style={styles.muted}>Resumo e pontos (decide o administrador)</Text>
+          <View style={styles.modes}>
+            {(Object.keys(GAMIFICATION_LABEL) as GamificationMode[]).map((m) => {
+              const on = household.gamification === m;
+              return (
+                <Pressable key={m} disabled={!isAdmin} accessibilityRole="button" accessibilityState={{ selected: on, disabled: !isAdmin }} style={[styles.mode, on && styles.modeOn, !isAdmin && !on && styles.modeOff]} onPress={() => setMode(m)}>
+                  <Text variant="button" style={on ? styles.modeTextOn : styles.modeText}>{GAMIFICATION_LABEL[m]}</Text>
+                </Pressable>
+              );
+            })}
           </View>
-          <Switch
-            value={showAiExplain}
-            onValueChange={async (v) => {
-              if (!(await setShowAiExplain(v))) setToast('Não foi possível guardar.');
-            }}
-          />
+          <Text variant="label" style={styles.muted}>
+            {household.gamification === 'off' && 'Sem pontos, agradecimentos nem resumo semanal.'}
+            {household.gamification === 'weekly_summary' && 'Resumo semanal e agradecimentos, sem ranking.'}
+            {household.gamification === 'competition' && 'Resumo semanal com pontos e 🏆 para quem fez mais.'}
+            {!isAdmin && ' Só o administrador altera.'}
+          </Text>
         </View>
-        )}
 
-        <Button title="🔔 Horas dos lembretes" variant="secondary" onPress={() => router.push('/notifications')} />
-        {hasModule('meals') && <Button title="🍽️ Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />}
-
-        <Text style={styles.section}>Da casa</Text>
-        <Text style={styles.cardLine}>Resumo e pontos (decide o administrador)</Text>
-        <View style={styles.modes}>
-          {(Object.keys(GAMIFICATION_LABEL) as GamificationMode[]).map((m) => {
-            const on = household.gamification === m;
-            return (
-              <Pressable key={m} disabled={!isAdmin} style={[styles.mode, on && styles.modeOn, !isAdmin && !on && styles.modeOff]} onPress={() => setMode(m)}>
-                <Text style={[styles.modeText, on && styles.modeTextOn]}>{GAMIFICATION_LABEL[m]}</Text>
-              </Pressable>
-            );
-          })}
+        <View style={styles.card}>
+          <Text variant="section" style={styles.cardHeading}>A tua conta</Text>
+          {anonymous ? (
+            <View style={styles.warn}>
+              <Text variant="body" style={styles.warnText}>
+                ⚠ A tua conta ainda não está protegida. Se perderes o telemóvel, perdes a casa.
+              </Text>
+              <Button title="Proteger a minha conta" onPress={() => router.push('/account')} />
+            </View>
+          ) : (
+            <>
+              <Text variant="body" style={styles.personName}>✅ {me?.email}</Text>
+              <Button title="Mudar palavra-passe" variant="secondary" onPress={() => router.push('/account')} />
+            </>
+          )}
+          <Pressable style={styles.dangerRow} onPress={askLeave} accessibilityRole="button">
+            <Text variant="button" style={styles.dangerText}>Sair desta casa</Text>
+          </Pressable>
+          <Pressable style={styles.dangerRow} onPress={signOut} accessibilityRole="button">
+            <Text variant="button" style={styles.dangerText}>Terminar sessão</Text>
+          </Pressable>
         </View>
-        <Text style={styles.cardLine}>
-          {household.gamification === 'off' && 'Sem pontos, agradecimentos nem resumo semanal.'}
-          {household.gamification === 'weekly_summary' && 'Resumo semanal e agradecimentos, sem ranking.'}
-          {household.gamification === 'competition' && 'Resumo semanal com pontos e 🏆 para quem fez mais.'}
-          {!isAdmin && ' Só o administrador altera.'}
-        </Text>
-
-        <Text style={styles.section}>Esta casa</Text>
-        <Button title="Sair desta casa" variant="secondary" onPress={askLeave} />
-
-        <Text style={styles.section}>A tua conta</Text>
-        {anonymous ? (
-          <View style={styles.warn}>
-            <Text style={styles.warnText}>
-              A tua conta ainda não está protegida. Se perderes o telemóvel, perdes a casa.
-            </Text>
-            <Button title="Proteger a minha conta" onPress={() => router.push('/account')} />
-            <Button title="Terminar sessão" variant="secondary" onPress={signOut} />
-          </View>
-        ) : (
-          <View style={styles.group}>
-            <Text style={styles.cardTitle}>✅ {me?.email}</Text>
-            <Button title="Mudar palavra-passe" variant="secondary" onPress={() => router.push('/account')} />
-            <Button title="Terminar sessão" variant="secondary" onPress={signOut} />
-          </View>
-        )}
       </ScrollView>
       <Toast message={toast} onHide={hideToast} />
     </View>
@@ -303,27 +296,30 @@ export default function HouseScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { padding: 20, gap: 12, paddingBottom: 80 },
-  title: { fontSize: 24, fontWeight: '600' },
-  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 12 },
-  card: { borderRadius: radius.card, ...shadow, padding: 14, backgroundColor: colors.white, gap: 2 },
-  cardTitle: { fontSize: 17, fontWeight: '600' },
-  cardLine: { color: colors.muted },
-  linkAction: { color: colors.primary, fontSize: 14, marginTop: 4 },
-  prefRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 80 },
+  title: { color: colors.ink },
+  card: { borderRadius: radius.card, ...shadow, padding: spacing.sm, backgroundColor: colors.white, gap: 12 },
+  cardHeading: { color: colors.ink },
+  person: { gap: 2 },
+  personName: { color: colors.ink },
+  muted: { color: colors.muted },
+  fieldLabel: { color: colors.muted, marginTop: 8, marginBottom: -6 },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
+  linkAction: { color: colors.primary },
+  prefRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64 },
   prefText: { flex: 1, gap: 2 },
-  prefTitle: { fontSize: 16, color: colors.ink },
-  row: { flexDirection: 'row' },
-  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 12, fontSize: 17 },
-  inviteBox: { gap: 10, borderWidth: 1, borderColor: colors.primary, borderRadius: 12, padding: 16, alignItems: 'center' },
-  code: { fontSize: 30, fontWeight: '700', letterSpacing: 3 },
-  warn: { gap: 10, backgroundColor: colors.warnBg, borderRadius: 12, padding: 16 },
+  prefTitle: { color: colors.ink },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  inviteBox: { gap: 12, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.card, padding: spacing.sm, alignItems: 'center' },
+  code: { color: colors.ink, letterSpacing: 3, textAlign: 'center' },
+  warn: { gap: 12, backgroundColor: colors.warnBg, borderRadius: radius.card, padding: spacing.sm },
   warnText: { color: colors.warnText },
-  group: { gap: 10 },
   modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  mode: { borderWidth: 1, borderColor: colors.primary, borderRadius: 16, paddingVertical: 8, paddingHorizontal: 14 },
+  mode: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
   modeOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   modeOff: { opacity: 0.5 },
-  modeText: { color: colors.primary, fontWeight: '600' },
+  modeText: { color: colors.primary },
   modeTextOn: { color: colors.white },
+  dangerRow: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
+  dangerText: { color: colors.pink },
 });
