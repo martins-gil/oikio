@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     .from('receipts')
     .select('id', { count: 'exact', head: true })
     .eq('household_id', receipt.household_id)
-    .not('image_path', 'is', null)
+    .or('image_path.not.is.null,ai_model.not.is.null') // talões com foto (por ler ou já lidos: a foto apaga-se depois da leitura)
     .gte('created_at', since);
   if ((count ?? 0) > DAILY_LIMIT) return fail('Já leste muitos talões hoje. Tenta amanhã ou regista a compra à mão.', 429);
 
@@ -132,9 +132,13 @@ Deno.serve(async (req) => {
   );
   if (linesError) return fail('Não consegui guardar as linhas do talão.');
 
+  // A foto já cumpriu o seu papel: guarda-se só o que foi lido (linhas, preços, loja, data), não a imagem
+  await supabase.storage.from('receipts').remove([receipt.image_path]);
+
   await supabase
     .from('receipts')
     .update({
+      image_path: null,
       store_name: clean.store_name,
       purchased_at: clean.purchased_at,
       total_cents: clean.total_cents,

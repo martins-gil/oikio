@@ -41,3 +41,6 @@ Quando o talão só diz a quantidade, a linha pede «cada unidade tem __ g» (ou
 e o tamanho fica guardado no produto (`product_packages`, nome «unidade»), por isso nas compras seguintes já vem certo.
 No ecrã do produto, «Unidade e tamanho» permite mudar a qualquer altura (`convert_product_unit()`: o stock, o mínimo,
 os consumos e as embalagens são convertidos pelo mesmo fator, com um movimento de ajuste registado) ou voltar a contar em unidades.
+
+## A foto não se guarda
+Depois de a IA ler o talão, a **foto é apagada** do armazenamento (`read-receipt`) e `receipts.image_path` fica vazio: guarda-se só o que foi lido (linhas, quantidades, preços, loja, data). A foto continua a ser enviada à IA para a leitura e, se a leitura falhar ou saíres sem confirmar, apaga-se também. Os talões antigos podem ter foto: apaga-as uma vez em Supabase → Storage → balde `receipts`. O limite diário de leituras conta os talões com `ai_model` preenchido.

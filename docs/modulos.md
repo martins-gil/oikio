@@ -10,8 +10,8 @@ Origem: avaliação do produto. A app crescia depressa demais para quem chega pe
 ## Regras
 - **Por pessoa:** `user_settings.modules` (RLS: cada pessoa só vê e altera as suas). Os dados da casa continuam partilhados; só muda o que cada pessoa vê.
 - **Quem já usava a app** mantém tudo ligado (a migração `20261124090000_modules.sql` liga os três a quem já existia).
-- **Sem Dinheiro, a compra não regista despesa** (para não expor gastos que a pessoa não quis acompanhar); o talão continua a repor o stock.
-- **Descoberta sem pressão (uma só vez):** depois da primeira compra, oferece o Dinheiro; com 5 ou mais produtos, oferece as Refeições. Sempre em Casa → Para ti.
+- **A despesa da compra regista-se sempre**, tenha a pessoa o módulo Dinheiro ligado ou não: se ligar mais tarde, já tem o histórico. Sem o módulo, a pessoa não vê as despesas (nem o interruptor «registar em Dinheiro» no talão). O talão repõe sempre o stock.
+- **Descoberta sem pressão (uma só vez):** depois da primeira compra, oferece o Dinheiro («as tuas despesas já estão a ser guardadas»); com 5 ou mais produtos, oferece as Refeições. Sempre em Casa → Para ti.
 - Mensagens técnicas («corre `npx supabase db push`») só aparecem em desenvolvimento (`lib/errors.ts`); quem usa a app vê um texto simples.
 
 ## Testes

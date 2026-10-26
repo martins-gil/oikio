@@ -2,16 +2,21 @@ import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { TextInput } from '@/components/Text';
+
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
 import { describeForm, formToArgs } from '@/lib/schedule';
-import { normalizeTitle, PACKS, SUGGESTIONS } from '@/lib/taskSuggestions';
+import { LEVEL_COLOR, LEVEL_LABEL, type Level } from '@/lib/stock';
+import { normalizeTitle, PACKS, SUGGESTIONS, TASK_PRODUCT_HINTS } from '@/lib/taskSuggestions';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
-type Step = 'packs' | 'review' | 'done';
+type Step = 'packs' | 'review' | 'link' | 'done';
+type Link = { on: boolean; perUse: string; pack: string; level: Level };
+const num = (t: string) => Number(t.replace(',', '.'));
 
 // Arranque por tarefas: «o que fazem em casa?» → escolhes temas → ajustas a lista → criadas. Os produtos vêm depois (opcional).
 export default function StarterScreen() {
@@ -23,6 +28,8 @@ export default function StarterScreen() {
   const [have, setHave] = useState<Set<string> | null>(null);
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState(0);
+  const [createdTitles, setCreatedTitles] = useState<string[]>([]);
+  const [links, setLinks] = useState<Record<string, Link>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,21 +60,132 @@ export default function StarterScreen() {
     setSaving(true);
     setError(null);
     let ok = 0;
+    const okTitles: string[] = [];
     for (const s of chosen) {
       const { error: err } = await supabase.rpc('save_task', formToArgs(household.id, s.form));
-      if (!err) ok += 1;
+      if (!err) {
+        ok += 1;
+        okTitles.push(s.form.title);
+      }
     }
     await supabase.rpc('ensure_today_occurrences', { p_household: household.id });
     setSaving(false);
     setCreated(ok);
+    setCreatedTitles(okTitles);
     if (ok < chosen.length) setError(`${chosen.length - ok} tarefa(s) não foram criadas. As outras foram.`);
-    setStep('done');
+    // Tarefas que costumam gastar um produto (detergente, pastilhas…): oferece ligá-las já
+    const rows = okTitles.flatMap((t) => (TASK_PRODUCT_HINTS[t] ?? []).map((h) => ({ t, h })));
+    setLinks(Object.fromEntries(rows.map(({ t, h }) => [`${t}|${h.product}`, { on: true, perUse: String(h.perUse), pack: String(h.pack), level: 'full' as Level }])));
+    setStep(rows.length > 0 ? 'link' : 'done');
   };
 
   if (!household || have === null) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  // Liga cada tarefa ao produto que gasta: cria o produto se ainda não existe (com a embalagem e o nível que indicaste)
+  const hintRows = createdTitles.flatMap((t) => (TASK_PRODUCT_HINTS[t] ?? []).map((h) => ({ t, h, key: `${t}|${h.product}` })));
+  const patchLink = (key: string, patch: Partial<Link>) => setLinks((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+
+  const applyLinks = async () => {
+    if (!household || saving) return;
+    setSaving(true);
+    setError(null);
+    let failed = 0;
+    const { data: prods } = await supabase.from('products').select('id, name').eq('household_id', household.id).is('deleted_at', null);
+    const byName = new Map((prods ?? []).map((p: { id: string; name: string }) => [normalizeTitle(p.name), p.id]));
+    for (const { t, h, key } of hintRows) {
+      const l = links[key];
+      const perUse = num(l?.perUse ?? '');
+      const pack = num(l?.pack ?? '');
+      if (!l?.on || !(perUse > 0) || !(pack > 0)) continue;
+      try {
+        const { data: task } = await supabase.from('tasks').select('id').eq('household_id', household.id).eq('title', t).eq('scope', 'home').is('deleted_at', null).limit(1).maybeSingle();
+        if (!task) throw new Error('sem tarefa');
+        let productId = byName.get(normalizeTitle(h.product));
+        if (!productId) {
+          const { data: created, error: e1 } = await supabase
+            .from('products')
+            .insert({ household_id: household.id, name: h.product, base_unit: h.unit, tracking_mode: 'level', full_quantity: pack, min_stock: Math.round(pack * 0.25 * 100) / 100, location: 'cleaning' })
+            .select('id')
+            .single();
+          if (e1 || !created) throw new Error('sem produto');
+          productId = created.id as string;
+          byName.set(normalizeTitle(h.product), productId);
+          await supabase.rpc('set_stock_level', { p_product: productId, p_level: l.level });
+        }
+        await supabase.from('product_packages').upsert({ product_id: productId, name: 'embalagem', units_per_package: pack }, { onConflict: 'product_id,name' });
+        const { data: current } = await supabase.from('task_consumptions').select('product_id, quantity').eq('task_id', task.id);
+        const items = [...(current ?? []).filter((c: { product_id: string }) => c.product_id !== productId).map((c: { product_id: string; quantity: number }) => ({ product_id: c.product_id, quantity: Number(c.quantity) })), { product_id: productId, quantity: perUse }];
+        const { error: e2 } = await supabase.rpc('set_task_products', { p_task: task.id, p_items: items });
+        if (e2) throw new Error('sem ligação');
+      } catch {
+        failed += 1;
+      }
+    }
+    setSaving(false);
+    if (failed > 0) setError(`${failed} ligação(ões) não ficaram feitas. Podes ligá-las abrindo a tarefa, em «Gasta produtos».`);
+    setStep('done');
+  };
+
+  if (step === 'link') {
+    return (
+      <View style={styles.flex}>
+        <Stack.Screen options={{ title: 'Produtos das tarefas' }} />
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <Text style={styles.title}>Ligar produtos às tarefas</Text>
+          <Text style={styles.hint}>
+            Quando marcares estas tarefas como feitas, o produto desce sozinho e, a acabar, vai para as compras. Os valores são só uma estimativa: ajusta-os ao que usas. É opcional.
+          </Text>
+          {hintRows.map(({ t, h, key }) => {
+            const l = links[key];
+            if (!l) return null;
+            return (
+              <View key={key} style={[styles.linkCard, l.on && styles.rowOn]}>
+                <Pressable style={styles.linkHead} onPress={() => patchLink(key, { on: !l.on })}>
+                  <Text style={styles.check}>{l.on ? '☑' : '☐'}</Text>
+                  <View style={styles.flex}>
+                    <Text style={styles.rowTitle}>
+                      {h.emoji} {t}
+                    </Text>
+                    <Text style={styles.small}>gasta {h.product}</Text>
+                  </View>
+                </Pressable>
+                {l.on && (
+                  <View style={styles.linkBody}>
+                    <View style={styles.linkField}>
+                      <Text style={styles.small}>Gasta por vez</Text>
+                      <TextInput style={styles.linkInput} value={l.perUse} onChangeText={(v) => patchLink(key, { perUse: v })} keyboardType="decimal-pad" />
+                      <Text style={styles.small}>{h.unit === 'dose' ? 'doses' : 'un'}</Text>
+                    </View>
+                    <View style={styles.linkField}>
+                      <Text style={styles.small}>Uma embalagem tem</Text>
+                      <TextInput style={styles.linkInput} value={l.pack} onChangeText={(v) => patchLink(key, { pack: v })} keyboardType="decimal-pad" />
+                      <Text style={styles.small}>{h.unit === 'dose' ? 'doses' : 'un'}</Text>
+                    </View>
+                    <Text style={styles.small}>Quanto resta agora? (se o produto ainda não existir)</Text>
+                    <View style={styles.levels}>
+                      {(['full', 'half', 'low'] as Level[]).map((lv) => (
+                        <Pressable key={lv} style={[styles.levelChip, { borderColor: LEVEL_COLOR[lv] }, l.level === lv && { backgroundColor: LEVEL_COLOR[lv] }]} onPress={() => patchLink(key, { level: lv })}>
+                          <Text style={{ color: l.level === lv ? '#fff' : LEVEL_COLOR[lv], fontSize: 13 }}>{LEVEL_LABEL[lv]}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+          {error && <Text style={styles.error}>{error}</Text>}
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button title={saving ? 'A ligar…' : 'Ligar'} disabled={saving} onPress={applyLinks} />
+          <Button title="Agora não" variant="secondary" disabled={saving} onPress={() => setStep('done')} />
+        </View>
       </View>
     );
   }
@@ -166,5 +284,12 @@ const styles = StyleSheet.create({
   tipTitle: { fontSize: 16, color: colors.ink },
   tipText: { fontSize: 14, color: colors.muted },
   error: { color: colors.pink, textAlign: 'center' },
+  linkCard: { gap: 8, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  linkHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  linkBody: { gap: 8, paddingLeft: 40 },
+  linkField: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  linkInput: { minWidth: 64, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: '#fff', paddingVertical: 6, paddingHorizontal: 8, textAlign: 'center', fontSize: 15, color: colors.ink },
+  levels: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  levelChip: { borderWidth: 2, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
   footer: { gap: 8, padding: 16, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: '#fff' },
 });

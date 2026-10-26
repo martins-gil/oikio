@@ -78,7 +78,7 @@ export default function ReceiptScreen() {
   const { household } = useHousehold();
   const me = session?.user.id;
   const { has: hasModule, setModule } = useModules();
-  const money = hasModule('money'); // sem o módulo Dinheiro, a compra não regista despesa
+  const money = hasModule('money'); // a despesa regista-se sempre; o módulo Dinheiro só decide se a pessoa a vê
 
   const today = localDate();
   const [store, setStore] = useState('');
@@ -124,9 +124,10 @@ export default function ReceiptScreen() {
     const key = keyRef.current++;
     const unit = productOf(productId)?.base_unit;
     const needsAmount = unit === 'g' || unit === 'ml';
+    const pack = productId ? packs.find((k) => k.product_id === productId && k.name === 'embalagem') : undefined; // «1 embalagem» = N doses
     setLines((prev) => [
       ...prev,
-      { key, raw: clean, text: clean, productId, packageId: null, qtyText: needsAmount ? '' : '1', price: '', check: needsAmount, ai: null, location: null, count: null, sizeText: '', addNew: !productId, newUnit: 'un' },
+      { key, raw: clean, text: clean, productId, packageId: pack?.id ?? null, qtyText: needsAmount ? '' : '1', price: '', check: needsAmount, ai: null, location: null, count: null, sizeText: '', addNew: !productId, newUnit: 'un' },
     ]);
     setEntry('');
   };
@@ -240,6 +241,9 @@ export default function ReceiptScreen() {
           addNew: !product,
           newUnit,
         };
+        // Produto com «embalagem» definida (N doses por embalagem): a compra conta-se em embalagens
+        const emb = product && base !== 'g' && base !== 'ml' ? packList.find((k) => k.product_id === product.id && k.name === 'embalagem') : undefined;
+        if (emb) return { ...line, packageId: emb.id, qtyText: toText(Number(d.quantity)), check: false };
         if (noSize) return withSize(line, list);
         const conv = toBaseQuantity(ai, base);
         return { ...line, qtyText: toText(conv.qty), check: product ? conv.check : false };
@@ -357,7 +361,7 @@ export default function ReceiptScreen() {
       rid = receipt.id as string;
     }
     const { error: e2 } = await supabase.from('receipt_lines').insert(rows.map((r) => ({ receipt_id: rid, ...r })));
-    const { error: e3 } = e2 ? { error: e2 } : await supabase.rpc('confirm_receipt', { p_receipt: rid, p_register_expense: money && registerExpense });
+    const { error: e3 } = e2 ? { error: e2 } : await supabase.rpc('confirm_receipt', { p_receipt: rid, p_register_expense: registerExpense });
     if (e3) {
       if (!receiptId) await supabase.from('receipts').delete().eq('id', rid); // não deixa um talão manual a meio
       setSaving(false);
@@ -365,7 +369,7 @@ export default function ReceiptScreen() {
       return;
     }
     setSaving(false);
-    const expenseNote = money && registerExpense && total > 0 ? ` Despesa de ${formatEuros(total)} registada em Dinheiro.` : '';
+    const expenseNote = registerExpense && total > 0 ? ` Despesa de ${formatEuros(total)} guardada${money ? ' em Dinheiro' : ' (verás em Dinheiro, se ligares esse módulo)'}.` : '';
     // Primeira compra sem o módulo Dinheiro: oferece-o uma só vez
     const offerKey = 'nestkeep.offer.money';
     const alreadyOffered = await AsyncStorage.getItem(offerKey).catch(() => '1');
@@ -373,7 +377,7 @@ export default function ReceiptScreen() {
     if (offer) AsyncStorage.setItem(offerKey, '1').catch(() => {});
     Alert.alert(
       'Compra registada ✅',
-      `Stock atualizado em ${stockLines} ${stockLines === 1 ? 'produto' : 'produtos'}.${expenseNote}${offer ? '\n\nQueres acompanhar o que gastas? Podes ligar o módulo Dinheiro (também em Casa → Módulos).' : ''}`,
+      `Stock atualizado em ${stockLines} ${stockLines === 1 ? 'produto' : 'produtos'}.${expenseNote}${offer ? '\n\nAs tuas despesas já estão a ser guardadas. Queres vê-las e acompanhar o orçamento? Liga o módulo Dinheiro (também em Casa → Para ti).' : ''}`,
       offer
         ? [
             { text: 'Agora não', style: 'cancel', onPress: () => router.back() },

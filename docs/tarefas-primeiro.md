@@ -15,3 +15,8 @@ Origem: avaliação do produto. A gestão da casa (tarefas) é o centro; os prod
 ## Barra da semana e previsão (adicionado ao passo 2)
 - O ecrã «Hoje» abre sempre **em hoje**. A barra da semana, logo por baixo da saudação, deixa tocar noutro dia desta semana: dias passados mostram o que ficou por fazer e o que foi feito; dias futuros mostram as tarefas já marcadas e as **previstas** (um número por baixo do dia). «Voltar a hoje» regressa.
 - A geração cria cada ocorrência só no próprio dia, por isso a previsão vem de `week_forecast(casa, de, até)`, que simula as mesmas regras (calendário, X por período, de N em N dias) **sem criar nada**. São previsões: o dia real pode mudar conforme se fazem as anteriores. Tarefas pessoais e «quando for preciso» não entram. Teste: `supabase/tests/week_forecast.sql`.
+
+## Doses e embalagens (adicionado ao passo 1)
+- **Por vez:** em «Gasta produtos» a quantidade escreve-se (ex.: 35 ml, 0,5 dose) ou ajusta-se com − e +.
+- **Embalagem:** na ficha do produto, «Mais» → «Embalagem»: quantas doses (ou unidades) tem uma embalagem. É opcional (pode não vir no talão). Fica em `product_packages` («embalagem»): nos produtos **por nível** é o que vale «Cheio» (`full_quantity`, mantém o nível atual) e, nas compras, «1 embalagem» entra como N doses (a linha do talão vem já em embalagens).
+- **Arranque por tarefas:** acrescentámos «Pôr a máquina da loiça» e, depois de criar as tarefas, um passo opcional «Ligar produtos às tarefas» (roupa → detergente e amaciador, máquina → pastilhas, loiça → detergente), com «gasta por vez», «uma embalagem tem» e «quanto resta»: cria o produto se ainda não existir e liga-o à tarefa. Os valores são estimativas editáveis.

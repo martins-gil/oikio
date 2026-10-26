@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 import { useHousehold } from '@/lib/household';
-import { formatAmount } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors, radius } from '@/lib/theme';
 
@@ -21,6 +20,7 @@ export function TaskProducts({ items, onChange }: { items: TaskProduct[]; onChan
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({}); // o que a pessoa está a escrever em cada quantidade
 
   useEffect(() => {
     if (!household) return;
@@ -54,7 +54,10 @@ export function TaskProducts({ items, onChange }: { items: TaskProduct[]; onChan
     add({ product_id: data.id as string, name: data.name as string, base_unit: data.base_unit as string });
   };
 
-  const setQty = (id: string, quantity: number) => onChange(items.map((i) => (i.product_id === id ? { ...i, quantity: Math.max(stepOf(i.unit) / 2, round2(quantity)) } : i)));
+  const setQty = (id: string, quantity: number) => {
+    setDrafts((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== id)));
+    onChange(items.map((i) => (i.product_id === id ? { ...i, quantity: Math.max(stepOf(i.unit) / 2, round2(quantity)) } : i)));
+  };
 
   return (
     <View style={styles.wrap}>
@@ -66,7 +69,18 @@ export function TaskProducts({ items, onChange }: { items: TaskProduct[]; onChan
           <Pressable style={styles.step} hitSlop={6} onPress={() => setQty(i.product_id, i.quantity - stepOf(i.unit))}>
             <Text style={styles.stepText}>−</Text>
           </Pressable>
-          <Text style={styles.qty}>{formatAmount(i.quantity, i.unit)}</Text>
+          <TextInput
+            style={styles.qtyInput}
+            value={drafts[i.product_id] ?? String(i.quantity).replace('.', ',')}
+            keyboardType="decimal-pad"
+            onChangeText={(t) => {
+              setDrafts((d) => ({ ...d, [i.product_id]: t }));
+              const n = Number(t.replace(',', '.'));
+              if (Number.isFinite(n) && n > 0 && n <= 100000) onChange(items.map((x) => (x.product_id === i.product_id ? { ...x, quantity: Math.round(n * 100) / 100 } : x)));
+            }}
+            onBlur={() => setDrafts((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== i.product_id)))}
+          />
+          <Text style={styles.unit}>{i.unit}</Text>
           <Pressable style={styles.step} hitSlop={6} onPress={() => setQty(i.product_id, i.quantity + stepOf(i.unit))}>
             <Text style={styles.stepText}>＋</Text>
           </Pressable>
@@ -111,7 +125,8 @@ const styles = StyleSheet.create({
   name: { flex: 1, fontSize: 15, color: colors.ink },
   step: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   stepText: { color: '#fff', fontSize: 18, lineHeight: 22 },
-  qty: { minWidth: 62, textAlign: 'center', fontSize: 15, color: colors.ink },
+  qtyInput: { minWidth: 56, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: '#fff', paddingVertical: 4, paddingHorizontal: 6, textAlign: 'center', fontSize: 15, color: colors.ink },
+  unit: { fontSize: 13, color: colors.muted, minWidth: 28 },
   remove: { fontSize: 16, color: colors.faint, paddingLeft: 4 },
   panel: { gap: 6, padding: 10, borderRadius: radius.button, backgroundColor: '#F4F3FF' },
   input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 10, fontSize: 16, color: colors.ink },

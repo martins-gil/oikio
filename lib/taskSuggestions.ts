@@ -32,6 +32,7 @@ export const SUGGESTIONS: Suggestion[] = [
   weekly('Todas as semanas', 'Limpar a casa de banho', 1, 3),
   weekly('Todas as semanas', 'Limpar a cozinha a fundo', 1, 2),
   weekly('Todas as semanas', 'Lavar roupa', 2, 2),
+  weekly('Todas as semanas', 'Pôr a máquina da loiça', 4, 1),
   weekly('Todas as semanas', 'Passar a ferro', 1, 2),
   weekly('Todas as semanas', 'Mudar as toalhas', 1, 1),
   weekly('Todas as semanas', 'Regar as plantas', 2, 1),
@@ -68,7 +69,7 @@ export const PACKS: Pack[] = [
     title: 'Rotina básica',
     detail: 'Loiça, lixo, aspirar, chão e casa de banho',
     preselected: true,
-    titles: ['Lavar a loiça', 'Despejar o lixo', 'Aspirar', 'Lavar o chão', 'Limpar a casa de banho', 'Fazer a lista de compras'],
+    titles: ['Lavar a loiça', 'Pôr a máquina da loiça', 'Despejar o lixo', 'Aspirar', 'Lavar o chão', 'Limpar a casa de banho', 'Fazer a lista de compras'],
   },
   { key: 'laundry', emoji: '🧺', title: 'Roupa', detail: 'Lavar, passar a ferro, toalhas e lençóis', titles: ['Lavar roupa', 'Passar a ferro', 'Mudar as toalhas', 'Mudar os lençóis'] },
   { key: 'cleaning', emoji: '🧽', title: 'Limpeza regular', detail: 'Pó, cozinha, frigorífico, forno e micro-ondas', titles: ['Limpar o pó', 'Limpar a cozinha a fundo', 'Limpar o frigorífico', 'Limpar o forno', 'Limpar o micro-ondas'] },
@@ -76,3 +77,15 @@ export const PACKS: Pack[] = [
   { key: 'green', emoji: '🌿', title: 'Plantas e reciclagem', detail: 'Regar as plantas e despejar a reciclagem', titles: ['Regar as plantas', 'Despejar a reciclagem'] },
   { key: 'yearly', emoji: '🔧', title: 'Manutenção da casa', detail: 'Caldeira, detetores de fumo e filtros', titles: ['Revisão da caldeira ou do esquentador', 'Verificar detetores de fumo e extintor', 'Limpar o filtro do exaustor', 'Limpar ralos e sifões'] },
 ];
+
+// Produtos que costumam gastar-se em certas tarefas (para ligar logo no arranque). Os valores são estimativas, a pessoa ajusta-os.
+// perUse = quanto se gasta de cada vez; pack = quantas doses (ou unidades) tem uma embalagem cheia.
+export type TaskProductHint = { product: string; unit: 'dose' | 'un'; perUse: number; pack: number; emoji: string };
+export const TASK_PRODUCT_HINTS: Record<string, TaskProductHint[]> = {
+  'Lavar roupa': [
+    { product: 'Detergente da roupa', unit: 'dose', perUse: 1, pack: 40, emoji: '🧺' },
+    { product: 'Amaciador', unit: 'dose', perUse: 1, pack: 40, emoji: '🧴' },
+  ],
+  'Pôr a máquina da loiça': [{ product: 'Pastilhas da loiça', unit: 'un', perUse: 1, pack: 40, emoji: '🍽️' }],
+  'Lavar a loiça': [{ product: 'Detergente da loiça', unit: 'dose', perUse: 1, pack: 100, emoji: '🧴' }],
+};

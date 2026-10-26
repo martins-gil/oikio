@@ -39,6 +39,8 @@ export default function ProductScreen() {
   const [sizeUnit, setSizeUnit] = useState<'g' | 'ml'>('g');
   const { showExpiry } = useShowExpiry();
   const router = useRouter();
+  const [packText, setPackText] = useState(''); // quantas doses (ou unidades) tem uma embalagem
+  const [packSaved, setPackSaved] = useState<number | null>(null);
   const [more, setMore] = useState(false); // «Mais»: mínimo, unidade e tamanho, local, essencial, deitei fora
   const [usedIn, setUsedIn] = useState<{ task_id: string; title: string; quantity: number }[]>([]); // tarefas que gastam este produto
   const [busy, setBusy] = useState(false);
@@ -49,7 +51,7 @@ export default function ProductScreen() {
     const [stock, list, ess, size] = await Promise.all([
       supabase.from('v_stock').select(STOCK_COLUMNS).eq('product_id', id).maybeSingle(),
       supabase.from('shopping_list_items').select('id').eq('product_id', id).is('checked_at', null).maybeSingle(),
-      supabase.from('products').select('is_essential').eq('id', id).maybeSingle(),
+      supabase.from('products').select('is_essential, full_quantity').eq('id', id).maybeSingle(),
       supabase.from('product_packages').select('units_per_package').eq('product_id', id).eq('name', 'unidade').maybeSingle(),
     ]);
     const used = await supabase.from('task_consumptions').select('task_id, quantity, tasks!inner(title, deleted_at)').eq('product_id', id);
@@ -63,6 +65,10 @@ export default function ProductScreen() {
     setUnitSize(sz);
     setSizeText(sz ? String(sz).replace('.', ',') : '');
     setEssential(!!ess.data?.is_essential);
+    const emb = await supabase.from('product_packages').select('units_per_package').eq('product_id', id).eq('name', 'embalagem').maybeSingle();
+    const embN = emb.data ? Number(emb.data.units_per_package) : ess.data?.full_quantity ? Number(ess.data.full_quantity) : null;
+    setPackSaved(embN);
+    setPackText(embN ? String(embN).replace('.', ',') : '');
     if (ess.error) setToast(saveErrorText(ess.error.message));
     const p = (stock.data ?? null) as StockRow | null;
     setProduct(p);
@@ -139,6 +145,24 @@ export default function ProductScreen() {
     load();
   };
   // Tamanho de cada unidade (ex.: 200 g): serve para as compras seguintes e para as receitas
+  const parsedPack = Number(packText.replace(',', '.'));
+  const packOk = Number.isFinite(parsedPack) && parsedPack > 0 && parsedPack <= 100000;
+  // «Quantas doses tem uma embalagem?»: serve às compras («1 embalagem» = N doses) e, nos produtos por nível, é o que vale «Cheio»
+  const savePack = async () => {
+    if (!packOk || busy || !product) return;
+    setBusy(true);
+    const { error: e1 } = await supabase.from('product_packages').upsert({ product_id: id, name: 'embalagem', units_per_package: parsedPack }, { onConflict: 'product_id,name' });
+    let failed = !!e1;
+    if (!failed && product.tracking_mode === 'level') {
+      const { error: e2 } = await supabase.from('products').update({ full_quantity: parsedPack, min_stock: Math.round(parsedPack * 0.25 * 100) / 100 }).eq('id', id);
+      failed = !!e2;
+      // mantém o nível em que estava (Cheio, Meio…) com a nova medida
+      if (!failed && product.level && product.level !== 'empty') await supabase.rpc('set_stock_level', { p_product: id, p_level: product.level });
+    }
+    setToast(failed ? 'Não foi possível guardar.' : `Guardado: ${String(parsedPack).replace('.', ',')} ${unitName(product.base_unit)} por embalagem`);
+    await load();
+    setBusy(false);
+  };
   const parsedSize = Number(sizeText.replace(',', '.'));
   const sizeOk = Number.isFinite(parsedSize) && parsedSize > 0;
   const saveSize = () =>
@@ -200,6 +224,7 @@ export default function ProductScreen() {
   }
 
   const isLevel = product.tracking_mode === 'level';
+  const unitName = (u: string) => (u === 'dose' ? 'doses' : u === 'rolo' ? 'rolos' : u === 'un' ? 'unidades' : u);
 
   return (
     <View style={styles.flex}>
@@ -303,6 +328,23 @@ export default function ProductScreen() {
                 </View>
               </>
             )}
+        {product.base_unit !== 'g' && product.base_unit !== 'ml' && (
+          <View style={styles.sizeBox}>
+            <Text style={styles.label}>Embalagem</Text>
+            <Text style={styles.essentialHint}>
+              Quantas {unitName(product.base_unit)} tem uma embalagem? É opcional (pode não vir no talão), mas ajuda a controlar o gasto:{' '}
+              {isLevel ? 'é o que vale «Cheio», e cada tarefa gasta uma parte.' : 'ao registares «1 embalagem» numa compra, entram todas de uma vez.'}
+            </Text>
+            <View style={styles.sizeRow}>
+              <TextInput style={styles.sizeInput} value={packText} onChangeText={setPackText} placeholder="40" keyboardType="decimal-pad" />
+              <Text style={styles.placeText}>{unitName(product.base_unit)}</Text>
+              <View style={styles.flex}>
+                <Button title="Guardar" variant="secondary" disabled={!packOk || busy || parsedPack === packSaved} onPress={savePack} />
+              </View>
+            </View>
+          </View>
+        )}
+
         <Text style={styles.label}>Unidade e tamanho</Text>
         {product.base_unit === 'un' ? (
           <View style={styles.sizeBox}>
