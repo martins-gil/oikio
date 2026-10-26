@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { Text, TextInput } from '@/components/Text';
+import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
@@ -34,10 +35,9 @@ export default function CreateHouseScreen() {
   };
 
   return (
-    <View style={styles.center}>
-      <Text style={styles.title}>Como se chama a vossa casa?</Text>
-      <TextInput
-        style={styles.input}
+    <AuthScreen logo title="Como se chama a vossa casa?" subtitle="Podem mudar mais tarde. É só para vos reconhecerem na app.">
+      <Field
+        label="Nome da casa"
         value={name}
         onChangeText={setName}
         placeholder="Ex.: Casa da Rua Verde"
@@ -45,34 +45,19 @@ export default function CreateHouseScreen() {
         returnKeyType="done"
         onSubmitEditing={createHousehold}
       />
+      {error && <ErrorText>{error}</ErrorText>}
       <Button
         title={saving ? 'A criar…' : 'Criar casa'}
         disabled={!name.trim() || saving}
         onPress={createHousehold}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
-      <View style={styles.or}>
-        <Text style={styles.orText}>ou</Text>
-      </View>
+      <Text variant="label" style={styles.orText}>ou</Text>
       <Button title="Tenho um convite" variant="secondary" onPress={() => router.push('/join')} />
       {!household && <Button title="Já tenho conta" variant="secondary" onPress={() => router.push('/sign-in')} />}
-    </View>
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 },
-  title: { fontSize: 22, fontWeight: '600', textAlign: 'center' },
-  input: {
-    alignSelf: 'stretch',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    backgroundColor: colors.white,
-    padding: 12,
-    fontSize: 16,
-  },
-  error: { color: colors.pink, textAlign: 'center' },
-  or: { alignItems: 'center' },
-  orText: { color: colors.muted },
+  orText: { color: colors.muted, textAlign: 'center' },
 });

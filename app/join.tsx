@@ -1,14 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 
-import { Text, TextInput } from '@/components/Text';
+import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { colors, radius } from '@/lib/theme';
 
 // Mensagens da base de dados → texto para quem usa a app
 function friendly(message: string): string {
@@ -54,41 +53,31 @@ export default function JoinScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Entrar numa casa</Text>
-        <Text style={styles.label}>Código do convite</Text>
-        <TextInput
-          style={[styles.input, styles.code]}
-          value={code}
-          onChangeText={setCode}
-          placeholder="K7M2-XQ9P-4T"
-          autoCapitalize="characters"
-          autoCorrect={false}
-          autoFocus={!params.code}
-        />
-        <Text style={styles.label}>O teu nome</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Como te chamas?"
-          returnKeyType="done"
-          onSubmitEditing={join}
-        />
-        {error && <Text style={styles.error}>{error}</Text>}
-        <Button title={saving ? 'A entrar…' : 'Entrar'} disabled={!ready || saving} onPress={join} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <AuthScreen title="Entrar numa casa" subtitle="Escreve o código que recebeste de quem te convidou.">
+      <Field
+        label="Código do convite"
+        style={styles.code}
+        value={code}
+        onChangeText={setCode}
+        placeholder="K7M2-XQ9P-4T"
+        autoCapitalize="characters"
+        autoCorrect={false}
+        autoFocus={!params.code}
+      />
+      <Field
+        label="O teu nome"
+        value={name}
+        onChangeText={setName}
+        placeholder="Como te chamas?"
+        returnKeyType="done"
+        onSubmitEditing={join}
+      />
+      {error && <ErrorText>{error}</ErrorText>}
+      <Button title={saving ? 'A entrar…' : 'Entrar'} disabled={!ready || saving} onPress={join} />
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  container: { padding: 24, gap: 12, flexGrow: 1, justifyContent: 'center' },
-  title: { fontSize: 22, fontWeight: '600', textAlign: 'center', marginBottom: 8 },
-  label: { fontSize: 14, color: colors.muted, textTransform: 'uppercase' },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 14, fontSize: 17 },
-  code: { fontSize: 22, letterSpacing: 2, textAlign: 'center' },
-  error: { color: colors.pink, textAlign: 'center' },
+  code: { letterSpacing: 2, textAlign: 'center' },
 });

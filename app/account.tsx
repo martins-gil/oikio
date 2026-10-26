@@ -1,13 +1,14 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { Text, TextInput } from '@/components/Text';
+import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { colors, radius } from '@/lib/theme';
+import { colors } from '@/lib/theme';
 
 type Stage = 'email' | 'waiting' | 'password' | 'done';
 
@@ -68,87 +69,78 @@ export default function AccountScreen() {
     setStage('done');
   };
 
+  const heading =
+    stage === 'email' ? 'Proteger a minha conta' : stage === 'waiting' ? 'Confirma o teu e-mail' : stage === 'password' ? 'Escolhe uma palavra-passe' : 'Conta guardada ✅';
+
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        {stage === 'email' && (
-          <>
-            <Text style={styles.title}>Proteger a minha conta</Text>
-            <Text style={styles.hint}>
-              Sem isto, se perderes ou mudares de telemóvel, perdes a casa. Com e-mail e palavra-passe, entras em
-              qualquer telemóvel e ela lá está.
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="O teu e-mail"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              returnKeyType="done"
-              onSubmitEditing={sendEmail}
-            />
-            <Button title={busy ? 'A enviar…' : 'Enviar e-mail de confirmação'} disabled={!email.includes('@') || busy} onPress={sendEmail} />
-          </>
-        )}
+    <AuthScreen title={heading}>
+      {stage === 'email' && (
+        <>
+          <Text variant="body" style={styles.hint}>
+            Sem isto, se perderes ou mudares de telemóvel, perdes a casa. Com e-mail e palavra-passe, entras em
+            qualquer telemóvel e ela lá está.
+          </Text>
+          <Field
+            label="O teu e-mail"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="nome@exemplo.pt"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            returnKeyType="done"
+            onSubmitEditing={sendEmail}
+          />
+          <Button title={busy ? 'A enviar…' : 'Enviar e-mail de confirmação'} disabled={!email.includes('@') || busy} onPress={sendEmail} />
+        </>
+      )}
 
-        {stage === 'waiting' && (
-          <>
-            <Text style={styles.title}>Confirma o teu e-mail</Text>
-            <Text style={styles.hint}>
-              Enviámos uma mensagem para {email}. Abre-a e toca na ligação. Se a página que abrir mostrar um erro,
-              não faz mal: volta aqui e toca no botão.
-            </Text>
-            <Button title={busy ? 'A verificar…' : 'Já confirmei'} disabled={busy} onPress={confirmed} />
-            <Button title="Usar outro e-mail" variant="secondary" onPress={() => setStage('email')} />
-          </>
-        )}
+      {stage === 'waiting' && (
+        <>
+          <Text variant="body" style={styles.hint}>
+            Enviámos uma mensagem para {email}. Abre-a e toca na ligação. Se a página que abrir mostrar um erro,
+            não faz mal: volta aqui e toca no botão.
+          </Text>
+          <Button title={busy ? 'A verificar…' : 'Já confirmei'} disabled={busy} onPress={confirmed} />
+          <Button title="Usar outro e-mail" variant="secondary" onPress={() => setStage('email')} />
+        </>
+      )}
 
-        {stage === 'password' && (
-          <>
-            <Text style={styles.title}>Escolhe uma palavra-passe</Text>
-            <Text style={styles.hint}>
-              {user?.email ? `Conta: ${user.email}. ` : ''}Mínimo 8 caracteres. Vais precisar dela para entrar noutro
-              telemóvel.
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Palavra-passe"
-              secureTextEntry
-              autoCapitalize="none"
-              autoComplete="new-password"
-              returnKeyType="done"
-              onSubmitEditing={savePassword}
-            />
-            <Button title={busy ? 'A guardar…' : 'Guardar'} disabled={password.length < 8 || busy} onPress={savePassword} />
-          </>
-        )}
+      {stage === 'password' && (
+        <>
+          <Text variant="body" style={styles.hint}>
+            {user?.email ? `Conta: ${user.email}. ` : ''}Mínimo 8 caracteres. Vais precisar dela para entrar noutro
+            telemóvel.
+          </Text>
+          <Field
+            label="Palavra-passe"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoComplete="new-password"
+            returnKeyType="done"
+            onSubmitEditing={savePassword}
+          />
+          <Button title={busy ? 'A guardar…' : 'Guardar'} disabled={password.length < 8 || busy} onPress={savePassword} />
+        </>
+      )}
 
-        {stage === 'done' && (
-          <>
-            <Text style={styles.title}>Conta guardada ✅</Text>
-            <Text style={styles.hint}>
-              Quando mudares de telemóvel, abre a app e escolhe "Já tenho conta".
-            </Text>
-            <Button title="Concluir" onPress={() => router.back()} />
-          </>
-        )}
+      {stage === 'done' && (
+        <>
+          <Text variant="body" style={styles.hint}>
+            Quando mudares de telemóvel, abre a app e escolhe "Já tenho conta".
+          </Text>
+          <Button title="Concluir" onPress={() => router.back()} />
+        </>
+      )}
 
-        {message && <Text style={styles.error}>{message}</Text>}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      {message && <ErrorText>{message}</ErrorText>}
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  container: { padding: 24, gap: 14, flexGrow: 1, justifyContent: 'center' },
-  title: { fontSize: 22, fontWeight: '600', textAlign: 'center' },
-  hint: { color: colors.muted, textAlign: 'center', lineHeight: 22 },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 14, fontSize: 17 },
-  error: { color: colors.pink, textAlign: 'center' },
+  hint: { color: colors.muted, textAlign: 'center' },
 });

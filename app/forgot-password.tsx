@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { Text, TextInput } from '@/components/Text';
+import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { RESET_REDIRECT } from '@/lib/authLink';
 import { supabase } from '@/lib/supabase';
-import { colors, radius } from '@/lib/theme';
+import { colors } from '@/lib/theme';
 
 // Esqueci a palavra-passe: pede o e-mail e recebe uma ligação. Ao tocar nela (neste telemóvel) a app abre
 // no ecrã "Nova palavra-passe". Não revela se o e-mail existe (o Supabase responde sempre o mesmo).
@@ -35,47 +36,38 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Esqueci a palavra-passe</Text>
-        {sent ? (
-          <>
-            <Text style={styles.hint}>
-              Se existir uma conta com {email.trim()}, enviámos um e-mail (vê também o spam).{'\n\n'}
-              Abre-o <Text style={styles.bold}>neste telemóvel</Text> e toca em «Reset password». A app abre e podes escolher a nova palavra-passe.
-            </Text>
-            <Button title={busy ? 'A enviar…' : 'Enviar outra vez'} variant="secondary" disabled={busy} onPress={send} />
-          </>
-        ) : (
-          <>
-            <Text style={styles.hint}>Escreve o e-mail da tua conta. Enviamos-te uma ligação para escolheres uma nova palavra-passe.</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="E-mail"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              returnKeyType="done"
-              onSubmitEditing={send}
-            />
-            <Button title={busy ? 'A enviar…' : 'Enviar ligação'} disabled={!email.includes('@') || busy} onPress={send} />
-          </>
-        )}
-        {message && <Text style={styles.error}>{message}</Text>}
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <AuthScreen title="Esqueci a palavra-passe">
+      {sent ? (
+        <>
+          <Text variant="body" style={styles.hint}>
+            Se existir uma conta com {email.trim()}, enviámos um e-mail (vê também o spam).{'\n\n'}
+            Abre-o neste telemóvel e toca em «Reset password». A app abre e podes escolher a nova palavra-passe.
+          </Text>
+          <Button title={busy ? 'A enviar…' : 'Enviar outra vez'} variant="secondary" disabled={busy} onPress={send} />
+        </>
+      ) : (
+        <>
+          <Text variant="body" style={styles.hint}>Escreve o e-mail da tua conta. Enviamos-te uma ligação para escolheres uma nova palavra-passe.</Text>
+          <Field
+            label="E-mail"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="nome@exemplo.pt"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            returnKeyType="done"
+            onSubmitEditing={send}
+          />
+          <Button title={busy ? 'A enviar…' : 'Enviar ligação'} disabled={!email.includes('@') || busy} onPress={send} />
+        </>
+      )}
+      {message && <ErrorText>{message}</ErrorText>}
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  container: { padding: 24, gap: 12, flexGrow: 1, justifyContent: 'center' },
-  title: { fontSize: 22, textAlign: 'center', color: colors.ink },
-  hint: { color: colors.muted, textAlign: 'center', marginBottom: 8 },
-  bold: { color: colors.ink },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 14, fontSize: 17 },
-  error: { color: colors.pink, textAlign: 'center' },
+  hint: { color: colors.muted, textAlign: 'center' },
 });

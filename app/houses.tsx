@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { ROLE_LABEL, useHousehold } from '@/lib/household';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, radius, spacing } from '@/lib/theme';
 
 // Menu «Em que casa estás?»: cartão centrado, como um ecrã de entrada. Aparece ao abrir a app a quem tem várias casas
 // (com uma só, entra direto) e quando se toca no nome da casa. Daqui também se cria outra casa ou se entra por convite.
@@ -32,15 +32,15 @@ export default function HousesScreen() {
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
       {!needsPick && router.canGoBack() && (
-        <Pressable hitSlop={12} style={[styles.close, { top: insets.top + 12 }]} onPress={() => router.back()} accessibilityLabel="Fechar">
-          <Text style={styles.closeText}>✕</Text>
+        <Pressable style={[styles.close, { top: insets.top + 8 }]} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Fechar">
+          <Text variant="section" style={styles.closeText}>✕</Text>
         </Pressable>
       )}
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <Image source={require('../assets/brand/glyph.png')} style={styles.glyph} resizeMode="contain" />
-          <Text style={styles.title}>Em que casa estás?</Text>
-          <Text style={styles.subtitle}>Escolhe a casa para continuar.</Text>
+          <Text variant="title" style={styles.title}>Em que casa estás?</Text>
+          <Text variant="body" style={styles.subtitle}>Escolhe a casa para continuar.</Text>
 
           <View style={styles.list}>
             {households.map((h) => {
@@ -49,10 +49,10 @@ export default function HousesScreen() {
                 <Pressable key={h.id} style={[styles.option, on && styles.optionOn]} onPress={() => setChosen(h.id)} accessibilityRole="radio" accessibilityState={{ selected: on }}>
                   <View style={[styles.radio, on && styles.radioOn]}>{on && <View style={styles.radioDot} />}</View>
                   <View style={styles.optionText}>
-                    <Text style={styles.optionName} numberOfLines={1}>
+                    <Text variant="button" style={styles.optionName} numberOfLines={2}>
                       {h.name}
                     </Text>
-                    {h.role ? <Text style={styles.optionRole}>{ROLE_LABEL[h.role]}</Text> : null}
+                    {h.role ? <Text variant="label" style={styles.optionRole}>{ROLE_LABEL[h.role]}</Text> : null}
                   </View>
                 </Pressable>
               );
@@ -62,18 +62,12 @@ export default function HousesScreen() {
           <Button title="Continuar" disabled={!chosen} onPress={enter} />
 
           <View style={styles.links}>
-            <Text style={styles.linkLine}>
-              Queres outra casa?{' '}
-              <Text style={styles.link} onPress={() => router.push('/create-house')}>
-                Criar outra casa
-              </Text>
-            </Text>
-            <Text style={styles.linkLine}>
-              Tens um código?{' '}
-              <Text style={styles.link} onPress={() => router.push('/join')}>
-                Tenho um convite
-              </Text>
-            </Text>
+            <Pressable style={styles.linkRow} onPress={() => router.push('/create-house')} accessibilityRole="button">
+              <Text variant="button" style={styles.link}>＋ Criar outra casa</Text>
+            </Pressable>
+            <Pressable style={styles.linkRow} onPress={() => router.push('/join')} accessibilityRole="button">
+              <Text variant="button" style={styles.link}>Tenho um convite</Text>
+            </Pressable>
           </View>
         </View>
       </ScrollView>
@@ -83,11 +77,11 @@ export default function HousesScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.backdrop },
-  scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
+  scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.md },
   card: {
     alignSelf: 'stretch',
-    maxWidth: 420,
-    gap: 14,
+    maxWidth: 440,
+    gap: spacing.sm,
     padding: 28,
     borderRadius: radius.card,
     backgroundColor: colors.white,
@@ -98,20 +92,20 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   glyph: { width: 56, height: 56, alignSelf: 'center', marginBottom: 6 },
-  title: { fontSize: 24, fontFamily: fonts.heading, color: colors.ink, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: 6 },
+  title: { color: colors.ink, textAlign: 'center' },
+  subtitle: { color: colors.muted, textAlign: 'center' },
   list: { gap: 10 },
-  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.white },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, padding: 14, borderRadius: radius.button, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.white },
   optionOn: { borderColor: colors.primary, backgroundColor: colors.lavender },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.placeholder, alignItems: 'center', justifyContent: 'center' },
+  radio: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: colors.placeholder, alignItems: 'center', justifyContent: 'center' },
   radioOn: { borderColor: colors.primary },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
+  radioDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: colors.primary },
   optionText: { flex: 1, gap: 1 },
-  optionName: { fontSize: 16, color: colors.ink },
-  optionRole: { fontSize: 12, color: colors.muted },
-  links: { gap: 8, marginTop: 8 },
-  linkLine: { fontSize: 13, color: colors.muted },
-  link: { color: colors.primary, fontFamily: fonts.bodyBold },
-  close: { position: 'absolute', right: 16, zIndex: 2, width: 38, height: 38, borderRadius: 19, backgroundColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
-  closeText: { color: colors.ink, fontSize: 16 },
+  optionName: { color: colors.ink },
+  optionRole: { color: colors.muted },
+  links: { marginTop: 4 },
+  linkRow: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
+  link: { color: colors.primary },
+  close: { position: 'absolute', right: 16, zIndex: 2, width: 48, height: 48, borderRadius: 24, backgroundColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
+  closeText: { color: colors.ink },
 });

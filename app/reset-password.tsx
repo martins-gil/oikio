@@ -1,13 +1,14 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { Text, TextInput } from '@/components/Text';
+import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
+import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { clearAuthUrl, getAuthUrl, parseAuthLink, subscribeAuthUrl } from '@/lib/authLink';
 import { supabase } from '@/lib/supabase';
-import { colors, radius } from '@/lib/theme';
+import { colors } from '@/lib/theme';
 
 type State = 'waiting' | 'ready' | 'invalid';
 
@@ -64,46 +65,37 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Nova palavra-passe</Text>
-        {state === 'waiting' && <Text style={styles.hint}>A validar a ligação…</Text>}
-        {state === 'invalid' && (
-          <>
-            <Text style={styles.hint}>
-              {message ?? 'Esta ligação expirou ou já foi usada. Pede uma nova.'}
-            </Text>
-            <Button title="Pedir nova ligação" onPress={() => router.replace('/forgot-password')} />
-          </>
-        )}
-        {state === 'ready' && (
-          <>
-            <Text style={styles.hint}>Escolhe a tua nova palavra-passe (8 ou mais caracteres).</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Nova palavra-passe"
-              secureTextEntry
-              autoCapitalize="none"
-              autoComplete="new-password"
-              returnKeyType="done"
-              onSubmitEditing={save}
-            />
-            <Button title={busy ? 'A guardar…' : 'Guardar e entrar'} disabled={password.length < 8 || busy} onPress={save} />
-          </>
-        )}
-        {state !== 'invalid' && message && <Text style={styles.error}>{message}</Text>}
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <AuthScreen title="Nova palavra-passe">
+      {state === 'waiting' && <Text variant="body" style={styles.hint}>A validar a ligação…</Text>}
+      {state === 'invalid' && (
+        <>
+          <Text variant="body" style={styles.hint}>
+            {message ?? 'Esta ligação expirou ou já foi usada. Pede uma nova.'}
+          </Text>
+          <Button title="Pedir nova ligação" onPress={() => router.replace('/forgot-password')} />
+        </>
+      )}
+      {state === 'ready' && (
+        <>
+          <Text variant="body" style={styles.hint}>Escolhe a tua nova palavra-passe (8 ou mais caracteres).</Text>
+          <Field
+            label="Nova palavra-passe"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoComplete="new-password"
+            returnKeyType="done"
+            onSubmitEditing={save}
+          />
+          <Button title={busy ? 'A guardar…' : 'Guardar e entrar'} disabled={password.length < 8 || busy} onPress={save} />
+        </>
+      )}
+      {state !== 'invalid' && message && <ErrorText>{message}</ErrorText>}
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  container: { padding: 24, gap: 12, flexGrow: 1, justifyContent: 'center' },
-  title: { fontSize: 22, textAlign: 'center', color: colors.ink },
-  hint: { color: colors.muted, textAlign: 'center', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 14, fontSize: 17 },
-  error: { color: colors.pink, textAlign: 'center' },
+  hint: { color: colors.muted, textAlign: 'center' },
 });
