@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
-import { colors } from '@/lib/theme';
+import { colors, radius, spacing } from '@/lib/theme';
 
 export type SheetOption = { label: string; onPress: () => void; destructive?: boolean };
 
@@ -19,23 +19,24 @@ export function ActionSheet({ visible, title, subtitle, options, onClose }: Prop
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
-          {title && <Text style={styles.title}>{title}</Text>}
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          {title && <Text variant="section" style={styles.title}>{title}</Text>}
+          {subtitle && <Text variant="label" style={styles.subtitle}>{subtitle}</Text>}
           <View style={styles.options}>
             {options.map((o) => (
               <Pressable
                 key={o.label}
                 style={styles.option}
+                accessibilityRole="button"
                 onPress={() => {
                   onClose();
                   o.onPress();
                 }}>
-                <Text style={[styles.optionText, o.destructive && styles.destructive]}>{o.label}</Text>
+                <Text variant="body" style={o.destructive ? styles.destructive : styles.optionText}>{o.label}</Text>
               </Pressable>
             ))}
           </View>
-          <Pressable style={[styles.option, styles.cancel]} onPress={onClose}>
-            <Text style={styles.cancelText}>Cancelar</Text>
+          <Pressable style={[styles.option, styles.cancel]} accessibilityRole="button" onPress={onClose}>
+            <Text variant="button" style={styles.cancelText}>Cancelar</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -45,13 +46,13 @@ export function ActionSheet({ visible, title, subtitle, options, onClose }: Prop
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.white, borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, paddingBottom: 28, gap: 8 },
-  title: { fontSize: 18, fontWeight: '700' },
-  subtitle: { color: colors.muted, fontSize: 14 },
+  sheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, padding: spacing.md, paddingBottom: spacing.lg, gap: 8 },
+  title: { color: colors.ink },
+  subtitle: { color: colors.muted },
   options: { gap: 2, marginTop: 4 },
-  option: { paddingVertical: 14, paddingHorizontal: 8, borderRadius: 10 },
-  optionText: { fontSize: 17 },
+  option: { minHeight: 56, justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 12, borderRadius: radius.button },
+  optionText: { color: colors.ink },
   destructive: { color: colors.pink },
-  cancel: { marginTop: 4, backgroundColor: colors.panel, alignItems: 'center' },
-  cancelText: { fontSize: 17, fontWeight: '600' },
+  cancel: { marginTop: 4, backgroundColor: colors.lavender, alignItems: 'center' },
+  cancelText: { color: colors.primary },
 });

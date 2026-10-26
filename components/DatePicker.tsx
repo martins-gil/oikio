@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 
 import { localDate } from '@/lib/money';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, spacing } from '@/lib/theme';
 
 type Props = {
   value: string | null; // AAAA-MM-DD
@@ -68,27 +68,27 @@ export function DatePicker({ value, onChange, min, max }: Props) {
     <View style={styles.box}>
       <View style={styles.quick}>
         {quick.map((q) => (
-          <Pressable key={q.label} style={[styles.chip, value === q.date && styles.chipOn]} onPress={() => pick(q.date)}>
-            <Text style={[styles.chipText, value === q.date && styles.chipTextOn]}>{q.label}</Text>
+          <Pressable key={q.label} accessibilityRole="button" style={[styles.chip, value === q.date && styles.chipOn]} onPress={() => pick(q.date)}>
+            <Text variant="button" style={value === q.date ? styles.chipTextOn : styles.chipText}>{q.label}</Text>
           </Pressable>
         ))}
       </View>
 
       <View style={styles.monthRow}>
-        <Pressable hitSlop={12} disabled={!canPrev} onPress={() => shift(-1)}>
-          <Text style={[styles.arrow, !canPrev && styles.off]}>◀</Text>
+        <Pressable style={styles.arrowButton} accessibilityRole="button" accessibilityLabel="Mês anterior" disabled={!canPrev} onPress={() => shift(-1)}>
+          <Text variant="section" style={[styles.arrow, !canPrev && styles.off]}>◀</Text>
         </Pressable>
-        <Text style={styles.month}>
+        <Text variant="section" style={styles.month}>
           {MONTHS[month]} {year}
         </Text>
-        <Pressable hitSlop={12} disabled={!canNext} onPress={() => shift(1)}>
-          <Text style={[styles.arrow, !canNext && styles.off]}>▶</Text>
+        <Pressable style={styles.arrowButton} accessibilityRole="button" accessibilityLabel="Mês seguinte" disabled={!canNext} onPress={() => shift(1)}>
+          <Text variant="section" style={[styles.arrow, !canNext && styles.off]}>▶</Text>
         </Pressable>
       </View>
 
       <View style={styles.grid}>
         {WEEK.map((w, i) => (
-          <Text key={`w${i}`} style={styles.weekday}>
+          <Text key={`w${i}`} variant="label" style={styles.weekday}>
             {w}
           </Text>
         ))}
@@ -97,9 +97,9 @@ export function DatePicker({ value, onChange, min, max }: Props) {
           const disabled = date < lo || date > hi;
           const selected = date === value;
           return (
-            <Pressable key={date} style={styles.cell} disabled={disabled} onPress={() => pick(date)}>
+            <Pressable key={date} style={styles.cell} disabled={disabled} accessibilityRole="button" onPress={() => pick(date)}>
               <View style={[styles.day, selected && styles.daySelected, date === today && !selected && styles.dayToday]}>
-                <Text style={[styles.dayText, disabled && styles.off, selected && styles.dayTextSelected]}>{Number(date.slice(8))}</Text>
+                <Text variant="body" style={[styles.dayText, disabled && styles.off, selected && styles.dayTextSelected]}>{Number(date.slice(8))}</Text>
               </View>
             </Pressable>
           );
@@ -110,22 +110,23 @@ export function DatePicker({ value, onChange, min, max }: Props) {
 }
 
 const styles = StyleSheet.create({
-  box: { gap: 12, backgroundColor: colors.primary, borderRadius: radius.card, padding: 14 },
+  box: { gap: 12, backgroundColor: colors.primary, borderRadius: radius.card, padding: spacing.sm },
   quick: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: colors.lavender, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.lavender, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 16 },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.lavender },
   chipTextOn: { color: colors.white },
-  monthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 },
-  arrow: { fontSize: 18, color: colors.accent },
+  monthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  arrowButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  arrow: { color: colors.accent },
   off: { opacity: 0.25 },
-  month: { fontSize: 18, color: colors.white, textTransform: 'capitalize' },
+  month: { color: colors.white, textTransform: 'capitalize', flexShrink: 1, textAlign: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  weekday: { width: `${100 / 7}%`, textAlign: 'center', color: colors.lavender, fontSize: 12, marginBottom: 4 },
-  cell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 2 },
-  day: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  weekday: { width: `${100 / 7}%`, textAlign: 'center', color: colors.lavender, marginBottom: 4 },
+  cell: { width: `${100 / 7}%`, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  day: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   daySelected: { backgroundColor: colors.accent },
   dayToday: { borderWidth: 1, borderColor: colors.accent },
-  dayText: { fontSize: 15, color: colors.white },
+  dayText: { color: colors.white },
   dayTextSelected: { color: colors.ink },
 });

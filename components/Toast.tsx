@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
-import { colors } from '@/lib/theme';
+import { colors, radius, spacing } from '@/lib/theme';
 
 type Props = { message: string | null; onHide: () => void; durationMs?: number };
 
@@ -16,16 +16,16 @@ export function Toast({ message, onHide, durationMs = 4000 }: Props) {
 
   if (!message) return null;
   return (
-    <View style={styles.wrap} pointerEvents="none">
+    <View style={styles.wrap} pointerEvents="none" accessibilityLiveRegion="polite">
       <View style={styles.toast}>
-        <Text style={styles.text}>{message}</Text>
+        <Text variant="body" style={styles.text}>{message}</Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 16, right: 16, bottom: 16, alignItems: 'center' },
-  toast: { backgroundColor: colors.ink, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16 },
-  text: { color: colors.white, fontSize: 15, textAlign: 'center' },
+  wrap: { position: 'absolute', left: spacing.sm, right: spacing.sm, bottom: spacing.sm, alignItems: 'center' },
+  toast: { backgroundColor: colors.ink, borderRadius: radius.button, paddingVertical: 14, paddingHorizontal: 20 },
+  text: { color: colors.white, textAlign: 'center' },
 });

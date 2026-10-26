@@ -32,7 +32,7 @@ export function ProgressRing({ percent, size = 88 }: Props) {
         );
       })}
       <View style={styles.center}>
-        <Text style={styles.percent}>{Math.round(percent)}%</Text>
+        <Text variant="button" style={styles.percent}>{Math.round(percent)}%</Text>
       </View>
     </View>
   );
@@ -40,5 +40,5 @@ export function ProgressRing({ percent, size = 88 }: Props) {
 
 const styles = StyleSheet.create({
   center: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  percent: { fontSize: 18, color: colors.ink },
+  percent: { color: colors.ink },
 });

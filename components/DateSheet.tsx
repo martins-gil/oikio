@@ -5,7 +5,7 @@ import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { DatePicker } from '@/components/DatePicker';
-import { colors } from '@/lib/theme';
+import { colors, radius, spacing } from '@/lib/theme';
 
 type Props = {
   visible: boolean;
@@ -31,22 +31,22 @@ export function DateSheet({ visible, title, initial, confirmPrefix = 'Passar par
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
           <ScrollView contentContainerStyle={styles.content}>
-            <Text style={styles.title}>{title}</Text>
+            <Text variant="section" style={styles.title}>{title}</Text>
             <DatePicker value={picked} onChange={setPicked} />
-            <View style={styles.buttons}>
-              <Button
-                title={picked ? `${confirmPrefix} ${longDate(picked)}` : 'Escolhe um dia'}
-                disabled={!picked}
-                onPress={() => {
-                  if (picked) {
-                    onClose();
-                    onConfirm(picked);
-                  }
-                }}
-              />
-              <Button title="Cancelar" variant="secondary" onPress={onClose} />
-            </View>
           </ScrollView>
+          <View style={styles.buttons}>
+            <Button
+              title={picked ? `${confirmPrefix} ${longDate(picked)}` : 'Escolhe um dia'}
+              disabled={!picked}
+              onPress={() => {
+                if (picked) {
+                  onClose();
+                  onConfirm(picked);
+                }
+              }}
+            />
+            <Button title="Cancelar" variant="secondary" onPress={onClose} />
+          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -55,8 +55,8 @@ export function DateSheet({ visible, title, initial, confirmPrefix = 'Passar par
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.white, borderTopLeftRadius: 18, borderTopRightRadius: 18, maxHeight: '88%' },
-  content: { padding: 16, gap: 12, paddingBottom: 28 },
-  title: { fontSize: 18, fontWeight: '700' },
-  buttons: { gap: 10 },
+  sheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, maxHeight: '90%' },
+  content: { padding: spacing.md, gap: spacing.sm },
+  title: { color: colors.ink },
+  buttons: { gap: 10, padding: spacing.md, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
 });
