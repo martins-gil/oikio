@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
@@ -17,7 +18,7 @@ import { useSession } from '@/lib/session';
 import { useModules } from '@/lib/settings';
 import { formatAmount, PLACES, stepFor, type Place } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 import { devHint } from '@/lib/errors';
 
 type Product = { id: string; name: string; base_unit: string };
@@ -96,6 +97,9 @@ export default function ReceiptScreen() {
   const [fromPhoto, setFromPhoto] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
+  const insets = useSafeAreaInsets();
+  const [headToggled, setHeadToggled] = useState<boolean | null>(null); // detalhes do talão (loja, data, total): abertos por defeito só com foto
+  const [openLines, setOpenLines] = useState<Record<number, boolean>>({}); // detalhes de cada linha
 
   const loadProducts = useCallback(async () => {
     if (!household) return { list: [] as Product[], packList: [] as Pack[] };
@@ -403,54 +407,69 @@ export default function ReceiptScreen() {
     router.back();
   };
 
+  const headOpen = headToggled ?? fromPhoto;
+  const dateLabel = date === today ? 'hoje' : date === addDaysIso(today, -1) ? 'ontem' : date.split('-').reverse().join('/');
+  const headSummary = [store.trim() || 'Sem loja', dateLabel, totalText.trim() ? `${totalText.trim()} €` : null].filter(Boolean).join(' · ');
+
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {!fromPhoto && (
           <View style={styles.card}>
-            <Text style={styles.label}>Mais rápido: lê o talão por foto</Text>
+            <Text variant="button" style={styles.cardTitle}>Mais rápido: lê o talão por foto</Text>
             {reading ? (
               <View style={styles.reading}>
                 <ActivityIndicator color={colors.primary} />
-                <Text style={styles.small}>A ler o talão… pode demorar até 30 segundos.</Text>
+                <Text variant="label" style={styles.hint}>A ler o talão… pode demorar até 30 segundos.</Text>
               </View>
             ) : (
               <View style={styles.photoRow}>
-                <View style={styles.flex}>
+                <View style={styles.photoButton}>
                   <Button title="📷 Tirar foto" onPress={() => readPhoto('camera')} />
                 </View>
-                <View style={styles.flex}>
+                <View style={styles.photoButton}>
                   <Button title="🖼 Galeria" variant="secondary" onPress={() => readPhoto('library')} />
                 </View>
               </View>
             )}
-            <Text style={styles.small}>A IA propõe as linhas e tu confirmas. Ou regista à mão, mais abaixo.</Text>
+            <Text variant="label" style={styles.hint}>A IA propõe as linhas e tu confirmas. Ou regista à mão, mais abaixo.</Text>
           </View>
         )}
 
         <View style={styles.card}>
-          <Text style={styles.label}>Loja (opcional)</Text>
-          <TextInput style={styles.input} value={store} onChangeText={setStore} placeholder="Ex.: Pingo Doce" />
-          <Text style={styles.label}>Data</Text>
-          <View style={styles.chips}>
-            {[
-              { label: 'Hoje', value: today },
-              { label: 'Ontem', value: addDaysIso(today, -1) },
-            ].map((c) => (
-              <Pressable key={c.label} style={[styles.chip, !otherDate && date === c.value && styles.chipOn]} onPress={() => { setOtherDate(false); setDate(c.value); }}>
-                <Text style={[styles.chipText, !otherDate && date === c.value && styles.chipTextOn]}>{c.label}</Text>
-              </Pressable>
-            ))}
-            <Pressable style={[styles.chip, otherDate && styles.chipOn]} onPress={() => setOtherDate(true)}>
-              <Text style={[styles.chipText, otherDate && styles.chipTextOn]}>{otherDate ? date.split('-').reverse().join('/') : 'Outra data'}</Text>
-            </Pressable>
-          </View>
-          {otherDate && <DatePicker value={date} onChange={setDate} min={addDaysIso(today, -60)} max={today} />}
-          <Text style={styles.label}>Total do talão (opcional)</Text>
-          <TextInput style={styles.input} value={totalText} onChangeText={setTotalText} placeholder="Ex.: 23,50" keyboardType="decimal-pad" />
+          <Pressable style={styles.headRow} onPress={() => setHeadToggled(!headOpen)} accessibilityRole="button">
+            <View style={styles.flex}>
+              <Text variant="button" style={styles.cardTitle}>Detalhes do talão</Text>
+              {!headOpen && <Text variant="label" style={styles.hint}>{headSummary}</Text>}
+            </View>
+            <Text variant="button" style={styles.linkText}>{headOpen ? '▲' : '▼'}</Text>
+          </Pressable>
+          {headOpen && (
+            <>
+              <Text variant="label" style={styles.label}>Loja (opcional)</Text>
+              <TextInput style={styles.input} value={store} onChangeText={setStore} placeholder="Ex.: Pingo Doce" />
+              <Text variant="label" style={styles.label}>Data</Text>
+              <View style={styles.chips}>
+                {[
+                  { label: 'Hoje', value: today },
+                  { label: 'Ontem', value: addDaysIso(today, -1) },
+                ].map((c) => (
+                  <Pressable key={c.label} style={[styles.chip, !otherDate && date === c.value && styles.chipOn]} onPress={() => { setOtherDate(false); setDate(c.value); }}>
+                    <Text variant="button" style={!otherDate && date === c.value ? styles.chipTextOn : styles.chipText}>{c.label}</Text>
+                  </Pressable>
+                ))}
+                <Pressable style={[styles.chip, otherDate && styles.chipOn]} onPress={() => setOtherDate(true)}>
+                  <Text variant="button" style={otherDate ? styles.chipTextOn : styles.chipText}>{otherDate ? date.split('-').reverse().join('/') : 'Outra data'}</Text>
+                </Pressable>
+              </View>
+              {otherDate && <DatePicker value={date} onChange={setDate} min={addDaysIso(today, -60)} max={today} />}
+              <Text variant="label" style={styles.label}>Total do talão (opcional)</Text>
+              <TextInput style={styles.input} value={totalText} onChangeText={setTotalText} placeholder="Ex.: 23,50" keyboardType="decimal-pad" />
+            </>
+          )}
         </View>
 
-        <Text style={styles.title}>O que compraste</Text>
+        <Text variant="section" style={styles.title}>O que compraste</Text>
         <View style={styles.addRow}>
           <TextInput
             style={[styles.input, styles.flex]}
@@ -460,21 +479,21 @@ export default function ReceiptScreen() {
             returnKeyType="done"
             onSubmitEditing={addTyped}
           />
-          <Pressable style={[styles.addButton, !entry.trim() && styles.disabled]} disabled={!entry.trim()} onPress={addTyped}>
-            <Text style={styles.addText}>+</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Juntar produto" style={[styles.addButton, !entry.trim() && styles.disabled]} disabled={!entry.trim()} onPress={addTyped}>
+            <Text variant="section" style={styles.addText}>+</Text>
           </Pressable>
         </View>
         {suggestions.length > 0 && (
           <View style={styles.chips}>
             {suggestions.map((p) => (
               <Pressable key={p.id} style={styles.suggest} onPress={() => addLine(p.name, p.id)}>
-                <Text style={styles.suggestText}>{p.name}</Text>
+                <Text variant="body" style={styles.suggestText}>{p.name}</Text>
               </Pressable>
             ))}
           </View>
         )}
 
-        {lines.length === 0 && <Text style={styles.hint}>Escreve um produto e toca em +. Podes escolher um dos teus produtos para o stock subir.</Text>}
+        {lines.length === 0 && <Text variant="label" style={styles.hintCenter}>Escreve um produto e toca em +. Podes escolher um dos teus produtos para o stock subir.</Text>}
         {lines.map((l) => {
           const linkedPacks = packs.filter((k) => k.product_id === l.productId);
           const product = productOf(l.productId);
@@ -486,135 +505,167 @@ export default function ReceiptScreen() {
             const next = Math.max(step, (Number.isFinite(current) ? current : 0) + delta * step);
             patch(l.key, { qtyText: toText(next), check: false });
           };
+          const needsCheck = l.check && !!(l.productId || willCreate);
+          const detailsOpen = openLines[l.key] ?? needsCheck; // abre sozinho quando falta confirmar algo
+          const baseUnit = product?.base_unit ?? l.newUnit;
+          const shownName = product?.name ?? l.text;
+          const hasDetails = !!product || willCreate || linkedPacks.length > 0 || l.raw !== shownName;
           return (
             <View key={l.key} style={styles.card}>
               <View style={styles.lineHead}>
                 <View style={styles.flex}>
                   {willCreate ? (
-                    <TextInput style={styles.nameInput} value={l.text} onChangeText={(t) => patch(l.key, { text: t })} placeholder="Nome do produto" />
+                    <TextInput style={styles.input} value={l.text} onChangeText={(t) => patch(l.key, { text: t })} placeholder="Nome do produto" />
                   ) : (
-                    <Text style={styles.lineName}>{product?.name ?? l.text}</Text>
+                    <Text variant="button" style={styles.lineName}>{product?.name ?? l.text}</Text>
                   )}
-                  {product && product.name !== l.raw && <Text style={styles.small}>no talão: {l.raw}</Text>}
-                  {!product && l.raw !== l.text && <Text style={styles.small}>no talão: {l.raw}</Text>}
                   {product ? (
-                    <Text style={styles.ok}>✓ stock sobe ({product.base_unit})</Text>
+                    <Text variant="label" style={styles.ok}>✓ stock sobe ({product.base_unit})</Text>
                   ) : willCreate ? (
-                    <Text style={styles.ok}>➕ vai criar um produto novo ({l.newUnit})</Text>
+                    <Text variant="label" style={styles.ok}>➕ cria um produto novo ({l.newUnit})</Text>
                   ) : (
-                    <Text style={styles.warn}>não entra nos produtos: fica só no registo</Text>
+                    <Text variant="label" style={styles.hint}>só no registo (não entra nos produtos)</Text>
                   )}
                 </View>
-                <Pressable hitSlop={12} onPress={() => removeLine(l.key)}>
-                  <Text style={styles.remove}>✕</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel="Tirar esta linha" style={styles.removeButton} onPress={() => removeLine(l.key)}>
+                  <Text variant="section" style={styles.remove}>✕</Text>
                 </Pressable>
               </View>
+
               {!product && (
-                <>
-                  {willCreate && (
-                    <View style={styles.chips}>
-                      {PLACES.map((pl) => (
-                        <Pressable key={pl.key} style={[styles.chip, (l.location ?? 'pantry') === pl.key && styles.chipOn]} onPress={() => patch(l.key, { location: pl.key })}>
-                          <Text style={[styles.chipText, (l.location ?? 'pantry') === pl.key && styles.chipTextOn]}>
-                            {pl.emoji} {pl.label}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                  <Pressable style={styles.link} onPress={() => patch(l.key, { addNew: !l.addNew })}>
-                    <Text style={styles.linkText}>{willCreate ? 'Não adicionar aos produtos' : '＋ Adicionar aos produtos'}</Text>
-                  </Pressable>
-                </>
+                <Pressable style={styles.linkRow} onPress={() => patch(l.key, { addNew: !l.addNew })}>
+                  <Text variant="body" style={styles.linkText}>{willCreate ? 'Não adicionar aos produtos' : '＋ Adicionar aos produtos'}</Text>
+                </Pressable>
               )}
-              {linkedPacks.length > 0 && (
-                <View style={styles.chips}>
-                  <Pressable style={[styles.chip, l.packageId === null && styles.chipOn]} onPress={() => patch(l.key, { packageId: null })}>
-                    <Text style={[styles.chipText, l.packageId === null && styles.chipTextOn]}>{product ? product.base_unit : 'Unidade'}</Text>
-                  </Pressable>
-                  {linkedPacks.map((k) => (
-                    <Pressable key={k.id} style={[styles.chip, l.packageId === k.id && styles.chipOn]} onPress={() => patch(l.key, { packageId: k.id })}>
-                      <Text style={[styles.chipText, l.packageId === k.id && styles.chipTextOn]}>
-                        {k.name} (×{Number(k.units_per_package)})
-                      </Text>
-                    </Pressable>
-                  ))}
+
+              {needsCheck && (
+                <View style={styles.checkBox}>
+                  <Text variant="label" style={styles.checkText}>
+                    {l.count !== null
+                      ? `⚠ O talão diz ${toText(l.count)} un, sem o tamanho. Escreve quanto tem cada unidade (ex.: 200 ${unitLabel}).`
+                      : `⚠ Confirma a quantidade em ${unitLabel}${l.ai?.ai_unit ? ` (o talão diz ${toText(l.ai.quantity)} ${l.ai.ai_unit})` : ''}.`}
+                  </Text>
                 </View>
               )}
-              {l.count !== null && (product || willCreate) && (
-                <View style={styles.sizeBox}>
-                  {willCreate && (
-                    <View style={styles.chips}>
-                      {(['un', 'g', 'ml'] as const).map((u) => (
-                        <Pressable key={u} style={[styles.chip, l.newUnit === u && styles.chipOn]} onPress={() => patch(l.key, { newUnit: u })}>
-                          <Text style={[styles.chipText, l.newUnit === u && styles.chipTextOn]}>{u === 'un' ? 'contar em unidades' : `contar em ${u}`}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                  {(product?.base_unit ?? l.newUnit) !== 'un' && ((product?.base_unit ?? l.newUnit) === 'g' || (product?.base_unit ?? l.newUnit) === 'ml') && (
-                    <View style={styles.sizeRow}>
-                      <Text style={styles.small}>{toText(l.count)} un × cada unidade tem</Text>
-                      <TextInput style={styles.sizeInput} value={l.sizeText} onChangeText={(t) => patch(l.key, { sizeText: t })} keyboardType="decimal-pad" placeholder="200" />
-                      <Text style={styles.small}>{product?.base_unit ?? l.newUnit}</Text>
-                    </View>
-                  )}
-                </View>
-              )}
+
               <View style={styles.lineBottom}>
                 <View style={styles.stepper}>
-                  <Pressable style={styles.step} hitSlop={8} onPress={() => bump(-1)}>
-                    <Text style={styles.stepText}>−</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Menos" style={styles.step} onPress={() => bump(-1)}>
+                    <Text variant="section" style={styles.stepText}>−</Text>
                   </Pressable>
                   <TextInput
-                    style={[styles.qtyInput, l.check && l.productId ? styles.qtyCheck : null]}
+                    style={[styles.qtyInput, needsCheck ? styles.qtyCheck : null]}
                     value={l.qtyText}
                     onChangeText={(t) => patch(l.key, { qtyText: t, check: false })}
                     keyboardType="decimal-pad"
                     placeholder="0"
+                    accessibilityLabel="Quantidade"
                   />
-                  <Pressable style={styles.step} hitSlop={8} onPress={() => bump(1)}>
-                    <Text style={styles.stepText}>＋</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Mais" style={styles.step} onPress={() => bump(1)}>
+                    <Text variant="section" style={styles.stepText}>＋</Text>
                   </Pressable>
-                  <Text style={styles.unit}>{unitLabel}</Text>
+                  <Text variant="label" style={styles.unit}>{unitLabel}</Text>
                 </View>
                 <TextInput
                   style={[styles.input, styles.price]}
                   value={l.price}
                   onChangeText={(t) => patch(l.key, { price: t })}
-                  placeholder="Preço (opc.)"
+                  placeholder="Preço €"
                   keyboardType="decimal-pad"
+                  accessibilityLabel="Preço"
                 />
               </View>
-              {l.check && (l.productId || willCreate) && (
-                <Text style={styles.checkText}>
-                  {l.count !== null
-                    ? `O talão diz ${toText(l.count)} un, sem o tamanho. Escreve quanto tem cada unidade (ex.: 200 ${unitLabel}).`
-                    : `Confirma a quantidade em ${unitLabel}${l.ai?.ai_unit ? ` (o talão diz ${toText(l.ai.quantity)} ${l.ai.ai_unit})` : ''}.`}
-                </Text>
+              {!l.check && (baseUnit === 'g' || baseUnit === 'ml') && (
+                <Text variant="label" style={styles.hint}>= {formatAmount(num(l.qtyText) || 0, baseUnit)}</Text>
               )}
-              {!l.check && ((product?.base_unit ?? l.newUnit) === 'g' || (product?.base_unit ?? l.newUnit) === 'ml') && (
-                <Text style={styles.small}>= {formatAmount(num(l.qtyText) || 0, product?.base_unit ?? l.newUnit)}</Text>
+
+              {hasDetails && (
+                <Pressable style={styles.linkRow} onPress={() => setOpenLines((o) => ({ ...o, [l.key]: !detailsOpen }))} accessibilityRole="button">
+                  <Text variant="body" style={styles.linkText}>{detailsOpen ? '▲ Menos detalhes' : '▼ Detalhes (unidade, embalagem, local)'}</Text>
+                </Pressable>
+              )}
+
+              {detailsOpen && (
+                <View style={styles.details}>
+                  {(product ? product.name !== l.raw : l.raw !== l.text) && <Text variant="label" style={styles.hint}>No talão: {l.raw}</Text>}
+                  {willCreate && (
+                    <>
+                      <Text variant="label" style={styles.label}>Onde fica?</Text>
+                      <View style={styles.chips}>
+                        {PLACES.map((pl) => (
+                          <Pressable key={pl.key} style={[styles.chip, (l.location ?? 'pantry') === pl.key && styles.chipOn]} onPress={() => patch(l.key, { location: pl.key })}>
+                            <Text variant="button" style={(l.location ?? 'pantry') === pl.key ? styles.chipTextOn : styles.chipText}>
+                              {pl.emoji} {pl.label}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </>
+                  )}
+                  {linkedPacks.length > 0 && (
+                    <>
+                      <Text variant="label" style={styles.label}>Comprei em</Text>
+                      <View style={styles.chips}>
+                        <Pressable style={[styles.chip, l.packageId === null && styles.chipOn]} onPress={() => patch(l.key, { packageId: null })}>
+                          <Text variant="button" style={l.packageId === null ? styles.chipTextOn : styles.chipText}>{product ? product.base_unit : 'Unidade'}</Text>
+                        </Pressable>
+                        {linkedPacks.map((k) => (
+                          <Pressable key={k.id} style={[styles.chip, l.packageId === k.id && styles.chipOn]} onPress={() => patch(l.key, { packageId: k.id })}>
+                            <Text variant="button" style={l.packageId === k.id ? styles.chipTextOn : styles.chipText}>
+                              {k.name} (×{Number(k.units_per_package)})
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </>
+                  )}
+                  {l.count !== null && (product || willCreate) && (
+                    <>
+                      {willCreate && (
+                        <>
+                          <Text variant="label" style={styles.label}>Contar em</Text>
+                          <View style={styles.chips}>
+                            {(['un', 'g', 'ml'] as const).map((u) => (
+                              <Pressable key={u} style={[styles.chip, l.newUnit === u && styles.chipOn]} onPress={() => patch(l.key, { newUnit: u })}>
+                                <Text variant="button" style={l.newUnit === u ? styles.chipTextOn : styles.chipText}>{u === 'un' ? 'unidades' : u}</Text>
+                              </Pressable>
+                            ))}
+                          </View>
+                        </>
+                      )}
+                      {(baseUnit === 'g' || baseUnit === 'ml') && (
+                        <>
+                          <Text variant="label" style={styles.label}>{toText(l.count)} un × cada unidade tem ({baseUnit})</Text>
+                          <TextInput style={styles.input} value={l.sizeText} onChangeText={(t) => patch(l.key, { sizeText: t })} keyboardType="decimal-pad" placeholder="Ex.: 200" />
+                        </>
+                      )}
+                    </>
+                  )}
+                </View>
               )}
             </View>
           );
         })}
-
-        {lines.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.sum}>Total: {formatEuros(total)}</Text>
-            {total > 0 && money && (
-              <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>Registar {formatEuros(total)} em Dinheiro</Text>
-                <Switch value={registerExpense} onValueChange={setRegisterExpense} />
-              </View>
-            )}
-            <Button title={saving ? 'A registar…' : 'Confirmar compra'} disabled={saving} onPress={confirm} />
-            {fromPhoto && <Button title="Descartar este talão" variant="secondary" disabled={saving} onPress={discard} />}
-            <Text style={styles.small}>Só ao confirmar é que o stock e a lista de compras mudam.</Text>
-          </View>
-        )}
       </ScrollView>
+
+      {lines.length > 0 && (
+        <View style={[styles.footer, { paddingBottom: spacing.sm + insets.bottom }]}>
+          <Text variant="section" style={styles.sum}>Total: {formatEuros(total)}</Text>
+          {total > 0 && money && (
+            <View style={styles.switchRow}>
+              <Text variant="body" style={styles.switchLabel}>Registar {formatEuros(total)} em Dinheiro</Text>
+              <Switch value={registerExpense} onValueChange={setRegisterExpense} />
+            </View>
+          )}
+          <Button title={saving ? 'A registar…' : 'Confirmar compra'} disabled={saving} onPress={confirm} />
+          {fromPhoto && (
+            <Pressable style={styles.linkRow} disabled={saving} onPress={discard}>
+              <Text variant="body" style={styles.discardText}>Descartar este talão</Text>
+            </Pressable>
+          )}
+          <Text variant="label" style={styles.hint}>Só ao confirmar é que o stock e a lista de compras mudam.</Text>
+        </View>
+      )}
       <Toast message={toast} onHide={hideToast} />
     </KeyboardAvoidingView>
   );
@@ -622,47 +673,50 @@ export default function ReceiptScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { padding: 16, gap: 12, paddingBottom: 80 },
-  card: { gap: 10, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
-  title: { fontSize: 20, color: colors.ink, marginTop: 6 },
-  label: { color: colors.muted, fontSize: 13 },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 12, fontSize: 16, color: colors.ink },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  card: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  cardTitle: { color: colors.ink },
+  title: { color: colors.ink, marginTop: 8 },
+  label: { color: colors.muted },
+  hint: { color: colors.muted },
+  hintCenter: { color: colors.muted, textAlign: 'center' },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
   chipTextOn: { color: colors.white },
-  addRow: { flexDirection: 'row', gap: 8 },
-  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
-  addText: { color: colors.accent, fontSize: 26 },
+  addRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: fieldMinHeight, height: fieldMinHeight, alignItems: 'center', justifyContent: 'center' },
+  addText: { color: colors.white },
   disabled: { opacity: 0.4 },
-  suggest: { backgroundColor: colors.lavender, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
+  suggest: { minHeight: 48, justifyContent: 'center', backgroundColor: colors.lavender, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18 },
   suggestText: { color: colors.primary },
-  hint: { color: colors.muted, textAlign: 'center' },
-  sizeBox: { gap: 8 },
-  sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sizeInput: { minWidth: 70, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 8, fontSize: 16, textAlign: 'center', color: colors.ink },
-  photoRow: { flexDirection: 'row', gap: 10 },
+  photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  photoButton: { flexGrow: 1, flexBasis: 150 },
   reading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   lineHead: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
-  lineName: { fontSize: 17, color: colors.ink },
-  nameInput: { fontSize: 17, color: colors.ink, borderBottomWidth: 1, borderBottomColor: colors.border, paddingVertical: 2 },
-  ok: { color: colors.success, fontSize: 13 },
-  warn: { color: colors.muted, fontSize: 13 },
-  remove: { fontSize: 18, color: colors.faint },
-  link: { alignSelf: 'flex-start' },
+  lineName: { color: colors.ink },
+  ok: { color: colors.success },
+  removeButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  remove: { color: colors.faint },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
   linkText: { color: colors.primary },
-  lineBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  discardText: { color: colors.pink, textAlign: 'center' },
+  lineBottom: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  step: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: colors.accent, fontSize: 20 },
-  qtyInput: { minWidth: 64, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, paddingVertical: 8, paddingHorizontal: 8, fontSize: 17, textAlign: 'center', color: colors.ink },
+  step: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: colors.white },
+  qtyInput: { minWidth: 72, minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 8, textAlign: 'center', color: colors.ink },
   qtyCheck: { borderColor: colors.warn, backgroundColor: colors.warnBg },
-  unit: { color: colors.muted, fontSize: 14 },
-  checkText: { color: colors.warnText, fontSize: 13 },
-  price: { flex: 1, maxWidth: 130, textAlign: 'right' },
-  sum: { fontSize: 20, color: colors.ink },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  unit: { color: colors.muted },
+  checkBox: { padding: 12, borderRadius: radius.button, backgroundColor: colors.warnBg },
+  checkText: { color: colors.warnText },
+  price: { flexGrow: 1, flexBasis: 120, textAlign: 'right' },
+  details: { gap: 8, padding: 12, borderRadius: radius.button, backgroundColor: colors.panel },
+  footer: { padding: spacing.md, paddingTop: spacing.sm, gap: 8, backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.border },
+  sum: { color: colors.ink },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   switchLabel: { flex: 1, color: colors.ink },
-  small: { color: colors.muted, fontSize: 12 },
 });
