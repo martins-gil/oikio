@@ -11,7 +11,7 @@ import { friendlyTaskError } from '@/lib/schedule';
 import { useHousehold } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 type PersonalTask = {
   id: string;
@@ -193,35 +193,37 @@ export default function PersonalScreen() {
     <Screen title="Pessoal" subtitle="Só tu vês isto">
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.privacy}>🔒 Só tu vês isto</Text>
+        <Text variant="label" style={styles.privacy}>🔒 Só tu vês isto</Text>
 
-        <Pressable style={styles.hoursCard} onPress={() => router.push('/hours')}>
-          <Text style={styles.hoursTitle}>⏱ Banco de horas e consultas</Text>
-          <Text style={styles.hoursValue}>
+        <Pressable style={styles.hoursCard} onPress={() => router.push('/hours')} accessibilityRole="button">
+          <Text variant="button" style={styles.hoursTitle}>⏱ Banco de horas e consultas</Text>
+          <Text variant="button" style={styles.hoursValue}>
             {hourBank === null ? '' : `${hourBank > 0 ? '+' : ''}${formatMinutes(hourBank)} ›`}
           </Text>
         </Pressable>
 
         {(pending.length > 0 || done.length > 0) && (
           <View style={styles.group}>
-            <Text style={styles.section}>Hoje</Text>
+            <Text variant="section" style={styles.section}>Hoje</Text>
             {pending.map((o) => (
-              <Pressable key={o.id} style={styles.task} onPress={() => markDone(o)}>
-                <Text style={styles.circle}>⚪</Text>
+              <Pressable key={o.id} style={styles.task} onPress={() => markDone(o)} accessibilityRole="button" accessibilityLabel={`Marcar ${o.tasks?.title ?? 'tarefa'} como feita`}>
+                <View style={styles.circle} />
                 <View style={styles.taskText}>
-                  <Text style={styles.taskTitle}>{o.tasks?.title}</Text>
+                  <Text variant="body" style={styles.taskTitle}>{o.tasks?.title}</Text>
                   {daysLate(todayStr, o.due_date) > 0 && (
-                    <Text style={styles.late}>em atraso há {daysLate(todayStr, o.due_date)} dia(s)</Text>
+                    <Text variant="label" style={styles.late}>⏰ em atraso há {daysLate(todayStr, o.due_date)} dia(s)</Text>
                   )}
                 </View>
               </Pressable>
             ))}
             {done.map((o) => (
               <Pressable key={o.id} style={[styles.task, styles.taskDone]} onPress={() => askUndo(o)}>
-                <Text style={styles.circle}>✅</Text>
+                <View style={[styles.circle, styles.circleDone]}>
+                  <Text variant="body" style={styles.checkMark}>✓</Text>
+                </View>
                 <View style={styles.taskText}>
-                  <Text style={[styles.taskTitle, styles.strike]}>{o.tasks?.title}</Text>
-                  <Text style={styles.line}>toca para desfazer</Text>
+                  <Text variant="body" style={[styles.taskTitle, styles.strike]}>{o.tasks?.title}</Text>
+                  <Text variant="label" style={styles.line}>toca para desfazer</Text>
                 </View>
               </Pressable>
             ))}
@@ -229,30 +231,31 @@ export default function PersonalScreen() {
         )}
 
         <View style={styles.group}>
-          <Text style={styles.section}>As minhas tarefas</Text>
-          {tasks.length === 0 && <Text style={styles.hint}>Ainda não tens tarefas pessoais.</Text>}
+          <Text variant="section" style={styles.section}>As minhas tarefas</Text>
+          {tasks.length === 0 && <Text variant="label" style={styles.hint}>Ainda não tens tarefas pessoais.</Text>}
           {tasks.map((t) => (
             <View key={t.id} style={styles.card}>
               <View style={styles.cardMain}>
-                <Text style={styles.taskTitle}>{t.title}</Text>
-                <Text style={styles.line}>
+                <Text variant="body" style={styles.taskTitle}>{t.title}</Text>
+                <Text variant="label" style={styles.line}>
                   {describeFrequency(t)} · {lastDone(t)}
                 </Text>
+                {t.recurrence === 'no_frequency' && (
+                  <Pressable style={styles.doneNow} onPress={() => doneNow(t)} accessibilityRole="button">
+                    <Text variant="button" style={styles.doneNowText}>Feito agora</Text>
+                  </Pressable>
+                )}
               </View>
-              {t.recurrence === 'no_frequency' && (
-                <Pressable style={styles.doneNow} onPress={() => doneNow(t)}>
-                  <Text style={styles.doneNowText}>Feito agora</Text>
-                </Pressable>
-              )}
-              <Pressable hitSlop={12} onPress={() => askDelete(t)}>
-                <Text style={styles.remove}>✕</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={`Apagar ${t.title}`} style={styles.removeButton} onPress={() => askDelete(t)}>
+                <Text variant="section" style={styles.remove}>✕</Text>
               </Pressable>
             </View>
           ))}
         </View>
 
         <View style={styles.group}>
-          <Text style={styles.section}>Nova tarefa</Text>
+          <Text variant="section" style={styles.section}>Nova tarefa</Text>
+          <Text variant="label" style={styles.label}>Nome</Text>
           <View style={styles.addRow}>
             <TextInput
               style={styles.input}
@@ -261,15 +264,17 @@ export default function PersonalScreen() {
               placeholder="Ex.: cabeleireiro"
               returnKeyType="done"
               onSubmitEditing={addTask}
+              accessibilityLabel="Nome da tarefa pessoal"
             />
-            <Pressable style={[styles.addButton, !title.trim() && styles.disabled]} disabled={!title.trim()} onPress={addTask}>
-              <Text style={styles.addText}>+</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Juntar tarefa" style={[styles.addButton, !title.trim() && styles.disabled]} disabled={!title.trim()} onPress={addTask}>
+              <Text variant="section" style={styles.addText}>+</Text>
             </Pressable>
           </View>
+          <Text variant="label" style={styles.label}>Com que frequência?</Text>
           <View style={styles.chips}>
             {FREQUENCIES.map((f) => (
               <Pressable key={f.key} style={[styles.chip, freq === f.key && styles.chipOn]} onPress={() => setFreq(f.key)}>
-                <Text style={[styles.chipText, freq === f.key && styles.chipTextOn]}>{f.label}</Text>
+                <Text variant="button" style={freq === f.key ? styles.chipTextOn : styles.chipText}>{f.label}</Text>
               </Pressable>
             ))}
           </View>
@@ -284,57 +289,38 @@ export default function PersonalScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 20, gap: 16, paddingBottom: 80 },
-  privacy: { color: colors.muted, fontSize: 15 },
-  hoursCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 12,
-    backgroundColor: colors.white,
-  },
-  hoursTitle: { fontSize: 16, fontWeight: '600' },
-  hoursValue: { fontSize: 16, color: colors.primary, fontWeight: '600' },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 80 },
+  privacy: { color: colors.muted },
+  hoursCard: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, minHeight: 64, padding: spacing.sm, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.card, backgroundColor: colors.white },
+  hoursTitle: { color: colors.ink, flexShrink: 1 },
+  hoursValue: { color: colors.primary },
   group: { gap: 8 },
-  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase' },
+  section: { color: colors.ink, marginTop: 4 },
+  label: { color: colors.muted },
   hint: { color: colors.muted },
-  task: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: radius.card, ...shadow,
-    backgroundColor: colors.white,
-  },
-  taskDone: { opacity: 0.55 },
-  circle: { fontSize: 24 },
+  task: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 64, padding: spacing.sm, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
+  taskDone: { opacity: 0.7 },
+  circle: { width: 32, height: 32, borderRadius: 16, borderWidth: 3, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  circleDone: { backgroundColor: colors.success, borderColor: colors.success },
+  checkMark: { color: colors.white },
   taskText: { flex: 1, gap: 2 },
-  taskTitle: { fontSize: 18 },
+  taskTitle: { color: colors.ink },
   strike: { textDecorationLine: 'line-through' },
-  line: { color: colors.muted, fontSize: 14 },
-  late: { color: colors.pink, fontSize: 14, fontWeight: '600' },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 14,
-    borderRadius: radius.card, ...shadow,
-    backgroundColor: colors.white,
-  },
-  cardMain: { flex: 1, gap: 2 },
-  doneNow: { backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
-  doneNowText: { color: colors.white, fontWeight: '600' },
-  remove: { fontSize: 18, color: colors.faint },
-  addRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
-  addText: { color: colors.white, fontSize: 26, fontWeight: '600' },
+  line: { color: colors.muted },
+  late: { color: colors.pink },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 64, padding: 14, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
+  cardMain: { flex: 1, gap: 4 },
+  doneNow: { alignSelf: 'flex-start', minHeight: 48, justifyContent: 'center', backgroundColor: colors.primary, borderRadius: radius.button, paddingHorizontal: 20, marginTop: 4 },
+  doneNowText: { color: colors.white },
+  removeButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  remove: { color: colors.faint },
+  addRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  input: { flex: 1, minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: fieldMinHeight, height: fieldMinHeight, alignItems: 'center', justifyContent: 'center' },
+  addText: { color: colors.white },
   disabled: { opacity: 0.4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: 16, paddingVertical: 6, paddingHorizontal: 12 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
   chipTextOn: { color: colors.white },

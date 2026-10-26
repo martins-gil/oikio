@@ -8,7 +8,7 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 import { formatEuros, localDate, parseEuros } from '@/lib/money';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
@@ -210,46 +210,50 @@ export default function MoneyScreen() {
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
-          <Text style={styles.section}>Nova despesa</Text>
+          <Text variant="section" style={styles.title}>Nova despesa</Text>
+          <Text variant="label" style={styles.label}>Valor</Text>
           <TextInput
             style={[styles.input, styles.amount]}
             value={amount}
             onChangeText={setAmount}
             placeholder="0,00 €"
             keyboardType="decimal-pad"
+            accessibilityLabel="Valor da despesa"
           />
+          <Text variant="label" style={styles.label}>Descrição (opcional)</Text>
           <TextInput
             style={styles.input}
             value={description}
             onChangeText={setDescription}
-            placeholder="Descrição (opcional)"
+            placeholder="Ex.: farmácia"
             returnKeyType="done"
           />
+          <Text variant="label" style={styles.label}>Categoria</Text>
           <View style={styles.chips}>
             {CATEGORIES.map((c) => (
               <Pressable key={c} style={[styles.chip, category === c && styles.chipOn]} onPress={() => setCategory(category === c ? null : c)}>
-                <Text style={[styles.chipText, category === c && styles.chipTextOn]}>{c}</Text>
+                <Text variant="button" style={category === c ? styles.chipTextOn : styles.chipText}>{c}</Text>
               </Pressable>
             ))}
           </View>
           <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>{shared ? 'Partilhada com a casa' : '🔒 Só minha'}</Text>
+            <Text variant="body" style={styles.switchLabel}>{shared ? 'Partilhada com a casa' : '🔒 Só minha'}</Text>
             <Switch value={shared} onValueChange={setShared} />
           </View>
           <Button title={saving ? 'A guardar…' : 'Guardar'} disabled={cents === null || saving} onPress={save} />
         </View>
 
-        <Pressable style={styles.analysisLink} onPress={() => router.push('/analysis')}>
-          <Text style={styles.analysisText}>📈 Análise: onde se perde dinheiro e orçamento sugerido</Text>
+        <Pressable style={styles.analysisLink} onPress={() => router.push('/analysis')} accessibilityRole="button">
+          <Text variant="body" style={styles.analysisText}>📈 Análise: onde se perde dinheiro e orçamento sugerido</Text>
         </Pressable>
 
         <View style={styles.monthRow}>
-          <Pressable hitSlop={12} onPress={() => changeMonth(-1)}>
-            <Text style={styles.arrow}>◀</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mês anterior" style={styles.arrowButton} onPress={() => changeMonth(-1)}>
+            <Text variant="section" style={styles.arrow}>◀</Text>
           </Pressable>
-          <Text style={styles.month}>{monthLabel}</Text>
-          <Pressable hitSlop={12} onPress={() => changeMonth(1)}>
-            <Text style={styles.arrow}>▶</Text>
+          <Text variant="section" style={styles.month}>{monthLabel}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mês seguinte" style={styles.arrowButton} onPress={() => changeMonth(1)}>
+            <Text variant="section" style={styles.arrow}>▶</Text>
           </Pressable>
         </View>
 
@@ -258,8 +262,8 @@ export default function MoneyScreen() {
         ) : (
           <>
             <View style={styles.card}>
-              <Text style={styles.title}>Orçamentos</Text>
-              <Text style={styles.small}>Toca numa categoria para definir quanto queres gastar por mês. Contam as despesas partilhadas.</Text>
+              <Text variant="section" style={styles.title}>Orçamentos</Text>
+              <Text variant="label" style={styles.small}>Toca numa categoria para definir quanto queres gastar por mês. Contam as despesas partilhadas.</Text>
               {CATEGORIES.map((c) => {
                 const budget = budgets.find((b) => b.category === c)?.monthly_cents ?? null;
                 const spent = spentBy.get(c) ?? 0;
@@ -268,13 +272,13 @@ export default function MoneyScreen() {
                   <View key={c} style={styles.budgetBlock}>
                     <Pressable style={styles.budgetRow} onPress={() => openBudget(c)}>
                       <View style={styles.tile}>
-                        <Text style={styles.tileIcon}>{CATEGORY_ICON[c]}</Text>
+                        <Text variant="section" style={styles.tileIcon}>{CATEGORY_ICON[c]}</Text>
                       </View>
                       <View style={styles.flex}>
                         <View style={styles.headRow}>
-                          <Text style={styles.budgetName}>{c}</Text>
-                          <Text style={styles.budgetAmounts}>
-                            <Text style={styles.budgetSpent}>{formatEuros(spent)}</Text>
+                          <Text variant="body" style={styles.budgetName}>{c}</Text>
+                          <Text variant="label" style={styles.budgetAmounts}>
+                            <Text variant="label" style={styles.budgetSpent}>{formatEuros(spent)}</Text>
                             {budget !== null ? ` / ${formatEuros(budget)}` : ''}
                           </Text>
                         </View>
@@ -283,36 +287,35 @@ export default function MoneyScreen() {
                             <View style={[styles.fill, { width: `${Math.min(pct, 100)}%`, backgroundColor: barColor(pct) }]} />
                           )}
                         </View>
-                        <Text style={[styles.small, budget !== null && spent > budget && { color: colors.pink }]}>
+                        <Text variant="label" style={[styles.small, budget !== null && spent > budget && { color: colors.pink }]}>
                           {budget === null
                             ? 'Sem orçamento · toca para definir'
                             : spent > budget
-                              ? `Excedeu em ${formatEuros(spent - budget)}`
+                              ? `⚠ Excedeu em ${formatEuros(spent - budget)}`
                               : `Ainda tens ${formatEuros(budget - spent)}`}
                         </Text>
                       </View>
                     </Pressable>
                     {editing === c && (
                       <View style={styles.editor}>
+                        <Text variant="label" style={styles.label}>Valor por mês</Text>
                         <TextInput
                           style={styles.input}
                           value={budgetText}
                           onChangeText={setBudgetText}
-                          placeholder="Valor por mês, ex. 400"
+                          placeholder="Ex.: 400"
                           keyboardType="decimal-pad"
                           autoFocus
                         />
+                        <Button title={savingBudget ? 'A guardar…' : 'Guardar'} disabled={parseEuros(budgetText) === null || savingBudget} onPress={saveBudget} />
                         <View style={styles.editorBtns}>
-                          <View style={styles.flex}>
-                            <Button title={savingBudget ? 'A guardar…' : 'Guardar'} disabled={parseEuros(budgetText) === null || savingBudget} onPress={saveBudget} />
-                          </View>
                           {budget !== null && (
-                            <Pressable hitSlop={8} onPress={removeBudget}>
-                              <Text style={styles.removeText}>Remover</Text>
+                            <Pressable style={styles.linkRow} onPress={removeBudget}>
+                              <Text variant="body" style={styles.removeText}>Remover orçamento</Text>
                             </Pressable>
                           )}
-                          <Pressable hitSlop={8} onPress={() => setEditing(null)}>
-                            <Text style={styles.cancelText}>Cancelar</Text>
+                          <Pressable style={styles.linkRow} onPress={() => setEditing(null)}>
+                            <Text variant="body" style={styles.cancelText}>Cancelar</Text>
                           </Pressable>
                         </View>
                       </View>
@@ -323,43 +326,43 @@ export default function MoneyScreen() {
             </View>
 
             <View style={styles.headRow}>
-              <Text style={styles.title}>Movimentos</Text>
-              <Text style={styles.small}>
-                {formatEuros(sharedTotal)} partilhadas
-                {privateTotal > 0 ? ` · 🔒 ${formatEuros(privateTotal)}` : ''}
-              </Text>
+              <Text variant="section" style={styles.title}>Movimentos</Text>
             </View>
+            <Text variant="label" style={styles.small}>
+              {formatEuros(sharedTotal)} partilhadas
+              {privateTotal > 0 ? ` · 🔒 ${formatEuros(privateTotal)}` : ''}
+            </Text>
             {byPerson.size > 0 && (
-              <Text style={styles.small}>
+              <Text variant="label" style={styles.small}>
                 {[...byPerson].map(([id, c]) => `${nameOf(id)}: ${formatEuros(c)}`).join(' · ')}
               </Text>
             )}
             <View style={styles.chips}>
               {CATEGORIES.map((c) => (
                 <Pressable key={c} style={[styles.chip, filter === c && styles.chipOn]} onPress={() => setFilter(filter === c ? null : c)}>
-                  <Text style={[styles.chipText, filter === c && styles.chipTextOn]}>{c}</Text>
+                  <Text variant="button" style={filter === c ? styles.chipTextOn : styles.chipText}>{c}</Text>
                 </Pressable>
               ))}
             </View>
 
-            {shown.length === 0 && <Text style={styles.hint}>Sem movimentos neste mês.</Text>}
+            {shown.length === 0 && <Text variant="label" style={styles.hint}>Sem movimentos neste mês.</Text>}
             {shown.map((e) => (
               <View key={e.id} style={styles.row}>
                 <View style={styles.tile}>
-                  <Text style={styles.tileIcon}>{CATEGORY_ICON[e.category ?? 'Outros'] ?? '📦'}</Text>
+                  <Text variant="section" style={styles.tileIcon}>{CATEGORY_ICON[e.category ?? 'Outros'] ?? '📦'}</Text>
                 </View>
                 <View style={styles.rowMain}>
-                  <Text style={styles.rowTitle} numberOfLines={1}>
+                  <Text variant="body" style={styles.rowTitle}>
                     {e.description || e.category || 'Sem descrição'} {!e.is_shared && '🔒'}
                   </Text>
-                  <Text style={styles.small}>
+                  <Text variant="label" style={styles.small}>
                     {[e.category, e.spent_on.split('-').reverse().slice(0, 2).join('/'), nameOf(e.paid_by)].filter(Boolean).join(' · ')}
                   </Text>
                 </View>
-                <Text style={styles.amountOut}>-{formatEuros(e.amount_cents)}</Text>
+                <Text variant="body" style={styles.amountOut}>-{formatEuros(e.amount_cents)}</Text>
                 {e.paid_by === me && (
-                  <Pressable hitSlop={12} onPress={() => askDelete(e)}>
-                    <Text style={styles.remove}>✕</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Apagar despesa" style={styles.removeButton} onPress={() => askDelete(e)}>
+                    <Text variant="section" style={styles.remove}>✕</Text>
                   </Pressable>
                 )}
               </View>
@@ -374,55 +377,48 @@ export default function MoneyScreen() {
 }
 
 const styles = StyleSheet.create({
-  analysisLink: { borderRadius: radius.card, padding: 14, backgroundColor: colors.lavender },
-  analysisText: { color: colors.primary, fontSize: 15 },
+  analysisLink: { minHeight: 56, justifyContent: 'center', borderRadius: radius.card, padding: spacing.sm, backgroundColor: colors.lavender },
+  analysisText: { color: colors.primary },
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 14, paddingBottom: 100 },
-  card: { gap: 12, borderRadius: radius.card, padding: 16, backgroundColor: colors.card, ...shadow },
-  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase' },
-  title: { fontSize: 20, color: colors.ink },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 100 },
+  card: { gap: 12, borderRadius: radius.card, padding: spacing.sm, backgroundColor: colors.card, ...shadow },
+  title: { color: colors.ink },
+  label: { color: colors.muted, marginBottom: -6 },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, fontSize: 16, color: colors.ink },
-  amount: { fontSize: 28, textAlign: 'center' },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  amount: { textAlign: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
   chipTextOn: { color: colors.white },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  switchLabel: { fontSize: 16, color: colors.ink },
-  monthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8 },
-  arrow: { fontSize: 20, color: colors.primary },
-  month: { fontSize: 20, color: colors.ink, textTransform: 'capitalize' },
-  small: { color: colors.muted, fontSize: 12 },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, minHeight: 48 },
+  switchLabel: { flex: 1, color: colors.ink },
+  monthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  arrowButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  arrow: { color: colors.primary },
+  month: { color: colors.ink, textTransform: 'capitalize', flexShrink: 1, textAlign: 'center' },
+  small: { color: colors.muted },
   hint: { color: colors.muted, textAlign: 'center' },
-  addBtn: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
-  addBtnText: { color: colors.ink, fontSize: 14 },
-  editor: { gap: 10, backgroundColor: colors.bg, borderRadius: 14, padding: 12 },
-  editorBtns: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  editor: { gap: 12, backgroundColor: colors.panel, borderRadius: radius.card, padding: spacing.sm },
+  editorBtns: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 20 },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
   removeText: { color: colors.pink },
   cancelText: { color: colors.muted },
   budgetBlock: { gap: 8 },
-  budgetRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  tile: { width: 46, height: 46, borderRadius: 12, backgroundColor: colors.lavender, alignItems: 'center', justifyContent: 'center' },
-  tileIcon: { fontSize: 22 },
-  budgetName: { fontSize: 15, color: colors.ink },
-  budgetAmounts: { fontSize: 13, color: colors.faint },
+  budgetRow: { flexDirection: 'row', gap: 12, alignItems: 'center', minHeight: 64 },
+  tile: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.lavender, alignItems: 'center', justifyContent: 'center' },
+  tileIcon: { color: colors.ink },
+  budgetName: { color: colors.ink, flexShrink: 1 },
+  budgetAmounts: { color: colors.muted },
   budgetSpent: { color: colors.ink },
   track: { height: 10, borderRadius: 5, backgroundColor: colors.bg, marginVertical: 5, overflow: 'hidden' },
   fill: { height: 10, borderRadius: 5 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    borderRadius: 14,
-    backgroundColor: colors.card,
-    ...shadow,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 64, padding: 12, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   rowMain: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: 15, color: colors.ink },
-  amountOut: { fontSize: 15, color: colors.ink },
-  remove: { fontSize: 18, color: colors.faint },
+  rowTitle: { color: colors.ink },
+  amountOut: { color: colors.ink },
+  removeButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  remove: { color: colors.faint },
 });
