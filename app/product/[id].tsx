@@ -39,6 +39,7 @@ export default function ProductScreen() {
   const [sizeUnit, setSizeUnit] = useState<'g' | 'ml'>('g');
   const { showExpiry } = useShowExpiry();
   const router = useRouter();
+  const [more, setMore] = useState(false); // «Mais»: mínimo, unidade e tamanho, local, essencial, deitei fora
   const [usedIn, setUsedIn] = useState<{ task_id: string; title: string; quantity: number }[]>([]); // tarefas que gastam este produto
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -179,6 +180,16 @@ export default function ProductScreen() {
   const removeFromList = () =>
     run(() => supabase.from('shopping_list_items').delete().eq('id', listItemId!), 'Não foi possível tirar da lista.');
 
+  // Estado rápido (produtos contados): Tenho / A acabar / Acabou
+  const markHave = () => product && product.total <= 0 && plus();
+  const markLow = () => !listItemId && addToList();
+  const markOut = () =>
+    run(async () => {
+      const used = await supabase.rpc('consume_product', { p_product: id, p_qty: Number(product!.total), p_reason: 'adjustment' });
+      if (used.error) return used;
+      return listItemId ? { error: null } : supabase.rpc('add_to_shopping_list', { p_household: household!.id, p_product: id });
+    }, 'Não foi possível registar.');
+
   if (!product) {
     return (
       <View style={styles.center}>
@@ -218,6 +229,19 @@ export default function ProductScreen() {
           </>
         ) : (
           <>
+            <View style={styles.statusRow}>
+              {([
+                { key: 'have', label: 'Tenho', color: LEVEL_COLOR.full, on: product.total > 0 && !product.below_min, onPress: markHave },
+                { key: 'low', label: 'A acabar', color: LEVEL_COLOR.half, on: product.total > 0 && product.below_min, onPress: markLow },
+                { key: 'out', label: 'Acabou', color: LEVEL_COLOR.low, on: product.total <= 0, onPress: markOut },
+              ] as const).map((o) => (
+                <Pressable key={o.key} disabled={busy} style={[styles.statusChip, { borderColor: o.color }, o.on && { backgroundColor: o.color }]} onPress={o.onPress}>
+                  <Text style={[styles.statusText, { color: o.on ? '#fff' : o.color }]}>{o.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={styles.essentialHint}>«A acabar» põe o produto na lista de compras; «Acabou» zera o stock e põe-no na lista.</Text>
+
             <Text style={styles.label}>Em stock</Text>
             <View style={styles.stepper}>
               <Pressable
@@ -234,24 +258,51 @@ export default function ProductScreen() {
               </Pressable>
             </View>
 
-            <Text style={styles.label}>Avisar quando houver menos de</Text>
-            <View style={styles.stepper}>
-              <Pressable
-                style={[styles.stepButtonSmall, (busy || product.min_stock <= 0) && styles.disabled]}
-                disabled={busy || product.min_stock <= 0}
-                onPress={() => changeMin(-1)}>
-                <Text style={styles.stepText}>−</Text>
-              </Pressable>
-              <Text style={styles.mid}>
-                {product.min_stock > 0 ? formatAmount(product.min_stock, product.base_unit) : 'não avisar'}
-              </Text>
-              <Pressable style={[styles.stepButtonSmall, busy && styles.disabled]} disabled={busy} onPress={() => changeMin(1)}>
-                <Text style={styles.stepText}>+</Text>
-              </Pressable>
-            </View>
           </>
         )}
 
+        <View style={styles.usedBox}>
+          <Text style={styles.essentialTitle}>Usado em</Text>
+          {usedIn.length === 0 ? (
+            <Text style={styles.essentialHint}>Nenhuma tarefa gasta este produto. Numa tarefa, em «Gasta produtos», podes ligá-lo: ao marcá-la como feita, desconta daqui.</Text>
+          ) : (
+            usedIn.map((u) => (
+              <Pressable key={u.task_id} onPress={() => router.push({ pathname: '/task/[id]', params: { id: u.task_id } })}>
+                <Text style={styles.linkText}>
+                  {u.title} · {formatAmount(u.quantity, product.base_unit)}
+                </Text>
+              </Pressable>
+            ))
+          )}
+        </View>
+
+        {showExpiry && <ExpiryCard productId={id} refreshKey={product.total} onMessage={setToast} />}
+
+        <Pressable onPress={() => setMore(!more)}>
+          <Text style={styles.linkText}>{more ? '▲ Menos' : '▼ Mais (mínimo, unidade e tamanho, local, essencial…)'}</Text>
+        </Pressable>
+
+        {more && (
+          <>
+            {!isLevel && (
+              <>
+                <Text style={styles.label}>Avisar quando houver menos de</Text>
+                <View style={styles.stepper}>
+                  <Pressable
+                    style={[styles.stepButtonSmall, (busy || product.min_stock <= 0) && styles.disabled]}
+                    disabled={busy || product.min_stock <= 0}
+                    onPress={() => changeMin(-1)}>
+                    <Text style={styles.stepText}>−</Text>
+                  </Pressable>
+                  <Text style={styles.mid}>
+                    {product.min_stock > 0 ? formatAmount(product.min_stock, product.base_unit) : 'não avisar'}
+                  </Text>
+                  <Pressable style={[styles.stepButtonSmall, busy && styles.disabled]} disabled={busy} onPress={() => changeMin(1)}>
+                    <Text style={styles.stepText}>+</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
         <Text style={styles.label}>Unidade e tamanho</Text>
         {product.base_unit === 'un' ? (
           <View style={styles.sizeBox}>
@@ -329,23 +380,8 @@ export default function ProductScreen() {
             <Text style={styles.linkText}>🗑️ Deitei fora</Text>
           </Pressable>
         ) : null}
-
-        <View style={styles.usedBox}>
-          <Text style={styles.essentialTitle}>Usado em</Text>
-          {usedIn.length === 0 ? (
-            <Text style={styles.essentialHint}>Nenhuma tarefa gasta este produto. Numa tarefa, em «Gasta produtos», podes ligá-lo: ao marcá-la como feita, desconta daqui.</Text>
-          ) : (
-            usedIn.map((u) => (
-              <Pressable key={u.task_id} onPress={() => router.push({ pathname: '/task/[id]', params: { id: u.task_id } })}>
-                <Text style={styles.linkText}>
-                  {u.title} · {formatAmount(u.quantity, product.base_unit)}
-                </Text>
-              </Pressable>
-            ))
-          )}
-        </View>
-
-        {showExpiry && <ExpiryCard productId={id} refreshKey={product.total} onMessage={setToast} />}
+          </>
+        )}
 
         <View style={styles.spacer} />
         {listItemId ? (
@@ -368,6 +404,9 @@ const styles = StyleSheet.create({
   sizeInput: { minWidth: 84, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: '#fff', padding: 10, fontSize: 17, textAlign: 'center', color: colors.ink },
   linkText: { color: colors.primary },
   usedBox: { gap: 4, marginTop: 8 },
+  statusRow: { flexDirection: 'row', gap: 8 },
+  statusChip: { flex: 1, borderWidth: 2, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
+  statusText: { fontSize: 16, fontWeight: '600' },
   discard: { alignSelf: 'flex-start', paddingVertical: 8 },
   places: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   place: { borderWidth: 1, borderColor: colors.primary, borderRadius: 14, paddingVertical: 6, paddingHorizontal: 12 },
