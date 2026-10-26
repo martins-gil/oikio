@@ -11,8 +11,8 @@ export function HouseSwitcher() {
   const { household } = useHousehold();
   if (!household) return null;
   return (
-    <Pressable style={styles.pill} hitSlop={8} onPress={() => router.push('/houses')} accessibilityLabel="Mudar de casa">
-      <Text style={styles.pillText} numberOfLines={1}>
+    <Pressable style={styles.pill} onPress={() => router.push('/houses')} accessibilityLabel="Mudar de casa">
+      <Text variant="label" style={styles.pillText} numberOfLines={1}>
         🏠 {household.name} ▾
       </Text>
     </Pressable>
@@ -20,6 +20,6 @@ export function HouseSwitcher() {
 }
 
 const styles = StyleSheet.create({
-  pill: { alignSelf: 'flex-start', maxWidth: '78%', marginBottom: 10, borderRadius: 16, paddingVertical: 5, paddingHorizontal: 12, backgroundColor: colors.onPrimarySoft },
-  pillText: { color: colors.white, fontSize: 14 },
+  pill: { alignSelf: 'flex-start', maxWidth: '78%', marginBottom: 10, minHeight: 44, justifyContent: 'center', borderRadius: 22, paddingVertical: 6, paddingHorizontal: 16, backgroundColor: colors.onPrimarySoft },
+  pillText: { color: colors.white },
 });

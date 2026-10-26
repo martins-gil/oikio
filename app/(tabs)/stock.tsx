@@ -20,7 +20,7 @@ import {
   type StockRow,
 } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 export default function StockScreen() {
   const router = useRouter();
@@ -117,23 +117,24 @@ export default function StockScreen() {
           placeholder="Novo produto (ex.: pilhas)"
           returnKeyType="done"
           onSubmitEditing={addProduct}
+          accessibilityLabel="Novo produto"
         />
-        <Pressable style={[styles.addButton, !name.trim() && styles.disabled]} disabled={!name.trim()} onPress={addProduct}>
-          <Text style={styles.addText}>+</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Juntar produto" style={[styles.addButton, !name.trim() && styles.disabled]} disabled={!name.trim()} onPress={addProduct}>
+          <Text variant="section" style={styles.addText}>+</Text>
         </Pressable>
       </View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text variant="label" style={styles.error}>{error}</Text>}
 
       {stock !== null && stock.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
           <Pressable style={[styles.chip, filter === null && styles.chipOn]} onPress={() => setFilter(null)}>
-            <Text style={[styles.chipText, filter === null && styles.chipTextOn]}>Tudo ({stock.length})</Text>
+            <Text variant="button" style={filter === null ? styles.chipTextOn : styles.chipText}>Tudo ({stock.length})</Text>
           </Pressable>
           {PLACES.map((pl) => {
             const count = stock.filter((p) => placeOf(p.location) === pl.key).length;
             return (
               <Pressable key={pl.key} style={[styles.chip, filter === pl.key && styles.chipOn]} onPress={() => setFilter(pl.key)}>
-                <Text style={[styles.chipText, filter === pl.key && styles.chipTextOn]}>
+                <Text variant="button" style={filter === pl.key ? styles.chipTextOn : styles.chipText}>
                   {pl.emoji} {pl.label} ({count})
                 </Text>
               </Pressable>
@@ -145,44 +146,44 @@ export default function StockScreen() {
       {stock === null ? (
         <ActivityIndicator />
       ) : stock.length === 0 ? (
-        <Text style={styles.hint}>Ainda não tens produtos.</Text>
+        <Text variant="label" style={styles.hint}>Ainda não tens produtos.</Text>
       ) : (
         PLACES.filter((pl) => filter === null || filter === pl.key).map((pl) => {
           const items = stock.filter((p) => placeOf(p.location) === pl.key);
           if (items.length === 0 && filter === null) return null;
           return (
             <View key={pl.key} style={styles.section}>
-              <Text style={styles.sectionTitle}>
+              <Text variant="section" style={styles.sectionTitle}>
                 {pl.emoji} {pl.label}
               </Text>
-              {items.length === 0 && <Text style={styles.hint}>Nada aqui. Escreve um produto em cima e fica nesta secção.</Text>}
+              {items.length === 0 && <Text variant="label" style={styles.hint}>Nada aqui. Escreve um produto em cima e fica nesta secção.</Text>}
               {items.map((p) => (
-                <Pressable key={p.product_id} style={styles.item} onPress={() => open(p.product_id)}>
-                  <Text style={styles.itemName}>{p.name}</Text>
-                  <Text
-                    style={[
-                      styles.itemValue,
-                      { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : colors.ink },
-                    ]}>
-                    {p.tracking_mode === 'level' && p.level ? LEVEL_LABEL[p.level] : formatAmount(p.total, p.base_unit)}
-                    {p.below_min ? '  🛒' : ''}
-                  </Text>
-                  <Pressable hitSlop={12} onPress={() => askDelete(p)}>
-                    <Text style={styles.remove}>✕</Text>
+                <View key={p.product_id} style={styles.item}>
+                  <Pressable style={styles.itemMain} onPress={() => open(p.product_id)}>
+                    <Text variant="body" style={styles.itemName}>{p.name}</Text>
+                    <Text
+                      variant="label"
+                      style={[
+                        styles.itemValue,
+                        { color: p.tracking_mode === 'level' && p.level ? LEVEL_COLOR[p.level] : colors.ink },
+                      ]}>
+                      {p.tracking_mode === 'level' && p.level ? LEVEL_LABEL[p.level] : formatAmount(p.total, p.base_unit)}
+                      {p.below_min ? '  🛒' : ''}
+                    </Text>
                   </Pressable>
-                </Pressable>
+                  <Pressable accessibilityRole="button" accessibilityLabel={`Apagar ${p.name}`} style={styles.removeButton} onPress={() => askDelete(p)}>
+                    <Text variant="section" style={styles.remove}>✕</Text>
+                  </Pressable>
+                </View>
               ))}
             </View>
           );
         })
       )}
-      {showExpiry && <Button title="⏳ Validades" variant="secondary" onPress={() => router.push('/expiry')} />}
-      {hasModule('meals') && <Button title="🍽️ O que cozinhar?" onPress={() => router.push('/meals')} />}
-      {hasModule('meals') && <Button title="Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />}
       {offerMeals && (
         <View style={styles.offer}>
-          <Text style={styles.offerTitle}>🍽️ Ideias para cozinhar com o que tens?</Text>
-          <Text style={styles.offerText}>Liga o módulo Refeições: a IA sugere receitas com o teu stock. Podes desligar quando quiseres em Casa → Módulos.</Text>
+          <Text variant="button" style={styles.offerTitle}>🍽️ Ideias para cozinhar com o que tens?</Text>
+          <Text variant="label" style={styles.offerText}>Liga o módulo Refeições: a IA sugere receitas com o teu stock. Podes desligar quando quiseres em Casa → Módulos.</Text>
           <View style={styles.offerRow}>
             <View style={styles.offerBtn}>
               <Button title="Agora não" variant="secondary" onPress={() => answerOffer(false)} />
@@ -193,42 +194,46 @@ export default function StockScreen() {
           </View>
         </View>
       )}
-      <Button title="Escolher dos sugeridos" variant="secondary" onPress={() => router.push(filter ? { pathname: '/onboarding', params: { place: filter } } : '/onboarding')} />
+      <Button title="Escolher dos sugeridos" onPress={() => router.push(filter ? { pathname: '/onboarding', params: { place: filter } } : '/onboarding')} />
+      {showExpiry && <Button title="⏳ Validades" variant="secondary" onPress={() => router.push('/expiry')} />}
+      {hasModule('meals') && <Button title="🍽️ O que cozinhar?" variant="secondary" onPress={() => router.push('/meals')} />}
+      {hasModule('meals') && (
+        <Pressable style={styles.linkRow} onPress={() => router.push('/kitchen')}>
+          <Text variant="button" style={styles.linkText}>Perfil de cozinha</Text>
+        </Pressable>
+      )}
     </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 10 },
-  offer: { gap: 8, padding: 14, borderRadius: radius.card, backgroundColor: colors.lavender },
-  offerTitle: { fontSize: 16, color: colors.ink },
-  offerText: { fontSize: 13, color: colors.muted },
-  offerRow: { flexDirection: 'row', gap: 10 },
-  offerBtn: { flex: 1 },
-  addRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
-  addText: { color: colors.white, fontSize: 26, fontWeight: '600' },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  offer: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.lavender },
+  offerTitle: { color: colors.ink },
+  offerText: { color: colors.muted },
+  offerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  offerBtn: { flexGrow: 1, flexBasis: 130 },
+  addRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  input: { flex: 1, minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: fieldMinHeight, height: fieldMinHeight, alignItems: 'center', justifyContent: 'center' },
+  addText: { color: colors.white },
   disabled: { opacity: 0.4 },
   filters: { gap: 8, paddingVertical: 2 },
-  chip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 12 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
   chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   chipText: { color: colors.primary },
   chipTextOn: { color: colors.white },
-  section: { gap: 8, marginTop: 6 },
-  sectionTitle: { fontSize: 18, color: colors.ink },
+  section: { gap: 8, marginTop: 8 },
+  sectionTitle: { color: colors.ink },
   hint: { color: colors.muted },
   error: { color: colors.pink },
-  item: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: radius.card, ...shadow,
-    backgroundColor: colors.white,
-  },
-  itemName: { fontSize: 17, flexShrink: 1, flex: 1 },
-  remove: { fontSize: 18, color: colors.faint, paddingLeft: 12 },
-  itemValue: { fontSize: 15, fontWeight: '600' },
+  linkRow: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
+  linkText: { color: colors.primary },
+  item: { flexDirection: 'row', alignItems: 'center', minHeight: 64, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
+  itemMain: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: 12, rowGap: 2, paddingVertical: 12, paddingLeft: 16 },
+  itemName: { flexShrink: 1, color: colors.ink },
+  itemValue: { fontFamily: undefined },
+  removeButton: { width: 48, height: 48, marginRight: 4, alignItems: 'center', justifyContent: 'center' },
+  remove: { color: colors.faint },
 });

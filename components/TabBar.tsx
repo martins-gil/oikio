@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/Text';
 import { useModules, type ModuleKey } from '@/lib/settings';
-import { colors, fonts, shadow } from '@/lib/theme';
+import { colors, shadow } from '@/lib/theme';
 
 // Separadores que só aparecem se a pessoa ligou o módulo (o núcleo — Resumo, Compras, Produtos — está sempre)
 const MODULE_TAB: Partial<Record<string, ModuleKey>> = { money: 'money', personal: 'personal' };
@@ -43,13 +43,15 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
           return (
             <Pressable
               key={route.key}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: focused }}
               style={[styles.item, focused && styles.itemOn]}
               onPress={() => {
                 const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
                 if (!focused && !event.defaultPrevented) navigateToTab(route.key);
               }}>
               <Image source={focused ? icon.on : icon.off} style={styles.icon} resizeMode="contain" />
-              <Text style={[styles.label, focused && styles.labelOn]} numberOfLines={1}>
+              <Text variant="label" style={[styles.label, focused && styles.labelOn]} numberOfLines={1}>
                 {LABELS[key]}
               </Text>
             </Pressable>
@@ -63,9 +65,9 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   wrap: { backgroundColor: colors.bg, paddingHorizontal: 12, paddingTop: 6 },
   bar: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: colors.white, borderRadius: 26, paddingVertical: 8, paddingHorizontal: 6, ...shadow, shadowOpacity: 0.16, shadowRadius: 14 },
-  item: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 6, marginHorizontal: 2, borderRadius: 18 },
+  item: { flex: 1, minHeight: 64, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 6, marginHorizontal: 2, borderRadius: 20 },
   itemOn: { backgroundColor: colors.lavender },
   icon: { width: 28, height: 28 },
-  label: { fontSize: 10.5, color: colors.faint, fontFamily: fonts.body },
+  label: { color: colors.muted, textAlign: 'center' },
   labelOn: { color: colors.primary },
 });

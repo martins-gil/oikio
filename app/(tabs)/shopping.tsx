@@ -10,7 +10,7 @@ import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { formatAmount, stepFor, type ShopItem } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 const itemName = (i: ShopItem) => i.products?.name ?? i.free_text ?? '';
 
@@ -145,62 +145,61 @@ export default function ShoppingScreen() {
           placeholder="Adicionar à lista (ex.: pilhas)"
           returnKeyType="done"
           onSubmitEditing={add}
+          accessibilityLabel="Adicionar à lista"
         />
-        <Pressable style={[styles.addButton, !text.trim() && styles.disabled]} disabled={!text.trim()} onPress={add}>
-          <Text style={styles.addText}>+</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Adicionar" style={[styles.addButton, !text.trim() && styles.disabled]} disabled={!text.trim()} onPress={add}>
+          <Text variant="section" style={styles.addText}>+</Text>
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
-        <Button title="🧾 Registar compra" variant="secondary" onPress={() => router.push('/receipt')} />
-        {open.length === 0 && <Text style={styles.empty}>Nada por comprar 🎉</Text>}
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {open.length === 0 && <Text variant="section" style={styles.empty}>Nada por comprar 🎉</Text>}
         {open.map((i) => {
           const unit = unitOf(i);
           const isEditing = editing === i.id;
           return (
             <View key={i.id} style={styles.item}>
               <View style={styles.row}>
-                <Pressable style={styles.check} hitSlop={6} onPress={() => buy(i)} accessibilityLabel="Marcar como comprado">
-                  <Text style={styles.circle}>⚪</Text>
+                <Pressable style={styles.check} onPress={() => buy(i)} accessibilityRole="button" accessibilityLabel={`Marcar ${itemName(i)} como comprado`}>
+                  <View style={styles.circle} />
                 </Pressable>
                 <Pressable style={styles.rowMain} onPress={() => openEditor(i)}>
                   <View style={styles.rowText}>
-                    <Text style={styles.name}>{itemName(i)}</Text>
-                    <Text style={styles.detail}>{itemDetail(i) ?? 'Toca para definir a quantidade'}</Text>
+                    <Text variant="body" style={styles.name}>{itemName(i)}</Text>
+                    <Text variant="label" style={styles.detail}>{itemDetail(i) ?? 'Toca para definir a quantidade'}</Text>
                   </View>
                 </Pressable>
-                <Pressable hitSlop={12} onPress={() => remove(i)}>
-                  <Text style={styles.remove}>✕</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Tirar ${itemName(i)} da lista`} style={styles.removeButton} onPress={() => remove(i)}>
+                  <Text variant="section" style={styles.remove}>✕</Text>
                 </Pressable>
               </View>
               {isEditing && (
                 <View style={styles.editor}>
-                  {!i.product_id && <TextInput style={styles.editInput} value={nameText} onChangeText={setNameText} placeholder="Nome" />}
+                  {!i.product_id && <TextInput style={styles.editInput} value={nameText} onChangeText={setNameText} placeholder="Nome" accessibilityLabel="Nome" />}
                   <View style={styles.qtyRow}>
-                    <Pressable style={styles.step} onPress={() => setQtyText(toText(Math.max(0, (num(qtyText) || 0) - stepFor(unitSel ?? 'un'))))}>
-                      <Text style={styles.stepText}>−</Text>
+                    <Pressable accessibilityRole="button" accessibilityLabel="Menos" style={styles.step} onPress={() => setQtyText(toText(Math.max(0, (num(qtyText) || 0) - stepFor(unitSel ?? 'un'))))}>
+                      <Text variant="section" style={styles.stepText}>−</Text>
                     </Pressable>
-                    <TextInput style={[styles.editInput, styles.qtyInput]} value={qtyText} onChangeText={setQtyText} keyboardType="decimal-pad" placeholder="Quantidade" />
-                    <Pressable style={styles.step} onPress={() => setQtyText(toText((num(qtyText) || 0) + stepFor(unitSel ?? 'un')))}>
-                      <Text style={styles.stepText}>＋</Text>
+                    <TextInput style={[styles.editInput, styles.qtyInput]} value={qtyText} onChangeText={setQtyText} keyboardType="decimal-pad" placeholder="Qtd." accessibilityLabel="Quantidade" />
+                    <Pressable accessibilityRole="button" accessibilityLabel="Mais" style={styles.step} onPress={() => setQtyText(toText((num(qtyText) || 0) + stepFor(unitSel ?? 'un')))}>
+                      <Text variant="section" style={styles.stepText}>＋</Text>
                     </Pressable>
-                    {i.product_id ? (
-                      <Text style={styles.detail}>{unit}</Text>
-                    ) : (
-                      <View style={styles.unitRow}>
-                        {UNIT_CHOICES.map((u) => (
-                          <Pressable key={u} style={[styles.unitChip, unitSel === u && styles.unitChipOn]} onPress={() => setUnitSel(u)}>
-                            <Text style={[styles.unitText, unitSel === u && styles.unitTextOn]}>{u}</Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    )}
+                    {i.product_id && <Text variant="body" style={styles.detail}>{unit}</Text>}
                   </View>
+                  {!i.product_id && (
+                    <View style={styles.unitRow}>
+                      {UNIT_CHOICES.map((u) => (
+                        <Pressable key={u} style={[styles.unitChip, unitSel === u && styles.unitChipOn]} onPress={() => setUnitSel(u)}>
+                          <Text variant="button" style={unitSel === u ? styles.unitTextOn : styles.unitText}>{u}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
                   <View style={styles.editButtons}>
-                    <View style={styles.flex}>
+                    <View style={styles.editButton}>
                       <Button title="Cancelar" variant="secondary" onPress={() => setEditing(null)} />
                     </View>
-                    <View style={styles.flex}>
+                    <View style={styles.editButton}>
                       <Button title="Guardar" onPress={() => saveEdit(i)} />
                     </View>
                   </View>
@@ -212,24 +211,27 @@ export default function ShoppingScreen() {
 
         {bought.length > 0 && (
           <View style={styles.group}>
-            <Text style={styles.section}>Comprado hoje</Text>
+            <Text variant="section" style={styles.section}>Comprado hoje</Text>
             {bought.map((i) => (
               <View key={i.id} style={[styles.row, styles.rowDone]}>
                 <View style={[styles.rowMain, styles.rowMainDone]}>
-                  <Text style={styles.circle}>✅</Text>
+                  <Text variant="section" style={styles.doneMark}>✅</Text>
                   <View style={styles.rowText}>
-                    <Text style={[styles.name, styles.strike]}>{itemName(i)}</Text>
-                    {itemDetail(i) && <Text style={styles.detail}>{itemDetail(i)}</Text>}
+                    <Text variant="body" style={[styles.name, styles.strike]}>{itemName(i)}</Text>
+                    {itemDetail(i) && <Text variant="label" style={styles.detail}>{itemDetail(i)}</Text>}
                   </View>
                 </View>
-                <Pressable hitSlop={12} onPress={() => remove(i)}>
-                  <Text style={styles.remove}>✕</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Tirar ${itemName(i)} da lista`} style={styles.removeButton} onPress={() => remove(i)}>
+                  <Text variant="section" style={styles.remove}>✕</Text>
                 </Pressable>
               </View>
             ))}
           </View>
         )}
       </ScrollView>
+      <View style={styles.footer}>
+        <Button title="🧾 Registar compra" variant="secondary" onPress={() => router.push('/receipt')} />
+      </View>
       <Toast message={toast} onHide={hideToast} />
     </View>
     </Screen>
@@ -239,44 +241,41 @@ export default function ShoppingScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  addRow: { flexDirection: 'row', gap: 8, padding: 16, paddingBottom: 4 },
-  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 12, fontSize: 16 },
-  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },
-  addText: { color: colors.white, fontSize: 26, fontWeight: '600' },
+  addRow: { flexDirection: 'row', gap: 8, alignItems: 'center', padding: spacing.md, paddingBottom: 4 },
+  input: { flex: 1, minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  addButton: { backgroundColor: colors.primary, borderRadius: radius.button, width: fieldMinHeight, height: fieldMinHeight, alignItems: 'center', justifyContent: 'center' },
+  addText: { color: colors.white },
   disabled: { opacity: 0.4 },
-  container: { padding: 16, gap: 8, paddingBottom: 80 },
-  empty: { textAlign: 'center', fontSize: 18, marginTop: 24 },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  footer: { padding: spacing.md, paddingTop: spacing.sm, backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.border },
+  empty: { textAlign: 'center', color: colors.ink, marginTop: 24 },
   group: { gap: 8, marginTop: 16 },
-  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase' },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingRight: 16,
-    borderRadius: radius.card, ...shadow,
-    backgroundColor: colors.white,
-  },
-  rowDone: { opacity: 0.55 },
-  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 16 },
+  section: { color: colors.ink },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 64, paddingLeft: 8, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
+  rowDone: { opacity: 0.6 },
+  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   item: { gap: 0 },
-  rowMainDone: { paddingLeft: 16 },
-  check: { paddingLeft: 16, paddingRight: 4, paddingVertical: 14 },
-  editor: { gap: 10, padding: 14, marginTop: -6, borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card, backgroundColor: colors.bg },
-  editInput: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 10, fontSize: 16, color: colors.ink },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  qtyInput: { minWidth: 90, textAlign: 'center' },
-  step: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: colors.white, fontSize: 22, lineHeight: 26 },
-  unitRow: { flexDirection: 'row', gap: 6 },
-  unitChip: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.chip, paddingVertical: 6, paddingHorizontal: 10 },
+  rowMainDone: { paddingLeft: 8 },
+  check: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  circle: { width: 32, height: 32, borderRadius: 16, borderWidth: 3, borderColor: colors.primary, backgroundColor: colors.white },
+  doneMark: { color: colors.success },
+  editor: { gap: 12, padding: spacing.sm, marginTop: -6, borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card, backgroundColor: colors.panel },
+  editInput: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  qtyRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  qtyInput: { minWidth: 100, textAlign: 'center' },
+  step: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: colors.white },
+  unitRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  unitChip: { minHeight: 48, minWidth: 56, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: colors.white },
   unitChipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
   unitText: { color: colors.primary },
   unitTextOn: { color: colors.white },
-  editButtons: { flexDirection: 'row', gap: 10 },
-  circle: { fontSize: 24 },
+  editButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  editButton: { flexGrow: 1, flexBasis: 130 },
   rowText: { flex: 1, gap: 2 },
-  name: { fontSize: 18, flexShrink: 1 },
-  detail: { color: colors.muted, fontSize: 14 },
+  name: { flexShrink: 1, color: colors.ink },
+  detail: { color: colors.muted },
   strike: { textDecorationLine: 'line-through' },
-  remove: { fontSize: 18, color: colors.faint },
+  removeButton: { width: 48, height: 48, marginRight: 4, alignItems: 'center', justifyContent: 'center' },
+  remove: { color: colors.faint },
 });
