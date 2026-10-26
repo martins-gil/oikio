@@ -82,7 +82,9 @@ begin
   perform pg_temp.assert_eq('U2 de 4 em 4 dias, feita há 2 → 0,50', (select v from res where k = 'u_i4 de 4 em 4 dias'), '0.50|2');
   perform pg_temp.assert_eq('U3 sem frequência: sem ratio, com dias', (select v from res where k = 'u_sem frequência'), 'null|3');
   perform pg_temp.assert_eq('U4 nunca feita: sem ratio nem dias', (select v from res where k = 'u_nunca feita'), 'null|null');
-  perform pg_temp.assert_eq('U5 diária feita há 12 horas → 0,50', (select v from res where k = 'u_diária'), '0.50|0');
+  -- «há 12 horas» pode ser ontem ou hoje (em dias de Lisboa), conforme a hora a que o teste corre
+  perform pg_temp.assert_eq('U5 diária feita há 12 horas → 0,50', (select v from res where k = 'u_diária'),
+    '0.50|' || ((now() at time zone 'Europe/Lisbon')::date - ((now() - interval '12 hours') at time zone 'Europe/Lisbon')::date)::text);
   perform pg_temp.assert_eq('U6 quem fez a última vez', (select v from res where k = 'u_by'), B::text);
   perform pg_temp.assert_eq('U7 as tarefas pessoais não entram (5 partilhadas)', (select v from res where k = 'u_count_a'), '5');
   perform pg_temp.assert_eq('U8 o parceiro também não vê a pessoal', (select v from res where k = 'u_count_b'), '0');
