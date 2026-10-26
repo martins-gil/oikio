@@ -12,8 +12,14 @@
 - `expiry_overview(casa)`: a lista do ecrã «Validades», dos mais urgentes para os menos.
 - Os dados são partilhados pela casa; só a **apresentação** depende da definição pessoal de cada pessoa. As funções recusam quem não é membro; a tabela de referência só se lê.
 
+## Lembretes de validade
+- O **primeiro lembrete do dia** (o das 9h por defeito) acrescenta uma linha, por exemplo «Validade: Ovos (passou há 2 dias), Iogurte (hoje), Queijo (amanhã) e mais 2» (máx. 3 nomes). O segundo lembrete não repete.
+- Só para quem tem ligado **«Mostrar validades sugeridas»** (definição pessoal) e não desligou **«Avisar de validades»** (Casa → Horas dos lembretes; aparece só com as validades ligadas). Quem não usa validades não recebe nada novo.
+- Só entram produtos **com stock** e **prazo conhecido** (FoodKeeper ou data impressa), a menos de 3 dias do fim ou que passaram há menos de 3 dias; nada se inventa nem se repete para sempre. Se não houver mais nada a dizer, não há lembrete.
+- Por baixo: `expiry_for_reminder()` (só o servidor a chama) e `product_expiry_core()` (a mesma conta de `product_expiry()`, sem a verificação de sessão, que a pública continua a fazer). Preferência: `notification_prefs.expiry`.
+
 ## Fora deste passo
-Lembretes de validade, validades no plano de refeições e prazos das marmitas congeladas (já há dados de congelador na tabela).
+Validades no plano de refeições e prazos das marmitas congeladas (já há dados de congelador na tabela).
 
 ## Testes
-`supabase/tests/shelf_life.sql` (34 verificações, com os dados reais do FoodKeeper).
+`supabase/tests/shelf_life.sql` (34 verificações, com os dados reais do FoodKeeper) e `supabase/tests/expiry_reminders.sql` (12: quem recebe, texto, só no primeiro lembrete, preferências, privacidade).

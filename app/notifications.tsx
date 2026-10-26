@@ -16,6 +16,7 @@ import {
   type PushStatus,
 } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
+import { useShowExpiry } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow, spacing } from '@/lib/theme';
 
@@ -38,6 +39,7 @@ function HourPicker({ value, onChange }: { value: number; onChange: (h: number) 
 export default function NotificationsScreen() {
   const { session } = useSession();
   const me = session?.user.id;
+  const { showExpiry } = useShowExpiry();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [status, setStatus] = useState<PushStatus | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -91,6 +93,17 @@ export default function NotificationsScreen() {
             </View>
             {prefs.hour_second !== null && <HourPicker value={prefs.hour_second} onChange={(hour_second) => update({ hour_second })} />}
             <Text variant="label" style={styles.small}>Hora de Lisboa.</Text>
+            {showExpiry && (
+              <>
+                <View style={styles.row}>
+                  <Text variant="button" style={styles.label}>Avisar de validades</Text>
+                  <Switch accessibilityLabel="Avisar de validades" value={prefs.expiry} onValueChange={(expiry) => update({ expiry })} />
+                </View>
+                <Text variant="label" style={styles.small}>
+                  No primeiro lembrete do dia, diz o que está a acabar o prazo sugerido (ou o prazo da embalagem). Só produtos com prazo conhecido.
+                </Text>
+              </>
+            )}
           </View>
         )}
 

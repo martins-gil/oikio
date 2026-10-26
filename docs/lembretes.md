@@ -22,3 +22,6 @@
 Em Settings → Edge Functions → send-reminders do painel do Supabase, ou com `curl`:
 `curl -X POST https://<projeto>.supabase.co/functions/v1/send-reminders -H "x-cron-secret: <o valor>"`
 A resposta mostra `{ due, sent, removed, errors }`. Só envia a quem tem a hora marcada neste momento (hora de Lisboa).
+
+## Validades nos lembretes
+O primeiro lembrete do dia inclui o que está a acabar o prazo, para quem ligou as validades e não desligou «Avisar de validades». Ver `docs/validades.md`.

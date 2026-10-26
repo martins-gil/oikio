@@ -9,8 +9,8 @@ export const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.
 
 export type PushStatus = 'ok' | 'expo_go' | 'no_device' | 'denied' | 'no_project' | 'error';
 
-export type Prefs = { enabled: boolean; hour_first: number; hour_second: number | null };
-export const DEFAULT_PREFS: Prefs = { enabled: true, hour_first: 9, hour_second: 17 };
+export type Prefs = { enabled: boolean; hour_first: number; hour_second: number | null; expiry: boolean };
+export const DEFAULT_PREFS: Prefs = { enabled: true, hour_first: 9, hour_second: 17, expiry: true };
 
 type NotificationsModule = typeof import('expo-notifications');
 type DeviceModule = typeof import('expo-device');
@@ -86,12 +86,15 @@ export function saveErrorText(message: string): string {
 }
 
 export async function loadPrefs(userId: string): Promise<Prefs> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('notification_prefs')
-    .select('enabled, hour_first, hour_second')
+    .select('enabled, hour_first, hour_second, expiry')
     .eq('user_id', userId)
     .maybeSingle();
-  return data ? (data as Prefs) : DEFAULT_PREFS;
+  if (!error) return data ? (data as Prefs) : DEFAULT_PREFS;
+  // Base de dados ainda sem a coluna «expiry» (migração por aplicar): lê o resto e deixa o aviso ligado
+  const old = await supabase.from('notification_prefs').select('enabled, hour_first, hour_second').eq('user_id', userId).maybeSingle();
+  return old.data ? { ...(old.data as Omit<Prefs, 'expiry'>), expiry: true } : DEFAULT_PREFS;
 }
 
 export async function savePrefs(userId: string, prefs: Prefs) {
