@@ -16,7 +16,7 @@ import {
   type ProductExpiry,
 } from '@/lib/expiry';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 type Found = { id: number; name: string; detail: string | null };
 
@@ -80,66 +80,66 @@ export function ExpiryCard({ productId, refreshKey, onMessage }: { productId: st
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>⏳ Validade sugerida</Text>
+      <Text variant="section" style={styles.title}>⏳ Validade sugerida</Text>
 
       {colored ? (
         <>
-          <Text style={[styles.state, { color: STATE_COLOR[info.state as 'ok' | 'soon' | 'over'] }]}>
+          <Text variant="button" style={[styles.state, { color: STATE_COLOR[info.state as 'ok' | 'soon' | 'over'] }]}>
             {STATE_LABEL[info.state as 'ok' | 'soon' | 'over']}
             {info.until_date ? ` · até ${dateText(info.until_date)}` : ''}
           </Text>
-          <Text style={styles.small}>
+          <Text variant="label" style={styles.small}>
             {info.printed_date
               ? 'Data impressa na embalagem.'
               : `${info.storage ? `Guardado no ${STORAGE_LABEL[info.storage]}` : ''}${info.bought_on ? `, comprado a ${dateText(info.bought_on)}` : ''}: ${rangeText(info.min_days, info.max_days)}.`}
           </Text>
         </>
       ) : info.state === 'no_match' ? (
-        <Text style={styles.small}>Não encontrei este alimento no FoodKeeper. Escolhe um parecido.</Text>
+        <Text variant="label" style={styles.small}>Não encontrei este alimento no FoodKeeper. Escolhe um parecido.</Text>
       ) : info.state === 'no_stock' ? (
-        <Text style={styles.small}>Sem stock: a validade conta a partir da compra.</Text>
+        <Text variant="label" style={styles.small}>Sem stock: a validade conta a partir da compra.</Text>
       ) : info.state === 'no_limit' ? (
-        <Text style={styles.small}>{info.storage ? `No ${STORAGE_LABEL[info.storage]}: ${here}.` : ''}</Text>
+        <Text variant="label" style={styles.small}>{info.storage ? `No ${STORAGE_LABEL[info.storage]}: ${here}.` : ''}</Text>
       ) : (
-        <Text style={styles.small}>O FoodKeeper não tem prazo, a contar da compra, para este alimento no {info.storage ? STORAGE_LABEL[info.storage] : 'local'}.</Text>
+        <Text variant="label" style={styles.small}>O FoodKeeper não tem prazo, a contar da compra, para este alimento no {info.storage ? STORAGE_LABEL[info.storage] : 'local'}.</Text>
       )}
 
       {info.food && (
-        <Text style={styles.small}>
+        <Text variant="label" style={styles.small}>
           Alimento: {info.food.name}
           {info.food.detail ? ` (${info.food.detail.trim()})` : ''} · {info.matched_by === 'user' ? 'escolhido por ti' : 'escolha automática'}
         </Text>
       )}
-      {others.length > 0 && <Text style={styles.small}>{others.map((o) => `${STORAGE_LABEL[o.s]}: ${o.t}`).join(' · ')}</Text>}
-      {info.tips ? <Text style={styles.small}>💡 {info.tips}</Text> : null}
-      <Text style={styles.source}>{SOURCE_NOTE}</Text>
+      {others.length > 0 && <Text variant="label" style={styles.small}>{others.map((o) => `${STORAGE_LABEL[o.s]}: ${o.t}`).join(' · ')}</Text>}
+      {info.tips ? <Text variant="label" style={styles.small}>💡 {info.tips}</Text> : null}
+      <Text variant="label" style={styles.source}>{SOURCE_NOTE}</Text>
 
       {mode === null && (
         <View style={styles.row}>
-          <Pressable onPress={() => setMode('date')}>
-            <Text style={styles.link}>📅 Data da embalagem</Text>
+          <Pressable style={styles.linkRow} accessibilityRole="button" onPress={() => setMode('date')}>
+            <Text variant="button" style={styles.link}>📅 Data da embalagem</Text>
           </Pressable>
-          <Pressable onPress={() => setMode('food')}>
-            <Text style={styles.link}>🔎 Mudar o alimento</Text>
+          <Pressable style={styles.linkRow} accessibilityRole="button" onPress={() => setMode('food')}>
+            <Text variant="button" style={styles.link}>🔎 Mudar o alimento</Text>
           </Pressable>
         </View>
       )}
 
       {mode === 'date' && (
         <View style={styles.panel}>
-          <Text style={styles.small}>Escreve a validade impressa (dd/mm/aaaa). Prevalece sobre a sugerida.</Text>
-          <TextInput style={styles.input} value={dateInput} onChangeText={setDateInput} placeholder="25/12/2026" keyboardType="numbers-and-punctuation" />
+          <Text variant="label" style={styles.small}>Escreve a validade impressa (dd/mm/aaaa). Prevalece sobre a sugerida.</Text>
+          <TextInput style={styles.input} accessibilityLabel="Data da embalagem" value={dateInput} onChangeText={setDateInput} placeholder="25/12/2026" keyboardType="numbers-and-punctuation" />
           <View style={styles.row}>
-            <View style={styles.flex}>
+            <View style={styles.buttonBox}>
               <Button title="Cancelar" variant="secondary" onPress={() => setMode(null)} />
             </View>
-            <View style={styles.flex}>
+            <View style={styles.buttonBox}>
               <Button title="Guardar" disabled={!dateInput.trim()} onPress={() => saveDate(false)} />
             </View>
           </View>
           {info.printed_date && (
-            <Pressable onPress={() => saveDate(true)}>
-              <Text style={styles.link}>Apagar a data da embalagem</Text>
+            <Pressable style={styles.linkRow} accessibilityRole="button" onPress={() => saveDate(true)}>
+              <Text variant="button" style={styles.link}>Apagar a data da embalagem</Text>
             </Pressable>
           )}
         </View>
@@ -147,21 +147,21 @@ export function ExpiryCard({ productId, refreshKey, onMessage }: { productId: st
 
       {mode === 'food' && (
         <View style={styles.panel}>
-          <TextInput style={styles.input} value={query} onChangeText={setQuery} placeholder="Procurar alimento (ex.: iogurte)" />
+          <TextInput style={styles.input} accessibilityLabel="Procurar alimento" value={query} onChangeText={setQuery} placeholder="Procurar alimento (ex.: iogurte)" />
           {found.map((f) => (
-            <Pressable key={f.id} style={styles.option} onPress={() => pick(f.id)}>
-              <Text style={styles.optionText}>
+            <Pressable key={f.id} style={styles.option} accessibilityRole="button" onPress={() => pick(f.id)}>
+              <Text variant="body" style={styles.optionText}>
                 {f.name}
                 {f.detail ? ` · ${f.detail.trim()}` : ''}
               </Text>
             </Pressable>
           ))}
           <View style={styles.row}>
-            <Pressable onPress={() => pick(null)}>
-              <Text style={styles.link}>Escolha automática</Text>
+            <Pressable style={styles.linkRow} accessibilityRole="button" onPress={() => pick(null)}>
+              <Text variant="button" style={styles.link}>Escolha automática</Text>
             </Pressable>
-            <Pressable onPress={() => setMode(null)}>
-              <Text style={styles.link}>Fechar</Text>
+            <Pressable style={styles.linkRow} accessibilityRole="button" onPress={() => setMode(null)}>
+              <Text variant="button" style={styles.link}>Fechar</Text>
             </Pressable>
           </View>
         </View>
@@ -172,15 +172,17 @@ export function ExpiryCard({ productId, refreshKey, onMessage }: { productId: st
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  card: { gap: 8, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
-  title: { fontSize: 18, color: colors.ink },
-  state: { fontSize: 16 },
-  small: { color: colors.muted, fontSize: 13 },
-  source: { color: colors.faint, fontSize: 12 },
-  row: { flexDirection: 'row', gap: 16, alignItems: 'center' },
-  link: { color: colors.primary, fontSize: 15 },
-  panel: { gap: 8, padding: 12, borderRadius: 14, backgroundColor: colors.bg },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 10, fontSize: 16, color: colors.ink },
-  option: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
-  optionText: { color: colors.ink, fontSize: 14 },
+  buttonBox: { flexGrow: 1, flexBasis: 130 },
+  card: { gap: 10, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  title: { color: colors.ink },
+  state: {},
+  small: { color: colors.muted },
+  source: { color: colors.muted },
+  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 20, alignItems: 'center' },
+  link: { color: colors.primary },
+  linkRow: { minHeight: 48, justifyContent: 'center' },
+  panel: { gap: 10, padding: 14, borderRadius: radius.card, backgroundColor: colors.panel },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  option: { minHeight: 48, justifyContent: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
+  optionText: { color: colors.ink },
 });

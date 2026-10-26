@@ -10,7 +10,7 @@ import { describeAssignment, describeSchedule, TASK_COLUMNS, type TaskRow } from
 import { useSession } from '@/lib/session';
 import { sinceText, urgencyColor, urgencyFill, type TaskStatus } from '@/lib/urgency';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, radius, shadow, spacing } from '@/lib/theme';
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-PT');
 
@@ -64,36 +64,36 @@ export default function StatusScreen() {
   const open = (id: string) => router.push({ pathname: '/task/[id]', params: { id } });
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
       <Stack.Screen options={{ title: 'Estado da casa' }} />
       {canManage && (
         <View style={styles.buttons}>
-          <View style={styles.flex}>
+          <View style={styles.buttonBox}>
             <Button title="+ Nova tarefa" onPress={() => router.push('/task/edit')} />
           </View>
-          <View style={styles.flex}>
+          <View style={styles.buttonBox}>
             <Button title="💡 Sugestões" variant="secondary" onPress={() => router.push('/task/suggestions')} />
           </View>
         </View>
       )}
-      <Text style={styles.hint}>Verde: em dia · Amarelo: a chegar a altura · Vermelho: em atraso</Text>
-      {error && <Text style={styles.error}>Não foi possível carregar tudo.</Text>}
-      {active.length === 0 && !error && <Text style={styles.hint}>Ainda não há tarefas da casa.</Text>}
+      <Text variant="label" style={styles.hint}>🟢 em dia · 🟡 a chegar a altura · 🔴 em atraso</Text>
+      {error && <Text variant="label" style={styles.error}>Não foi possível carregar tudo.</Text>}
+      {active.length === 0 && !error && <Text variant="label" style={styles.hint}>Ainda não há tarefas da casa.</Text>}
 
       {active.map((t) => {
         const st = status[t.id];
         const color = urgencyColor(st?.urgency_ratio);
         const who = st?.last_done_by ? nameOf(st.last_done_by) : null;
         return (
-          <Pressable key={t.id} style={styles.card} onPress={() => open(t.id)}>
-            <Text style={styles.title}>{t.title}</Text>
-            <Text style={styles.sub}>
+          <Pressable key={t.id} style={styles.card} accessibilityRole="button" onPress={() => open(t.id)}>
+            <Text variant="button" style={styles.title}>{t.title}</Text>
+            <Text variant="label" style={styles.sub}>
               {describeSchedule(t)} · {describeAssignment(t, nameOf)}
             </Text>
             <View style={styles.track}>
               <View style={[styles.fill, { width: `${urgencyFill(st?.urgency_ratio) * 100}%`, backgroundColor: color }]} />
             </View>
-            <Text style={[styles.line, st?.urgency_ratio != null && st.urgency_ratio > 1 && { color }]}>
+            <Text variant="label" style={[styles.line, st?.urgency_ratio != null && st.urgency_ratio > 1 && { color }]}>
               {sinceText(st?.days_since_last ?? null)}
               {who && st?.days_since_last != null ? ` por ${who}` : ''}
             </Text>
@@ -103,11 +103,11 @@ export default function StatusScreen() {
 
       {paused.length > 0 && (
         <View style={styles.group}>
-          <Text style={styles.section}>Pausadas</Text>
+          <Text variant="section" style={styles.section}>Pausadas</Text>
           {paused.map((t) => (
             <Pressable key={t.id} style={[styles.card, styles.dim]} onPress={() => open(t.id)}>
-              <Text style={styles.title}>⏸ {t.title}</Text>
-              <Text style={styles.sub}>{describeSchedule(t)}</Text>
+              <Text variant="button" style={styles.title}>⏸ {t.title}</Text>
+              <Text variant="label" style={styles.sub}>{describeSchedule(t)}</Text>
             </Pressable>
           ))}
         </View>
@@ -115,16 +115,16 @@ export default function StatusScreen() {
 
       {deleted.length > 0 && (
         <View style={styles.group}>
-          <Pressable onPress={() => setShowDeleted(!showDeleted)}>
-            <Text style={styles.section}>
+          <Pressable style={styles.headerRow} accessibilityRole="button" onPress={() => setShowDeleted(!showDeleted)}>
+            <Text variant="section" style={styles.section}>
               🗑 Apagadas ({deleted.length}) {showDeleted ? '▲' : '▼'}
             </Text>
           </Pressable>
           {showDeleted &&
             deleted.map((t) => (
               <Pressable key={t.id} style={[styles.card, styles.dim]} onPress={() => open(t.id)}>
-                <Text style={styles.title}>{t.title}</Text>
-                <Text style={styles.sub}>
+                <Text variant="button" style={styles.title}>{t.title}</Text>
+                <Text variant="label" style={styles.sub}>
                   apagada por {nameOf(t.deleted_by)} em {fmtDate(t.deleted_at!)}
                 </Text>
               </Pressable>
@@ -137,18 +137,20 @@ export default function StatusScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  buttons: { flexDirection: 'row', gap: 10 },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  buttonBox: { flexGrow: 1, flexBasis: 150 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 10, paddingBottom: 60 },
-  hint: { color: colors.muted, fontSize: 13, textAlign: 'center' },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  hint: { color: colors.muted, textAlign: 'center' },
   error: { color: colors.pink, textAlign: 'center' },
   group: { gap: 10, marginTop: 8 },
-  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase' },
-  card: { gap: 6, padding: 14, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
-  dim: { opacity: 0.65 },
-  title: { fontSize: 17, fontWeight: '600' },
-  sub: { color: colors.muted, fontSize: 13 },
+  headerRow: { minHeight: 48, justifyContent: 'center' },
+  section: { color: colors.ink },
+  card: { gap: 8, minHeight: 64, padding: spacing.sm, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
+  dim: { opacity: 0.7 },
+  title: { color: colors.ink },
+  sub: { color: colors.muted },
   track: { height: 10, borderRadius: 5, backgroundColor: colors.border, overflow: 'hidden' },
   fill: { height: 10, borderRadius: 5 },
-  line: { color: colors.muted, fontSize: 14 },
+  line: { color: colors.muted },
 });

@@ -9,7 +9,7 @@ import { Toast } from '@/components/Toast';
 import { formatMinutes, localDate, parseDuration } from '@/lib/money';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
 type Kind = 'hour_bank' | 'appointment';
 type Entry = { id: string; kind: Kind; label: string | null; entry_date: string; minutes: number };
@@ -83,8 +83,8 @@ export default function HoursScreen() {
 
   return (
     <View style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.privacy}>🔒 Só tu vês isto</Text>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Text variant="label" style={styles.privacy}>🔒 Só tu vês isto</Text>
 
         <View style={styles.tabs}>
           {(
@@ -93,8 +93,8 @@ export default function HoursScreen() {
               ['appointment', 'Consultas'],
             ] as const
           ).map(([k, name]) => (
-            <Pressable key={k} style={[styles.tab, kind === k && styles.tabOn]} onPress={() => setKind(k)}>
-              <Text style={[styles.tabText, kind === k && styles.tabTextOn]}>{name}</Text>
+            <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: kind === k }} style={[styles.tab, kind === k && styles.tabOn]} onPress={() => setKind(k)}>
+              <Text variant="button" style={kind === k ? styles.tabTextOn : styles.tabText}>{name}</Text>
             </Pressable>
           ))}
         </View>
@@ -103,35 +103,39 @@ export default function HoursScreen() {
           <ActivityIndicator />
         ) : (
           <View style={styles.summary}>
-            <Text style={styles.total}>
+            <Text variant="display" style={styles.total}>
               {kind === 'hour_bank' && balance > 0 ? '+' : ''}
               {formatMinutes(balance)}
             </Text>
-            <Text style={styles.line}>{kind === 'hour_bank' ? 'saldo atual' : 'tempo gasto no total'}</Text>
-            {kind === 'appointment' && <Text style={styles.line}>Este mês: {formatMinutes(monthTotal)}</Text>}
+            <Text variant="label" style={styles.line}>{kind === 'hour_bank' ? 'saldo atual' : 'tempo gasto no total'}</Text>
+            {kind === 'appointment' && <Text variant="label" style={styles.line}>Este mês: {formatMinutes(monthTotal)}</Text>}
           </View>
         )}
 
         <View style={styles.card}>
+          <Text variant="label" style={styles.label}>Duração</Text>
           <TextInput
             style={[styles.input, styles.big]}
+            accessibilityLabel="Duração"
             value={duration}
             onChangeText={setDuration}
             placeholder="1:30  ou  1,5  ou  45 min"
             keyboardType="numbers-and-punctuation"
           />
+          <Text variant="label" style={styles.label}>Etiqueta (opcional)</Text>
           <TextInput
             style={styles.input}
+            accessibilityLabel="Etiqueta"
             value={label}
             onChangeText={setLabel}
             placeholder={kind === 'hour_bank' ? 'Etiqueta (opcional)' : 'Ex.: dentista (opcional)'}
           />
           {kind === 'hour_bank' ? (
             <View style={styles.buttons}>
-              <View style={styles.flex}>
+              <View style={styles.buttonBox}>
                 <Button title="＋ Horas extra" disabled={minutes === null} onPress={() => add(1)} />
               </View>
-              <View style={styles.flex}>
+              <View style={styles.buttonBox}>
                 <Button title="－ Folga" variant="secondary" disabled={minutes === null} onPress={() => add(-1)} />
               </View>
             </View>
@@ -140,19 +144,19 @@ export default function HoursScreen() {
           )}
         </View>
 
-        {list.length === 0 && entries !== null && <Text style={styles.hint}>Ainda sem registos.</Text>}
+        {list.length === 0 && entries !== null && <Text variant="label" style={styles.hint}>Ainda sem registos.</Text>}
         {list.map((e) => (
           <View key={e.id} style={styles.row}>
             <View style={styles.rowMain}>
-              <Text style={styles.rowTitle}>
+              <Text variant="section" style={styles.rowTitle}>
                 {kind === 'hour_bank' && e.minutes > 0 ? '+' : ''}
                 {formatMinutes(e.minutes)}
               </Text>
-              <Text style={styles.line}>{e.label ?? (e.minutes < 0 ? 'Folga' : kind === 'hour_bank' ? 'Horas extra' : 'Consulta')}</Text>
-              <Text style={styles.small}>{e.entry_date.split('-').reverse().join('/')}</Text>
+              <Text variant="label" style={styles.line}>{e.label ?? (e.minutes < 0 ? 'Folga' : kind === 'hour_bank' ? 'Horas extra' : 'Consulta')}</Text>
+              <Text variant="label" style={styles.small}>{e.entry_date.split('-').reverse().join('/')}</Text>
             </View>
-            <Pressable hitSlop={12} onPress={() => askDelete(e)}>
-              <Text style={styles.remove}>✕</Text>
+            <Pressable style={styles.removeButton} accessibilityRole="button" accessibilityLabel="Apagar registo" onPress={() => askDelete(e)}>
+              <Text variant="section" style={styles.remove}>✕</Text>
             </Pressable>
           </View>
         ))}
@@ -164,31 +168,27 @@ export default function HoursScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { padding: 16, gap: 14, paddingBottom: 80 },
-  privacy: { color: colors.muted, fontSize: 15 },
-  tabs: { flexDirection: 'row', borderWidth: 1, borderColor: colors.primary, borderRadius: 10, overflow: 'hidden' },
-  tab: { flex: 1, padding: 10, alignItems: 'center' },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 80 },
+  privacy: { color: colors.muted },
+  tabs: { flexDirection: 'row', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, overflow: 'hidden', backgroundColor: colors.white },
+  tab: { flex: 1, minHeight: 52, justifyContent: 'center', padding: 10, alignItems: 'center' },
   tabOn: { backgroundColor: colors.primary },
-  tabText: { color: colors.primary, fontWeight: '600' },
-  tabTextOn: { color: colors.white },
+  tabText: { color: colors.primary, textAlign: 'center' },
+  tabTextOn: { color: colors.white, textAlign: 'center' },
   summary: { alignItems: 'center', gap: 2, paddingVertical: 6 },
-  total: { fontSize: 36, fontWeight: '700' },
-  line: { color: colors.muted, fontSize: 14 },
-  small: { color: colors.faint, fontSize: 12 },
-  card: { gap: 10, borderRadius: radius.card, ...shadow, padding: 14, backgroundColor: colors.white },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: colors.white, padding: 12, fontSize: 16 },
-  big: { fontSize: 22, textAlign: 'center' },
-  buttons: { flexDirection: 'row', gap: 10 },
+  total: { color: colors.ink },
+  line: { color: colors.muted },
+  small: { color: colors.muted },
+  label: { color: colors.muted, marginBottom: -6 },
+  card: { gap: 12, borderRadius: radius.card, ...shadow, padding: spacing.sm, backgroundColor: colors.white },
+  input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
+  big: { textAlign: 'center' },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  buttonBox: { flexGrow: 1, flexBasis: 140 },
   hint: { color: colors.muted, textAlign: 'center' },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 14,
-    borderRadius: radius.card, ...shadow,
-    backgroundColor: colors.white,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 64, padding: 14, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
   rowMain: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: 18, fontWeight: '600' },
-  remove: { fontSize: 18, color: colors.faint },
+  rowTitle: { color: colors.ink },
+  removeButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  remove: { color: colors.faint },
 });

@@ -2,6 +2,7 @@ import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { CheckCircle } from '@/components/CheckCircle';
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
@@ -9,7 +10,7 @@ import { useHousehold } from '@/lib/household';
 import { describeForm, formToArgs } from '@/lib/schedule';
 import { normalizeTitle, SUGGESTION_GROUPS, SUGGESTIONS } from '@/lib/taskSuggestions';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, radius, shadow, spacing } from '@/lib/theme';
 
 // Sugestões de tarefas comuns de manutenção da casa: escolhe várias e adiciona de uma vez
 export default function SuggestionsScreen() {
@@ -70,29 +71,29 @@ export default function SuggestionsScreen() {
   return (
     <View style={styles.flex}>
       <Stack.Screen options={{ title: 'Sugestões' }} />
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.hint}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+        <Text variant="body" style={styles.hint}>
           Tarefas comuns de manutenção da casa. Escolhe as que quiseres: ficam com uma frequência normal e podes ajustá-la depois.
         </Text>
         {SUGGESTION_GROUPS.map((group) => (
           <View key={group} style={styles.group}>
-            <Text style={styles.section}>{group}</Text>
+            <Text variant="section" style={styles.section}>{group}</Text>
             {SUGGESTIONS.filter((s) => s.group === group).map((s) => {
               const already = have.has(normalizeTitle(s.form.title));
               const on = picked.has(s.key);
               return (
-                <Pressable key={s.key} disabled={already} style={[styles.row, on && styles.rowOn, already && styles.dim]} onPress={() => toggle(s.key)}>
-                  <Text style={styles.check}>{already ? '✓' : on ? '☑' : '☐'}</Text>
+                <Pressable key={s.key} disabled={already} accessibilityRole="checkbox" accessibilityState={{ checked: on || already, disabled: already }} style={[styles.row, on && styles.rowOn, already && styles.dim]} onPress={() => toggle(s.key)}>
+                  <CheckCircle on={on || already} />
                   <View style={styles.rowText}>
-                    <Text style={styles.title}>{s.form.title}</Text>
-                    <Text style={styles.sub}>{already ? 'já tens' : describeForm(s.form)}</Text>
+                    <Text variant="button" style={styles.title}>{s.form.title}</Text>
+                    <Text variant="label" style={styles.sub}>{already ? 'já tens' : describeForm(s.form)}</Text>
                   </View>
                 </Pressable>
               );
             })}
           </View>
         ))}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <Text variant="label" style={styles.error}>{error}</Text>}
       </ScrollView>
       <View style={styles.footer}>
         <Button
@@ -108,17 +109,16 @@ export default function SuggestionsScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 12, paddingBottom: 24 },
-  hint: { color: colors.muted, fontSize: 14 },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
+  hint: { color: colors.muted },
   group: { gap: 8 },
-  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
-  rowOn: { borderColor: colors.primary, backgroundColor: colors.lavender },
-  dim: { opacity: 0.5 },
-  check: { fontSize: 22, width: 28, textAlign: 'center', color: colors.primary },
+  section: { color: colors.ink, marginTop: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, padding: 14, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
+  rowOn: { backgroundColor: colors.lavender },
+  dim: { opacity: 0.6 },
   rowText: { flex: 1, gap: 2 },
-  title: { fontSize: 16 },
-  sub: { color: colors.muted, fontSize: 13 },
+  title: { color: colors.ink },
+  sub: { color: colors.muted },
   error: { color: colors.pink, textAlign: 'center' },
-  footer: { padding: 16, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.white },
+  footer: { padding: spacing.md, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.white },
 });

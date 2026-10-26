@@ -13,7 +13,7 @@ import { describeAssignment, describeSchedule, friendlyTaskError, TASK_COLUMNS, 
 import { markTaskDoneNow } from '@/lib/taskActions';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, radius, shadow, spacing } from '@/lib/theme';
 
 type Occurrence = {
   id: string;
@@ -122,7 +122,7 @@ export default function TaskDetailScreen() {
   if (task === null) {
     return (
       <View style={styles.center}>
-        <Text style={styles.hint}>Esta tarefa não existe ou não podes vê-la.</Text>
+        <Text variant="label" style={styles.hint}>Esta tarefa não existe ou não podes vê-la.</Text>
       </View>
     );
   }
@@ -153,10 +153,10 @@ export default function TaskDetailScreen() {
   return (
     <View style={styles.flex}>
       <Stack.Screen options={{ title: task.title }} />
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         {deleted && (
           <View style={styles.deleted}>
-            <Text style={styles.deletedText}>
+            <Text variant="body" style={styles.deletedText}>
               🗑 Apagada por {nameOf(task.deleted_by)} em {new Date(task.deleted_at!).toLocaleDateString('pt-PT')}. O histórico fica guardado.
             </Text>
             {canManage && (
@@ -170,17 +170,17 @@ export default function TaskDetailScreen() {
         )}
 
         <View style={styles.card}>
-          <Text style={styles.title}>{task.title}</Text>
-          <Text style={styles.line}>🔁 {describeSchedule(task)}</Text>
-          {!personal && <Text style={styles.line}>👤 {describeAssignment(task, nameOf)}</Text>}
-          <Text style={styles.line}>💪 esforço {task.effort_points}</Text>
-          {!task.is_active && !deleted && <Text style={styles.line}>⏸ pausada</Text>}
+          <Text variant="title" style={styles.title}>{task.title}</Text>
+          <Text variant="body" style={styles.line}>🔁 {describeSchedule(task)}</Text>
+          {!personal && <Text variant="body" style={styles.line}>👤 {describeAssignment(task, nameOf)}</Text>}
+          <Text variant="body" style={styles.line}>💪 esforço {task.effort_points}</Text>
+          {!task.is_active && !deleted && <Text variant="body" style={styles.line}>⏸ pausada</Text>}
           {!deleted && task.is_active && pendingOcc && (
-            <Text style={styles.line}>
+            <Text variant="body" style={styles.line}>
               📅 por fazer {pendingOcc.due_date < today ? `(em atraso desde ${dm(pendingOcc.due_date)})` : `em ${longDate(pendingOcc.due_date)}`}
             </Text>
           )}
-          {!deleted && task.is_active && !pendingOcc && next && <Text style={styles.line}>📅 próxima: {longDate(next)}</Text>}
+          {!deleted && task.is_active && !pendingOcc && next && <Text variant="body" style={styles.line}>📅 próxima: {longDate(next)}</Text>}
         </View>
 
         {!deleted && task.is_active && (
@@ -202,7 +202,7 @@ export default function TaskDetailScreen() {
 
         {picking && (
           <View style={styles.picker}>
-            <Text style={styles.section}>Próxima data</Text>
+            <Text variant="section" style={styles.section}>Próxima data</Text>
             <DatePicker value={picked} onChange={setPicked} />
             <Button
               title={picked ? `Programar para ${longDate(picked)}` : 'Escolhe um dia'}
@@ -232,13 +232,13 @@ export default function TaskDetailScreen() {
           </View>
         )}
 
-        <Text style={styles.section}>Histórico</Text>
+        <Text variant="section" style={styles.section}>Histórico</Text>
         {history.length > 0 && (
-          <Text style={styles.summary}>
+          <Text variant="button" style={styles.summary}>
             ✅ {done} {done === 1 ? 'feita' : 'feitas'} · ⏭ {skipped} {skipped === 1 ? 'saltada' : 'saltadas'}
           </Text>
         )}
-        {history.length === 0 && <Text style={styles.hint}>Ainda sem registos.</Text>}
+        {history.length === 0 && <Text variant="label" style={styles.hint}>Ainda sem registos.</Text>}
         {history.map((o) => {
           const moved = o.scheduled_for && o.scheduled_for !== o.due_date ? ` (mudada de ${dm(o.scheduled_for)})` : '';
           let icon = '📅';
@@ -257,8 +257,8 @@ export default function TaskDetailScreen() {
           }
           return (
             <View key={o.id} style={styles.row}>
-              <Text style={styles.icon}>{icon}</Text>
-              <Text style={styles.rowText}>{text}</Text>
+              <Text variant="section" style={styles.icon}>{icon}</Text>
+              <Text variant="body" style={styles.rowText}>{text}</Text>
             </View>
           );
         })}
@@ -271,18 +271,18 @@ export default function TaskDetailScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  container: { padding: 16, gap: 12, paddingBottom: 80 },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 80 },
   hint: { color: colors.muted, textAlign: 'center' },
-  card: { gap: 6, padding: 16, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
-  title: { fontSize: 22, fontWeight: '700' },
-  line: { fontSize: 15, color: colors.ink },
+  card: { gap: 8, padding: spacing.sm, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
+  title: { color: colors.ink },
+  line: { color: colors.ink },
   actions: { gap: 10 },
-  picker: { gap: 10, padding: 14, borderWidth: 1, borderColor: colors.primary, borderRadius: 12, backgroundColor: colors.panel },
-  deleted: { gap: 10, padding: 14, borderRadius: 12, backgroundColor: colors.dangerBg },
+  picker: { gap: 12, padding: spacing.sm, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.card, backgroundColor: colors.panel },
+  deleted: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.dangerBg },
   deletedText: { color: colors.dangerText },
-  section: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', marginTop: 8 },
-  summary: { fontSize: 16, fontWeight: '600' },
-  row: { flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
-  icon: { fontSize: 18 },
-  rowText: { flex: 1, fontSize: 15 },
+  section: { color: colors.ink, marginTop: 8 },
+  summary: { color: colors.ink },
+  row: { flexDirection: 'row', gap: 10, minHeight: 56, paddingVertical: 10, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border },
+  icon: { color: colors.ink },
+  rowText: { flex: 1, color: colors.ink },
 });

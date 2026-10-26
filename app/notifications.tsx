@@ -17,19 +17,19 @@ import {
 } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, shadow } from '@/lib/theme';
+import { colors, radius, shadow, spacing } from '@/lib/theme';
 
 const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
 
 function HourPicker({ value, onChange }: { value: number; onChange: (h: number) => void }) {
   return (
     <View style={styles.stepper}>
-      <Pressable style={styles.step} hitSlop={8} onPress={() => onChange((value + 23) % 24)}>
-        <Text style={styles.stepText}>−</Text>
+      <Pressable style={styles.step} accessibilityRole="button" accessibilityLabel="Uma hora antes" onPress={() => onChange((value + 23) % 24)}>
+        <Text variant="section" style={styles.stepText}>−</Text>
       </Pressable>
-      <Text style={styles.hour}>{hh(value)}</Text>
-      <Pressable style={styles.step} hitSlop={8} onPress={() => onChange((value + 1) % 24)}>
-        <Text style={styles.stepText}>＋</Text>
+      <Text variant="display" style={styles.hour}>{hh(value)}</Text>
+      <Pressable style={styles.step} accessibilityRole="button" accessibilityLabel="Uma hora depois" onPress={() => onChange((value + 1) % 24)}>
+        <Text variant="section" style={styles.stepText}>＋</Text>
       </Pressable>
     </View>
   );
@@ -70,33 +70,33 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.label}>Receber lembretes</Text>
-            <Switch value={prefs.enabled} onValueChange={(enabled) => update({ enabled })} />
+            <Text variant="button" style={styles.label}>Receber lembretes</Text>
+            <Switch accessibilityLabel="Receber lembretes" value={prefs.enabled} onValueChange={(enabled) => update({ enabled })} />
           </View>
-          <Text style={styles.small}>
+          <Text variant="label" style={styles.small}>
             Mostram as tarefas do dia e os produtos essenciais que faltam comprar. Se não houver nada, não há aviso.
           </Text>
         </View>
 
         {prefs.enabled && (
           <View style={styles.card}>
-            <Text style={styles.label}>Primeiro lembrete</Text>
+            <Text variant="button" style={styles.label}>Primeiro lembrete</Text>
             <HourPicker value={prefs.hour_first} onChange={(hour_first) => update({ hour_first })} />
             <View style={styles.row}>
-              <Text style={styles.label}>Segundo lembrete</Text>
-              <Switch value={prefs.hour_second !== null} onValueChange={(on) => update({ hour_second: on ? 17 : null })} />
+              <Text variant="button" style={styles.label}>Segundo lembrete</Text>
+              <Switch accessibilityLabel="Segundo lembrete" value={prefs.hour_second !== null} onValueChange={(on) => update({ hour_second: on ? 17 : null })} />
             </View>
             {prefs.hour_second !== null && <HourPicker value={prefs.hour_second} onChange={(hour_second) => update({ hour_second })} />}
-            <Text style={styles.small}>Hora de Lisboa.</Text>
+            <Text variant="label" style={styles.small}>Hora de Lisboa.</Text>
           </View>
         )}
 
         <View style={styles.card}>
-          <Text style={styles.label}>Neste telemóvel</Text>
-          {status !== null && <Text style={styles.status}>{STATUS_TEXT[status]}</Text>}
+          <Text variant="button" style={styles.label}>Neste telemóvel</Text>
+          {status !== null && <Text variant="body" style={styles.status}>{STATUS_TEXT[status]}</Text>}
           {status !== 'ok' && status !== 'expo_go' && status !== 'no_device' && <Button title="Ativar neste telemóvel" onPress={activate} />}
         </View>
       </ScrollView>
@@ -107,14 +107,14 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { padding: 16, gap: 14, paddingBottom: 80 },
-  card: { gap: 12, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  label: { fontSize: 16, color: colors.ink },
-  small: { color: colors.muted, fontSize: 13 },
-  status: { color: colors.muted, fontSize: 14 },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 80 },
+  card: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, minHeight: 56 },
+  label: { color: colors.ink, flex: 1 },
+  small: { color: colors.muted },
+  status: { color: colors.muted },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
-  step: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: colors.accent, fontSize: 22 },
-  hour: { fontSize: 28, color: colors.ink, minWidth: 100, textAlign: 'center' },
+  step: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: colors.white },
+  hour: { color: colors.ink, minWidth: 110, textAlign: 'center' },
 });
