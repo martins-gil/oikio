@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
     console.error('Claude API:', detail);
-    return json({ ok: false, error: `O serviço de IA não respondeu. Tenta outra vez daqui a pouco. (${detail.slice(0, 200)})` });
+    return json({ ok: false, error: 'O serviço de IA não respondeu. Tenta outra vez daqui a pouco.' });
   }
   if (message.stop_reason === 'refusal') return json({ ok: false, error: 'Não foi possível gerar a explicação agora.' });
   if (message.stop_reason === 'max_tokens') return json({ ok: false, error: 'A resposta ficou incompleta. Tenta outra vez.' });

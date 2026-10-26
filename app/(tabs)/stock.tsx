@@ -1,13 +1,14 @@
 import { Screen } from '@/components/Screen';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
-import { useShowExpiry } from '@/lib/settings';
+import { useModules, useShowExpiry } from '@/lib/settings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   formatAmount,
   LEVEL_COLOR,
@@ -25,6 +26,8 @@ export default function StockScreen() {
   const router = useRouter();
   const { household } = useHousehold();
   const { showExpiry } = useShowExpiry();
+  const { has: hasModule, setModule } = useModules();
+  const [offerMeals, setOfferMeals] = useState(false); // convite (uma só vez) para ligar as Refeições
   const [stock, setStock] = useState<StockRow[] | null>(null);
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +38,20 @@ export default function StockScreen() {
     const { data } = await supabase.from('v_stock').select(STOCK_COLUMNS).eq('household_id', household.id).order('name');
     setStock((data ?? []) as StockRow[]);
   }, [household]);
+
+  // Com 5 ou mais produtos e sem o módulo Refeições, oferece-o uma vez
+  useEffect(() => {
+    if (hasModule('meals') || (stock?.length ?? 0) < 5) return setOfferMeals(false);
+    AsyncStorage.getItem('nestkeep.offer.meals')
+      .then((v) => setOfferMeals(v === null))
+      .catch(() => setOfferMeals(false));
+  }, [stock, hasModule]);
+
+  const answerOffer = async (turnOn: boolean) => {
+    setOfferMeals(false);
+    AsyncStorage.setItem('nestkeep.offer.meals', '1').catch(() => {});
+    if (turnOn) await setModule('meals', true);
+  };
 
   // Recarrega sempre que o ecrã volta a ficar visível (ex.: depois do onboarding ou de uma tarefa)
   useFocusEffect(
@@ -160,8 +177,22 @@ export default function StockScreen() {
         })
       )}
       {showExpiry && <Button title="⏳ Validades" variant="secondary" onPress={() => router.push('/expiry')} />}
-      <Button title="🍽️ O que cozinhar?" onPress={() => router.push('/meals')} />
-      <Button title="Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />
+      {hasModule('meals') && <Button title="🍽️ O que cozinhar?" onPress={() => router.push('/meals')} />}
+      {hasModule('meals') && <Button title="Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />}
+      {offerMeals && (
+        <View style={styles.offer}>
+          <Text style={styles.offerTitle}>🍽️ Ideias para cozinhar com o que tens?</Text>
+          <Text style={styles.offerText}>Liga o módulo Refeições: a IA sugere receitas com o teu stock. Podes desligar quando quiseres em Casa → Módulos.</Text>
+          <View style={styles.offerRow}>
+            <View style={styles.offerBtn}>
+              <Button title="Agora não" variant="secondary" onPress={() => answerOffer(false)} />
+            </View>
+            <View style={styles.offerBtn}>
+              <Button title="Ligar" onPress={() => answerOffer(true)} />
+            </View>
+          </View>
+        </View>
+      )}
       <Button title="Escolher dos sugeridos" variant="secondary" onPress={() => router.push(filter ? { pathname: '/onboarding', params: { place: filter } } : '/onboarding')} />
     </ScrollView>
     </Screen>
@@ -170,6 +201,11 @@ export default function StockScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 10 },
+  offer: { gap: 8, padding: 14, borderRadius: radius.card, backgroundColor: colors.lavender },
+  offerTitle: { fontSize: 16, color: colors.ink },
+  offerText: { fontSize: 13, color: colors.muted },
+  offerRow: { flexDirection: 'row', gap: 10 },
+  offerBtn: { flex: 1 },
   addRow: { flexDirection: 'row', gap: 8 },
   input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, backgroundColor: '#fff', padding: 12, fontSize: 16 },
   addButton: { backgroundColor: '#5C4DB1', borderRadius: radius.button, width: 48, alignItems: 'center', justifyContent: 'center' },

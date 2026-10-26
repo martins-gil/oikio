@@ -8,7 +8,7 @@ import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type GamificationMode, type Member } from '@/lib/household';
 import { useSession } from '@/lib/session';
-import { useShowAiExplain, useShowCosts, useShowExpiry } from '@/lib/settings';
+import { MODULES, useModules, useShowAiExplain, useShowCosts, useShowExpiry } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
 
@@ -25,6 +25,7 @@ export default function HouseScreen() {
   const { showCosts, setShowCosts } = useShowCosts();
   const { showExpiry, setShowExpiry } = useShowExpiry();
   const { showAiExplain, setShowAiExplain } = useShowAiExplain();
+  const { has: hasModule, setModule } = useModules();
 
   const [name, setName] = useState<string | null>(null); // null = ainda não editado
   const [invite, setInvite] = useState<Invite | null>(null);
@@ -191,7 +192,73 @@ export default function HouseScreen() {
           </>
         )}
 
-        <Text style={styles.section}>Resumo e pontos</Text>
+        <Text style={styles.section}>Para ti</Text>
+        <Text style={styles.cardLine}>Escolhe o que queres ver na app. É só teu: o teu parceiro escolhe o que quiser, e os dados da casa continuam partilhados.</Text>
+        {MODULES.map((m) => (
+          <View key={m.key} style={styles.prefRow}>
+            <View style={styles.prefText}>
+              <Text style={styles.prefTitle}>
+                {m.emoji} {m.title}
+              </Text>
+              <Text style={styles.cardLine}>{m.detail}</Text>
+            </View>
+            <Switch
+              value={hasModule(m.key)}
+              onValueChange={async (v) => {
+                if (!(await setModule(m.key, v))) setToast('Não foi possível guardar.');
+              }}
+            />
+          </View>
+        ))}
+
+        {hasModule('meals') && (
+        <View style={styles.prefRow}>
+          <View style={styles.prefText}>
+            <Text style={styles.prefTitle}>Mostrar custos e orçamento</Text>
+            <Text style={styles.cardLine}>Preços e orçamento nas refeições. É só teu: não muda o que o parceiro vê.</Text>
+          </View>
+          <Switch
+            value={showCosts}
+            onValueChange={async (v) => {
+              if (!(await setShowCosts(v))) setToast('Não foi possível guardar.');
+            }}
+          />
+        </View>
+        )}
+
+        <View style={styles.prefRow}>
+          <View style={styles.prefText}>
+            <Text style={styles.prefTitle}>Mostrar validades sugeridas</Text>
+            <Text style={styles.cardLine}>Prazos de conservação do USDA FoodKeeper nos produtos. É só teu: não muda o que o parceiro vê.</Text>
+          </View>
+          <Switch
+            value={showExpiry}
+            onValueChange={async (v) => {
+              if (!(await setShowExpiry(v))) setToast('Não foi possível guardar.');
+            }}
+          />
+        </View>
+
+        {hasModule('money') && (
+        <View style={styles.prefRow}>
+          <View style={styles.prefText}>
+            <Text style={styles.prefTitle}>Explicações com IA</Text>
+            <Text style={styles.cardLine}>Botão «Explica-me» na análise de despesas: a IA escreve, em linguagem simples, números já calculados. É só teu.</Text>
+          </View>
+          <Switch
+            value={showAiExplain}
+            onValueChange={async (v) => {
+              if (!(await setShowAiExplain(v))) setToast('Não foi possível guardar.');
+            }}
+          />
+        </View>
+        )}
+
+        <Button title="🔔 Horas dos lembretes" variant="secondary" onPress={() => router.push('/notifications')} />
+        {hasModule('meals') && <Button title="🍽️ Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />}
+
+        <Text style={styles.section}>Da casa</Text>
+        <Text style={styles.cardLine}>Resumo e pontos (decide o administrador)</Text>
         <View style={styles.modes}>
           {(Object.keys(GAMIFICATION_LABEL) as GamificationMode[]).map((m) => {
             const on = household.gamification === m;
@@ -208,50 +275,6 @@ export default function HouseScreen() {
           {household.gamification === 'competition' && 'Resumo semanal com pontos e 🏆 para quem fez mais.'}
           {!isAdmin && ' Só o administrador altera.'}
         </Text>
-
-        <Text style={styles.section}>Lembretes e cozinha</Text>
-        <Button title="🔔 Horas dos lembretes" variant="secondary" onPress={() => router.push('/notifications')} />
-        <Button title="🍽️ Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />
-
-        <Text style={styles.section}>Preferências pessoais</Text>
-        <View style={styles.prefRow}>
-          <View style={styles.prefText}>
-            <Text style={styles.prefTitle}>Mostrar custos e orçamento</Text>
-            <Text style={styles.cardLine}>Preços e orçamento nas refeições. É só teu: não muda o que o parceiro vê.</Text>
-          </View>
-          <Switch
-            value={showCosts}
-            onValueChange={async (v) => {
-              if (!(await setShowCosts(v))) setToast('Não foi possível guardar.');
-            }}
-          />
-        </View>
-
-        <View style={styles.prefRow}>
-          <View style={styles.prefText}>
-            <Text style={styles.prefTitle}>Mostrar validades sugeridas</Text>
-            <Text style={styles.cardLine}>Prazos de conservação do USDA FoodKeeper nos produtos. É só teu: não muda o que o parceiro vê.</Text>
-          </View>
-          <Switch
-            value={showExpiry}
-            onValueChange={async (v) => {
-              if (!(await setShowExpiry(v))) setToast('Não foi possível guardar.');
-            }}
-          />
-        </View>
-
-        <View style={styles.prefRow}>
-          <View style={styles.prefText}>
-            <Text style={styles.prefTitle}>Explicações com IA</Text>
-            <Text style={styles.cardLine}>Botão «Explica-me» na análise de despesas: a IA escreve, em linguagem simples, números já calculados. É só teu.</Text>
-          </View>
-          <Switch
-            value={showAiExplain}
-            onValueChange={async (v) => {
-              if (!(await setShowAiExplain(v))) setToast('Não foi possível guardar. Falta aplicar a migração? Corre "npx supabase db push".');
-            }}
-          />
-        </View>
 
         <Text style={styles.section}>Esta casa</Text>
         <Button title="Sair desta casa" variant="secondary" onPress={askLeave} />

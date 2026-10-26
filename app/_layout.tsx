@@ -9,6 +9,7 @@ import { HouseholdProvider } from '@/lib/household';
 import { rememberAuthUrl } from '@/lib/authLink';
 import { getNotifications, setupNotificationHandler } from '@/lib/notifications';
 import { SessionProvider } from '@/lib/session';
+import { SettingsProvider } from '@/lib/settings';
 import { colors, fonts } from '@/lib/theme';
 
 // O ecrã de arranque fica até os tipos de letra estarem carregados
@@ -49,6 +50,7 @@ export default function RootLayout() {
 
   return (
     <SessionProvider>
+      <SettingsProvider>
       <HouseholdProvider>
         <StatusBar style="light" />
         <Stack
@@ -86,6 +88,7 @@ export default function RootLayout() {
           <Stack.Screen name="invite/[code]" options={{ headerShown: false }} />
         </Stack>
       </HouseholdProvider>
+      </SettingsProvider>
     </SessionProvider>
   );
 }

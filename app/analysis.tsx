@@ -11,6 +11,7 @@ import { useShowAiExplain } from '@/lib/settings';
 import { formatEuros } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
+import { devHint } from '@/lib/errors';
 
 const BAR_HEIGHT = 90;
 
@@ -36,7 +37,7 @@ export default function AnalysisScreen() {
       supabase.rpc('budget_suggestions', { p_household: household.id }),
     ]);
     if (s.error || i.error || b.error) {
-      setToast('Falta aplicar a migração da análise: corre "npx supabase db push".');
+      setToast(devHint('Falta aplicar a migração da análise: corre "npx supabase db push".'));
       setScores([]);
       return;
     }

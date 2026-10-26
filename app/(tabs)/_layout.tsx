@@ -8,11 +8,13 @@ import { Text } from '@/components/Text';
 import { useHousehold } from '@/lib/household';
 import { registerForPush } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
+import { useModules } from '@/lib/settings';
 import { colors } from '@/lib/theme';
 
 export default function TabsLayout() {
   const { session, loading: sessionLoading, error: sessionError } = useSession();
   const { household, loading } = useHousehold();
+  const { has } = useModules();
 
   // Mantém o telemóvel registado para os lembretes (só se a permissão já foi dada)
   const signedIn = !!session && !!household;
@@ -44,8 +46,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" options={{ title: 'Resumo' }} />
       <Tabs.Screen name="shopping" options={{ title: 'Compras' }} />
       <Tabs.Screen name="stock" options={{ title: 'Produtos' }} />
-      <Tabs.Screen name="money" options={{ title: 'Dinheiro' }} />
-      <Tabs.Screen name="personal" options={{ title: 'Pessoal' }} />
+      <Tabs.Screen name="money" options={{ title: 'Dinheiro', href: has('money') ? undefined : null }} />
+      <Tabs.Screen name="personal" options={{ title: 'Pessoal', href: has('personal') ? undefined : null }} />
     </Tabs>
   );
 }

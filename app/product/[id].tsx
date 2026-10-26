@@ -24,6 +24,7 @@ import { useShowExpiry } from '@/lib/settings';
 import { ExpiryCard } from '@/components/ExpiryCard';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
+import { devHint } from '@/lib/errors';
 
 const LEVELS: StockLevel[] = ['full', 'half', 'low', 'empty'];
 
@@ -83,7 +84,7 @@ export default function ProductScreen() {
     setBusy(true);
     const { data, error } = await supabase.rpc('discard_product', { p_product: id, p_qty: qty });
     if (error) {
-      setToast(/discard_product|schema cache/i.test(error.message) ? 'Falta aplicar a migração: corre "npx supabase db push".' : `Não foi possível registar (${error.message}).`);
+      setToast(/discard_product|schema cache/i.test(error.message) ? devHint('Falta aplicar a migração: corre "npx supabase db push".') : `Não foi possível registar (${error.message}).`);
     } else {
       const value = (data as { value_cents: number | null } | null)?.value_cents;
       setToast(value ? `🗑️ Registado: ${formatEuros(value)} deitados fora` : '🗑️ Registado como deitado fora');

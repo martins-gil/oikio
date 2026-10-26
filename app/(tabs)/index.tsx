@@ -15,6 +15,7 @@ import { useHousehold } from '@/lib/household';
 import { addDaysIso, localDate, mondayOf } from '@/lib/money';
 import { friendlyTaskError } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
+import { useModules } from '@/lib/settings';
 import { formatAmount } from '@/lib/stock';
 import { colors, radius, shadow } from '@/lib/theme';
 import { sinceText, urgencyColor, urgencyFill, type TaskStatus } from '@/lib/urgency';
@@ -70,6 +71,7 @@ function consumptionText(o: Occurrence): string | null {
 export default function HomeScreen() {
   const router = useRouter();
   const { session } = useSession();
+  const { has: hasModule } = useModules();
   const { household, members, reload: reloadHousehold } = useHousehold();
   const me = session?.user.id;
   const myRole = members.find((m) => m.user_id === me)?.role;
@@ -537,10 +539,12 @@ export default function HomeScreen() {
                 <Text style={styles.tileText}>Sugestões</Text>
               </Pressable>
             )}
-            <Pressable style={styles.tile} onPress={() => router.push('/meals')}>
-              <Text style={styles.tileIcon}>🍽️</Text>
-              <Text style={styles.tileText}>Refeições</Text>
-            </Pressable>
+            {hasModule('meals') && (
+              <Pressable style={styles.tile} onPress={() => router.push('/meals')}>
+                <Text style={styles.tileIcon}>🍽️</Text>
+                <Text style={styles.tileText}>Refeições</Text>
+              </Pressable>
+            )}
             {current && scheduled.length > 0 && (
               <Pressable style={styles.tile} onPress={() => setShowScheduled(!showScheduled)}>
                 <Text style={styles.tileIcon}>📅</Text>

@@ -227,8 +227,8 @@ Deno.serve(async (req) => {
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
     console.error('Claude API:', detail);
-    // O detalhe (sem segredos) ajuda a perceber o que falhou
-    return json({ ok: false, error: `O serviço de IA não respondeu. Tenta outra vez daqui a pouco. (${detail.slice(0, 200)})` });
+    // O detalhe técnico fica só nos registos (não se mostra a quem usa a app)
+    return json({ ok: false, error: 'O serviço de IA não respondeu. Tenta outra vez daqui a pouco.' });
   }
   if (message.stop_reason === 'refusal') return json({ ok: false, error: 'Não foi possível gerar o plano agora. Tenta outra vez.' });
   if (message.stop_reason === 'max_tokens') return json({ ok: false, error: 'A resposta ficou incompleta. Tenta outra vez.' });

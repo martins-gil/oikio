@@ -7,14 +7,18 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { DatePicker } from '@/components/DatePicker';
 import { Toast } from '@/components/Toast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { useHousehold } from '@/lib/household';
 import { addDaysIso, formatEuros, localDate, parseEuros } from '@/lib/money';
 import { extensionFor, pickReceiptPhoto } from '@/lib/photo';
 import { suggestBaseUnit, toBaseQuantity, type AiLine } from '@/lib/receiptUnits';
 import { useSession } from '@/lib/session';
+import { useModules } from '@/lib/settings';
 import { formatAmount, PLACES, stepFor, type Place } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
+import { devHint } from '@/lib/errors';
 
 type Product = { id: string; name: string; base_unit: string };
 type Pack = { id: string; product_id: string; name: string; units_per_package: number };
@@ -59,7 +63,7 @@ const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,
 
 function friendly(message: string): string {
   if (/does not exist|schema cache|confirm_receipt|receipts/i.test(message) && !/já foi confirmado/i.test(message)) {
-    return 'Falta aplicar a migração dos talões: corre "npx supabase db push".';
+    return devHint('Falta aplicar a migração dos talões: corre "npx supabase db push".');
   }
   if (message.includes('já foi confirmado')) return 'Este talão já foi confirmado.';
   if (message.includes('Produto inexistente')) return 'Um dos produtos já não existe nesta casa.';
@@ -73,6 +77,8 @@ export default function ReceiptScreen() {
   const { session } = useSession();
   const { household } = useHousehold();
   const me = session?.user.id;
+  const { has: hasModule, setModule } = useModules();
+  const money = hasModule('money'); // sem o módulo Dinheiro, a compra não regista despesa
 
   const today = localDate();
   const [store, setStore] = useState('');
@@ -175,7 +181,7 @@ export default function ReceiptScreen() {
     } catch (e) {
       await cleanUp();
       setReading(false);
-      setToast(/does not exist|bucket/i.test(String(e)) ? 'Falta aplicar a migração das fotos: corre "npx supabase db push".' : 'Não consegui enviar a foto. Tenta outra vez.');
+      setToast(/does not exist|bucket/i.test(String(e)) ? devHint('Falta aplicar a migração das fotos: corre "npx supabase db push".') : 'Não consegui enviar a foto. Tenta outra vez.');
       return;
     }
     // 2) a IA lê a foto (demora uns 10 a 30 segundos)
@@ -351,7 +357,7 @@ export default function ReceiptScreen() {
       rid = receipt.id as string;
     }
     const { error: e2 } = await supabase.from('receipt_lines').insert(rows.map((r) => ({ receipt_id: rid, ...r })));
-    const { error: e3 } = e2 ? { error: e2 } : await supabase.rpc('confirm_receipt', { p_receipt: rid, p_register_expense: registerExpense });
+    const { error: e3 } = e2 ? { error: e2 } : await supabase.rpc('confirm_receipt', { p_receipt: rid, p_register_expense: money && registerExpense });
     if (e3) {
       if (!receiptId) await supabase.from('receipts').delete().eq('id', rid); // não deixa um talão manual a meio
       setSaving(false);
@@ -359,10 +365,28 @@ export default function ReceiptScreen() {
       return;
     }
     setSaving(false);
-    const expenseNote = registerExpense && total > 0 ? ` Despesa de ${formatEuros(total)} registada em Dinheiro.` : '';
-    Alert.alert('Compra registada ✅', `Stock atualizado em ${stockLines} ${stockLines === 1 ? 'produto' : 'produtos'}.${expenseNote}`, [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    const expenseNote = money && registerExpense && total > 0 ? ` Despesa de ${formatEuros(total)} registada em Dinheiro.` : '';
+    // Primeira compra sem o módulo Dinheiro: oferece-o uma só vez
+    const offerKey = 'nestkeep.offer.money';
+    const alreadyOffered = await AsyncStorage.getItem(offerKey).catch(() => '1');
+    const offer = !money && total > 0 && alreadyOffered === null;
+    if (offer) AsyncStorage.setItem(offerKey, '1').catch(() => {});
+    Alert.alert(
+      'Compra registada ✅',
+      `Stock atualizado em ${stockLines} ${stockLines === 1 ? 'produto' : 'produtos'}.${expenseNote}${offer ? '\n\nQueres acompanhar o que gastas? Podes ligar o módulo Dinheiro (também em Casa → Módulos).' : ''}`,
+      offer
+        ? [
+            { text: 'Agora não', style: 'cancel', onPress: () => router.back() },
+            {
+              text: 'Ligar Dinheiro',
+              onPress: async () => {
+                await setModule('money', true);
+                router.back();
+              },
+            },
+          ]
+        : [{ text: 'OK', onPress: () => router.back() }],
+    );
   };
 
   // Sai sem confirmar: o talão lido por foto fica por confirmar (apaga-se aqui para não deixar lixo)
@@ -575,7 +599,7 @@ export default function ReceiptScreen() {
         {lines.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.sum}>Total: {formatEuros(total)}</Text>
-            {total > 0 && (
+            {total > 0 && money && (
               <View style={styles.switchRow}>
                 <Text style={styles.switchLabel}>Registar {formatEuros(total)} em Dinheiro</Text>
                 <Switch value={registerExpense} onValueChange={setRegisterExpense} />

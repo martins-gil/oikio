@@ -2,6 +2,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { supabase } from './supabase';
+import { devHint } from './errors';
 
 // No Expo Go as notificações push não funcionam (só na versão real da app, o "development build")
 export const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient || Constants.appOwnership === 'expo';
@@ -80,7 +81,7 @@ export const STATUS_TEXT: Record<PushStatus, string> = {
 // Texto para quando falha uma gravação; se a base de dados ainda não tem a migração dos lembretes, diz como a aplicar
 export function saveErrorText(message: string): string {
   return /does not exist|schema cache|could not find|is_essential|notification_prefs/i.test(message)
-    ? 'Falta aplicar a migração dos lembretes: no PowerShell corre "npx supabase db push".'
+    ? devHint('Falta aplicar a migração dos lembretes: no PowerShell corre "npx supabase db push".')
     : 'Não foi possível guardar. Tenta outra vez.';
 }
 

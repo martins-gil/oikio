@@ -22,6 +22,7 @@ import { useSession } from '@/lib/session';
 import { useShowCosts } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
+import { devHint } from '@/lib/errors';
 
 const STEPS = ['schedule', 'people', 'budget', 'cravings', 'style', 'equipment', 'restrictions'] as const;
 type Step = (typeof STEPS)[number];
@@ -55,7 +56,7 @@ export default function KitchenScreen() {
         supabase.from('cooking_profiles').select(PROFILE_COLUMNS).eq('household_id', household.id).maybeSingle(),
         supabase.from('expense_budgets').select('monthly_cents').eq('household_id', household.id).eq('category', 'Supermercado').maybeSingle(),
       ]);
-      if (p.error) setToast(/does not exist|schema cache/i.test(p.error.message) ? 'Falta aplicar a migração do perfil: corre "npx supabase db push".' : 'Não foi possível carregar o perfil.');
+      if (p.error) setToast(/does not exist|schema cache/i.test(p.error.message) ? devHint('Falta aplicar a migração do perfil: corre "npx supabase db push".') : 'Não foi possível carregar o perfil.');
       if (p.data) setProfile(p.data as CookingProfile);
       else setProfile({ ...DEFAULT_PROFILE, diners: Math.min(12, Math.max(1, members.length || 2)) });
       if (b.data) setMoneyWeekly(Math.round((Number(b.data.monthly_cents) * 12) / 52));

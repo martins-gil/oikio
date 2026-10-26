@@ -12,6 +12,7 @@ import { colors, radius, shadow } from '@/lib/theme';
 import { formatEuros, localDate, parseEuros } from '@/lib/money';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
+import { devHint } from '@/lib/errors';
 
 type Expense = {
   id: string;
@@ -150,7 +151,7 @@ export default function MoneyScreen() {
 
   const budgetError = (message: string) =>
     /does not exist|schema cache|expense_budgets/i.test(message)
-      ? 'Falta aplicar a migração dos orçamentos: corre "npx supabase db push".'
+      ? devHint('Falta aplicar a migração dos orçamentos: corre "npx supabase db push".')
       : `Não foi possível guardar o orçamento (${message}).`;
 
   const saveBudget = async () => {

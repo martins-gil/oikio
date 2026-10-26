@@ -3,7 +3,11 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/Text';
+import { useModules, type ModuleKey } from '@/lib/settings';
 import { colors, fonts, shadow } from '@/lib/theme';
+
+// Separadores que só aparecem se a pessoa ligou o módulo (o núcleo — Resumo, Compras, Produtos — está sempre)
+const MODULE_TAB: Partial<Record<string, ModuleKey>> = { money: 'money', personal: 'personal' };
 
 // Ícones dos separadores (ativo e inativo), desenhados no estilo do logótipo
 const ICONS = {
@@ -25,6 +29,7 @@ const LABELS: Record<keyof typeof ICONS, string> = {
 // Barra de baixo: cartão branco arredondado, com o separador ativo numa pílula lavanda
 export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { has } = useModules();
   return (
     <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <View style={styles.bar}>
@@ -33,6 +38,8 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
           const key = route.name as keyof typeof ICONS;
           const icon = ICONS[key];
           if (!icon) return null;
+          const needs = MODULE_TAB[key];
+          if (needs && !has(needs)) return null;
           return (
             <Pressable
               key={route.key}

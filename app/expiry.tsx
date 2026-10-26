@@ -9,6 +9,7 @@ import { useHousehold } from '@/lib/household';
 import { formatAmount } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, shadow } from '@/lib/theme';
+import { devHint } from '@/lib/errors';
 
 // O que está a acabar o prazo sugerido (USDA FoodKeeper), do mais urgente para o menos
 export default function ExpiryScreen() {
@@ -21,7 +22,7 @@ export default function ExpiryScreen() {
     useCallback(() => {
       if (!household) return;
       supabase.rpc('expiry_overview', { p_household: household.id }).then(({ data, error: err }) => {
-        setError(err ? 'Falta aplicar a migração das validades: corre "npx supabase db push".' : null);
+        setError(err ? devHint('Falta aplicar a migração das validades: corre "npx supabase db push".') : null);
         setRows((data ?? []) as OverviewRow[]);
       });
     }, [household]),
