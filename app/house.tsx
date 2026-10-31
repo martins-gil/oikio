@@ -7,6 +7,7 @@ import { Text, TextInput } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { LegalConsent } from '@/components/LegalConsent';
 import { Toast } from '@/components/Toast';
+import { devHint } from '@/lib/errors';
 import { formatInviteCode, GAMIFICATION_LABEL, inviteMessage, ROLE_LABEL, useHousehold, type GamificationMode, type Member } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { MODULES, useModules, useShowAiExplain, useShowCosts, useShowExpiry } from '@/lib/settings';
@@ -115,6 +116,37 @@ export default function HouseScreen() {
     await supabase.auth.signOut();
     router.replace('/'); // volta ao início: sem casa, abre o ecrã de entrar / criar casa
   };
+
+  // Apagar a conta: confirma duas vezes (não tem volta) e depois sai desta sessão
+  const askDeleteAccount = () =>
+    Alert.alert(
+      'Apagar a minha conta?',
+      'Apaga a tua conta e o que é só teu: tarefas pessoais, banco de horas, definições, lembretes e as despesas que pagaste. As casas onde és a única pessoa são apagadas. Nas outras, a administração passa para outra pessoa e o que registaste fica, sem o teu nome. Não dá para desfazer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Continuar',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert('Tens a certeza?', 'Esta ação é definitiva.', [
+              { text: 'Não, manter a conta', style: 'cancel' },
+              {
+                text: 'Sim, apagar tudo',
+                style: 'destructive',
+                onPress: async () => {
+                  const { error } = await supabase.rpc('delete_my_account');
+                  if (error) {
+                    setToast(/does not exist|schema cache|could not find/i.test(error.message) ? devHint('Falta aplicar a migração: corre "npx supabase db push".') : 'Não foi possível apagar a conta. Tenta outra vez.');
+                    return;
+                  }
+                  await supabase.auth.signOut({ scope: 'local' }); // a conta já não existe: só limpa este telemóvel
+                  router.replace('/');
+                },
+              },
+            ]),
+        },
+      ],
+    );
 
   // Conta protegida: basta lembrar que é preciso o e-mail para voltar.
   // Conta sem e-mail: sair perde o acesso à casa, por isso avisa e oferece proteger primeiro.
@@ -283,6 +315,9 @@ export default function HouseScreen() {
           </Pressable>
           <Pressable style={styles.dangerRow} onPress={signOut} accessibilityRole="button">
             <Text variant="button" style={styles.dangerText}>Terminar sessão</Text>
+          </Pressable>
+          <Pressable style={styles.dangerRow} onPress={askDeleteAccount} accessibilityRole="button">
+            <Text variant="button" style={styles.dangerText}>Apagar a minha conta</Text>
           </Pressable>
         </View>
         <LegalConsent action="usar a app" />
