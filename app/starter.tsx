@@ -541,7 +541,16 @@ export default function StarterScreen() {
         <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
           <Text variant="title" style={styles.title}>Confirma a lista</Text>
           <Text variant="body" style={styles.hint}>Ajustámos a frequência a quem vive em casa. Tira o visto às que não fazem sentido; podes mudar tudo depois.</Text>
-          {tasks.length === 0 && <Text variant="body" style={styles.hint}>Já tens todas as tarefas destes temas. Volta atrás e escolhe outros.</Text>}
+          {tasks.length === 0 && (
+            <View style={styles.tip}>
+              <Text variant="button" style={styles.tipTitle}>✅ Já têm as tarefas essenciais</Text>
+              <Text variant="label" style={styles.tipText}>
+                {laterCount > 0
+                  ? 'Não há tarefas novas para criar agora. As outras sugestões para a vossa casa estão em «💡 Sugestões», no ecrã Hoje.'
+                  : 'Não há tarefas novas para criar com estes temas. Podem voltar atrás e escolher outros, ou continuar.'}
+              </Text>
+            </View>
+          )}
           {laterCount > 0 && (
             <Text variant="label" style={styles.small}>
               Há mais {laterCount} {laterCount === 1 ? 'sugestão' : 'sugestões'} para a vossa casa (roupa de cama, brinquedos, manutenção…). Ficam em «💡 Sugestões», no ecrã Hoje, já marcadas, para juntarem quando quiserem.
@@ -562,7 +571,11 @@ export default function StarterScreen() {
           })}
         </ScrollView>
         <View style={styles.footer}>
-          <Button title={saving ? 'A criar…' : chosen.length === 0 ? 'Escolhe pelo menos uma' : `Criar ${chosen.length} ${chosen.length === 1 ? 'tarefa' : 'tarefas'}`} disabled={chosen.length === 0 || saving} onPress={create} />
+          <Button
+            title={saving ? 'A criar…' : chosen.length === 0 ? 'Continuar sem criar tarefas' : `Criar ${chosen.length} ${chosen.length === 1 ? 'tarefa' : 'tarefas'}`}
+            disabled={saving}
+            onPress={chosen.length === 0 ? () => setStep('extras') : create}
+          />
           <Button title="Voltar" variant="secondary" disabled={saving} onPress={() => setStep('packs')} />
         </View>
       </View>
