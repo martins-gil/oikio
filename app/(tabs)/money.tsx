@@ -1,9 +1,10 @@
 import { Screen } from '@/components/Screen';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
+import { Toggle } from '@/components/Toggle';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -56,6 +57,7 @@ export default function MoneyScreen() {
   const [budgetText, setBudgetText] = useState('');
   const [savingBudget, setSavingBudget] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false); // formulário de nova despesa aberto
 
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -118,6 +120,7 @@ export default function MoneyScreen() {
     setAmount('');
     setDescription('');
     setCategory(null);
+    setAdding(false);
     setToast(shared ? `${formatEuros(cents)} guardados` : `${formatEuros(cents)} guardados 🔒`);
     // se estava noutro mês, volta ao atual para ver a despesa
     const today = new Date();
@@ -209,6 +212,44 @@ export default function MoneyScreen() {
     <Screen title="Dinheiro" subtitle="Despesas da casa">
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={styles.monthRow}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mês anterior" style={styles.arrowButton} onPress={() => changeMonth(-1)}>
+            <Text variant="section" style={styles.arrow}>◀</Text>
+          </Pressable>
+          <Text variant="section" style={styles.month}>{monthLabel}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mês seguinte" style={styles.arrowButton} onPress={() => changeMonth(1)}>
+            <Text variant="section" style={styles.arrow}>▶</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.card}>
+          <Text variant="label" style={styles.small}>Gasto este mês (partilhado)</Text>
+          <Text variant="display" style={styles.total}>{formatEuros(sharedTotal)}</Text>
+          {byPerson.size > 0 && (
+            <View style={styles.summaryChip}>
+              <Text variant="label" style={styles.summaryChipText}>{[...byPerson].map(([id, c]) => `${nameOf(id)}: ${formatEuros(c)}`).join(' · ')}</Text>
+            </View>
+          )}
+          {privateTotal > 0 && <Text variant="label" style={styles.small}>🔒 Só tuas: {formatEuros(privateTotal)}</Text>}
+        </View>
+
+        <View style={styles.card}>
+          <Text variant="section" style={styles.title}>Onde foi o dinheiro</Text>
+          {sharedTotal === 0 && <Text variant="label" style={styles.small}>Ainda sem despesas partilhadas neste mês.</Text>}
+          {[...spentBy].sort((a, b) => b[1] - a[1]).map(([c, v]) => (
+            <View key={c} style={styles.shareBlock}>
+              <View style={styles.headRow}>
+                <Text variant="body" style={styles.budgetName}>{CATEGORY_ICON[c] ?? '📦'} {c}</Text>
+                <Text variant="button" style={styles.budgetSpent}>{formatEuros(v)}</Text>
+              </View>
+              <View style={styles.track}>
+                <View style={[styles.fill, { width: `${Math.max(4, Math.round((v / sharedTotal) * 100))}%`, backgroundColor: colors.primary }]} />
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {adding && (
         <View style={styles.card}>
           <Text variant="section" style={styles.title}>Nova despesa</Text>
           <Text variant="label" style={styles.label}>Valor</Text>
@@ -238,29 +279,53 @@ export default function MoneyScreen() {
           </View>
           <View style={styles.switchRow}>
             <Text variant="body" style={styles.switchLabel}>{shared ? 'Partilhada com a casa' : '🔒 Só minha'}</Text>
-            <Switch value={shared} onValueChange={setShared} />
+            <Toggle value={shared} onValueChange={setShared} />
           </View>
           <Button title={saving ? 'A guardar…' : 'Guardar'} disabled={cents === null || saving} onPress={save} />
+          <Button title="Cancelar" variant="secondary" onPress={() => setAdding(false)} />
         </View>
+        )}
 
         <Pressable style={styles.analysisLink} onPress={() => router.push('/analysis')} accessibilityRole="button">
           <Text variant="body" style={styles.analysisText}>📈 Análise: onde se perde dinheiro e orçamento sugerido</Text>
         </Pressable>
 
-        <View style={styles.monthRow}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Mês anterior" style={styles.arrowButton} onPress={() => changeMonth(-1)}>
-            <Text variant="section" style={styles.arrow}>◀</Text>
-          </Pressable>
-          <Text variant="section" style={styles.month}>{monthLabel}</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="Mês seguinte" style={styles.arrowButton} onPress={() => changeMonth(1)}>
-            <Text variant="section" style={styles.arrow}>▶</Text>
-          </Pressable>
-        </View>
-
         {expenses === null ? (
           <ActivityIndicator />
         ) : (
           <>
+            <View style={styles.headRow}>
+              <Text variant="section" style={styles.title}>Movimentos</Text>
+              {list.some((x) => x.paid_by === me) && <Text variant="label" style={styles.small}>Mantém premido um teu para o apagar</Text>}
+            </View>
+            <View style={styles.chips}>
+              {CATEGORIES.map((c) => (
+                <Pressable key={c} style={[styles.chip, filter === c && styles.chipOn]} onPress={() => setFilter(filter === c ? null : c)}>
+                  <Text variant="button" style={filter === c ? styles.chipTextOn : styles.chipText}>{c}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {shown.length === 0 && <Text variant="label" style={styles.hint}>Sem movimentos neste mês.</Text>}
+            {shown.map((e) => (
+              <Pressable
+                key={e.id}
+                style={styles.row}
+                onLongPress={e.paid_by === me ? () => askDelete(e) : undefined}
+                accessibilityActions={e.paid_by === me ? [{ name: 'delete', label: 'Apagar despesa' }] : undefined}
+                onAccessibilityAction={() => askDelete(e)}>
+                <Text variant="section" style={styles.tileIcon}>{CATEGORY_ICON[e.category ?? 'Outros'] ?? '📦'}</Text>
+                <View style={styles.rowMain}>
+                  <Text variant="button" style={styles.rowTitle}>
+                    {e.description || e.category || 'Sem descrição'} {!e.is_shared && '🔒'}
+                  </Text>
+                  <Text variant="label" style={styles.small}>
+                    {[e.category, e.spent_on.split('-').reverse().slice(0, 2).join('/'), nameOf(e.paid_by)].filter(Boolean).join(' · ')}
+                  </Text>
+                </View>
+                <Text variant="button" style={styles.amountOut}>-{formatEuros(e.amount_cents)}</Text>
+              </Pressable>
+            ))}
             <View style={styles.card}>
               <Text variant="section" style={styles.title}>Orçamentos</Text>
               <Text variant="label" style={styles.small}>Toca numa categoria para definir quanto queres gastar por mês. Contam as despesas partilhadas.</Text>
@@ -325,51 +390,12 @@ export default function MoneyScreen() {
               })}
             </View>
 
-            <View style={styles.headRow}>
-              <Text variant="section" style={styles.title}>Movimentos</Text>
-            </View>
-            <Text variant="label" style={styles.small}>
-              {formatEuros(sharedTotal)} partilhadas
-              {privateTotal > 0 ? ` · 🔒 ${formatEuros(privateTotal)}` : ''}
-            </Text>
-            {byPerson.size > 0 && (
-              <Text variant="label" style={styles.small}>
-                {[...byPerson].map(([id, c]) => `${nameOf(id)}: ${formatEuros(c)}`).join(' · ')}
-              </Text>
-            )}
-            <View style={styles.chips}>
-              {CATEGORIES.map((c) => (
-                <Pressable key={c} style={[styles.chip, filter === c && styles.chipOn]} onPress={() => setFilter(filter === c ? null : c)}>
-                  <Text variant="button" style={filter === c ? styles.chipTextOn : styles.chipText}>{c}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            {shown.length === 0 && <Text variant="label" style={styles.hint}>Sem movimentos neste mês.</Text>}
-            {shown.map((e) => (
-              <View key={e.id} style={styles.row}>
-                <View style={styles.tile}>
-                  <Text variant="section" style={styles.tileIcon}>{CATEGORY_ICON[e.category ?? 'Outros'] ?? '📦'}</Text>
-                </View>
-                <View style={styles.rowMain}>
-                  <Text variant="body" style={styles.rowTitle}>
-                    {e.description || e.category || 'Sem descrição'} {!e.is_shared && '🔒'}
-                  </Text>
-                  <Text variant="label" style={styles.small}>
-                    {[e.category, e.spent_on.split('-').reverse().slice(0, 2).join('/'), nameOf(e.paid_by)].filter(Boolean).join(' · ')}
-                  </Text>
-                </View>
-                <Text variant="body" style={styles.amountOut}>-{formatEuros(e.amount_cents)}</Text>
-                {e.paid_by === me && (
-                  <Pressable accessibilityRole="button" accessibilityLabel="Apagar despesa" style={styles.removeButton} onPress={() => askDelete(e)}>
-                    <Text variant="section" style={styles.remove}>✕</Text>
-                  </Pressable>
-                )}
-              </View>
-            ))}
           </>
         )}
       </ScrollView>
+      <View style={styles.footer}>
+        {!adding && <Button title="＋ Nova despesa" onPress={() => setAdding(true)} />}
+      </View>
       <Toast message={toast} onHide={hideToast} />
     </View>
     </Screen>
@@ -381,7 +407,7 @@ const styles = StyleSheet.create({
   analysisText: { color: colors.primary },
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: 100 },
+  container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
   card: { gap: 12, borderRadius: radius.card, padding: spacing.sm, backgroundColor: colors.card, ...shadow },
   title: { color: colors.ink },
   label: { color: colors.muted, marginBottom: -6 },
@@ -410,10 +436,15 @@ const styles = StyleSheet.create({
   budgetRow: { flexDirection: 'row', gap: 12, alignItems: 'center', minHeight: 64 },
   tile: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.lavender, alignItems: 'center', justifyContent: 'center' },
   tileIcon: { color: colors.ink },
+  total: { color: colors.ink },
+  summaryChip: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 6, borderRadius: radius.chip, backgroundColor: colors.lavender },
+  summaryChipText: { color: colors.primary },
+  shareBlock: { gap: 2 },
+  footer: { padding: spacing.md, paddingTop: spacing.sm, backgroundColor: colors.bg },
   budgetName: { color: colors.ink, flexShrink: 1 },
   budgetAmounts: { color: colors.muted },
   budgetSpent: { color: colors.ink },
-  track: { height: 10, borderRadius: 5, backgroundColor: colors.bg, marginVertical: 5, overflow: 'hidden' },
+  track: { height: 10, borderRadius: 5, backgroundColor: colors.lavender, marginVertical: 5, overflow: 'hidden' },
   fill: { height: 10, borderRadius: 5 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 64, padding: 12, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   rowMain: { flex: 1, gap: 2 },

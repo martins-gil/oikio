@@ -1,9 +1,10 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AgeNotice } from '@/components/AgeNotice';
 import { Text, TextInput } from '@/components/Text';
+import { Toggle } from '@/components/Toggle';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -207,7 +208,7 @@ export default function PlanScreen() {
                 <Text variant="button" style={styles.blockTitle}>🧊 Preparar marmitas no domingo</Text>
                 <Text variant="label" style={styles.small}>Cozinhas em quantidade antes da semana e congelas para os dias úteis.</Text>
               </View>
-              <Switch accessibilityLabel="Preparar marmitas no domingo" value={batch} onValueChange={setBatch} />
+              <Toggle accessibilityLabel="Preparar marmitas no domingo" value={batch} onValueChange={setBatch} />
             </View>
           )}
           {working === 'plan' && (

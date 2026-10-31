@@ -98,10 +98,14 @@ Componentes partilhados do redesenho (usar em vez de repetir código):
 - `CheckCircle`: visto redondo de 32 nas listas de escolha (cor + sinal ✓).
 - `FavoriteStar`: estrela das favoritas com alvo de 48.
 - `ProgressArc`: gráfico de progresso em arco aberto com gradiente da marca (roxo → rosa → amarelo → verde) e ponta luminosa; número grande ao centro (ecrã Hoje). Contas em `lib/arc.ts`.
+- `Avatar`: bolinha com a inicial da pessoa (cores da marca, sempre a mesma por pessoa); `Pill`: etiqueta de estado (ok / aviso / mau / info: cor + texto); `Toggle`: interruptor menta.
 - `ProgressBar`: passos dos assistentes (segmentos + «Passo 2 de 5» em texto). `CountStepper`: nome + quantidade com botões − e + de 48 (pessoas, doses).
 - Cabeçalho do sistema (Stack): título na variante `section` (21).
 
 Padrões de ecrã adotados:
+- Maquetes aprovadas (palette B): cartões brancos com cantos 20; produtos com ícone (emoji), nome, quantidade, etiqueta de estado e barra de nível;
+  tarefas com círculo de visto, nome em Montserrat, «frequência · quem» e avatar à direita; apagar é por toque longo (sem ✕ em cada linha),
+  com a dica «Mantém premido…» no ecrã; ações principais num botão roxo cheio fixo em baixo (Registar a compra, Nova despesa).
 - Botão principal fixo no rodapé (formulários, talão, ficha do produto,
   refeições e plano, arranque), fora do scroll e acima da barra do sistema.
 - Informação extra em secções que abrem e fecham (Resumo da semana, Feitas,

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HouseSwitcher } from '@/components/HouseSwitcher';
 import { Text } from '@/components/Text';
+import { Toggle } from '@/components/Toggle';
 import { colors, radius } from '@/lib/theme';
 
 type Props = {

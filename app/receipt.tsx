@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
+import { Toggle } from '@/components/Toggle';
 
 import { Button } from '@/components/Button';
 import { DatePicker } from '@/components/DatePicker';
@@ -654,7 +655,7 @@ export default function ReceiptScreen() {
           {total > 0 && money && (
             <View style={styles.switchRow}>
               <Text variant="body" style={styles.switchLabel}>Registar {formatEuros(total)} em Dinheiro</Text>
-              <Switch value={registerExpense} onValueChange={setRegisterExpense} />
+              <Toggle value={registerExpense} onValueChange={setRegisterExpense} />
             </View>
           )}
           <Button title={saving ? 'A registar…' : 'Confirmar compra'} disabled={saving} onPress={confirm} />

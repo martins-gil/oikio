@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
+import { Toggle } from '@/components/Toggle';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -76,7 +77,7 @@ export default function NotificationsScreen() {
         <View style={styles.card}>
           <View style={styles.row}>
             <Text variant="button" style={styles.label}>Receber lembretes</Text>
-            <Switch accessibilityLabel="Receber lembretes" value={prefs.enabled} onValueChange={(enabled) => update({ enabled })} />
+            <Toggle accessibilityLabel="Receber lembretes" value={prefs.enabled} onValueChange={(enabled) => update({ enabled })} />
           </View>
           <Text variant="label" style={styles.small}>
             Mostram as tarefas do dia e os produtos essenciais que faltam comprar. Se não houver nada, não há aviso.
@@ -89,7 +90,7 @@ export default function NotificationsScreen() {
             <HourPicker value={prefs.hour_first} onChange={(hour_first) => update({ hour_first })} />
             <View style={styles.row}>
               <Text variant="button" style={styles.label}>Segundo lembrete</Text>
-              <Switch accessibilityLabel="Segundo lembrete" value={prefs.hour_second !== null} onValueChange={(on) => update({ hour_second: on ? 17 : null })} />
+              <Toggle accessibilityLabel="Segundo lembrete" value={prefs.hour_second !== null} onValueChange={(on) => update({ hour_second: on ? 17 : null })} />
             </View>
             {prefs.hour_second !== null && <HourPicker value={prefs.hour_second} onChange={(hour_second) => update({ hour_second })} />}
             <Text variant="label" style={styles.small}>Hora de Lisboa.</Text>
@@ -97,7 +98,7 @@ export default function NotificationsScreen() {
               <>
                 <View style={styles.row}>
                   <Text variant="button" style={styles.label}>Avisar de validades</Text>
-                  <Switch accessibilityLabel="Avisar de validades" value={prefs.expiry} onValueChange={(expiry) => update({ expiry })} />
+                  <Toggle accessibilityLabel="Avisar de validades" value={prefs.expiry} onValueChange={(expiry) => update({ expiry })} />
                 </View>
                 <Text variant="label" style={styles.small}>
                   No primeiro lembrete do dia, diz o que está a acabar o prazo sugerido (ou o prazo da embalagem). Só produtos com prazo conhecido.

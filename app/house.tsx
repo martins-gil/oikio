@@ -1,9 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
+import { Toggle } from '@/components/Toggle';
 
+import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { LegalConsent } from '@/components/LegalConsent';
 import { Toast } from '@/components/Toast';
@@ -179,13 +181,27 @@ export default function HouseScreen() {
 
         <View style={styles.card}>
           <Text variant="section" style={styles.cardHeading}>Quem vive aqui</Text>
+          <View style={styles.avatars}>
+            {members.map((m) => (
+              <Avatar key={m.user_id} id={m.user_id} name={m.display_name} size={44} />
+            ))}
+            <Text variant="label" style={[styles.muted, styles.avatarsText]}>
+              {members.length} {members.length === 1 ? 'pessoa' : 'pessoas'}
+              {isAdmin ? ' · és administrador(a)' : ''}
+            </Text>
+          </View>
           {members.map((m) => (
             <View key={m.user_id} style={styles.person}>
-              <Text variant="body" style={styles.personName}>
-                {m.display_name}
-                {m.user_id === me?.id ? ' (tu)' : ''}
-              </Text>
-              <Text variant="label" style={styles.muted}>{ROLE_LABEL[m.role]}</Text>
+              <View style={styles.personHead}>
+                <Avatar id={m.user_id} name={m.display_name} size={36} />
+                <View style={styles.personText}>
+                  <Text variant="button" style={styles.personName}>
+                    {m.display_name}
+                    {m.user_id === me?.id ? ' (tu)' : ''}
+                  </Text>
+                  <Text variant="label" style={styles.muted}>{ROLE_LABEL[m.role]}</Text>
+                </View>
+              </View>
               {isAdmin && m.user_id !== me?.id && m.role !== 'admin' && (
                 <Pressable style={styles.linkRow} onPress={() => askMakeAdmin(m)} accessibilityRole="button">
                   <Text variant="body" style={styles.linkAction}>Tornar administrador</Text>
@@ -200,6 +216,7 @@ export default function HouseScreen() {
             <Text variant="section" style={styles.cardHeading}>Convidar</Text>
             {invite ? (
               <View style={styles.inviteBox}>
+                <Text variant="label" style={styles.muted}>Código de convite</Text>
                 <Text variant="display" style={styles.code}>{formatInviteCode(invite.token)}</Text>
                 <Text variant="label" style={styles.muted}>
                   Vale até{' '}
@@ -237,7 +254,7 @@ export default function HouseScreen() {
                 </Text>
                 <Text variant="label" style={styles.muted}>{m.detail}</Text>
               </View>
-              <Switch accessibilityLabel={m.title} value={hasModule(m.key)} onValueChange={async (v) => { if (!(await setModule(m.key, v))) setToast('Não foi possível guardar.'); }} />
+              <Toggle accessibilityLabel={m.title} value={hasModule(m.key)} onValueChange={async (v) => { if (!(await setModule(m.key, v))) setToast('Não foi possível guardar.'); }} />
             </View>
           ))}
 
@@ -247,7 +264,7 @@ export default function HouseScreen() {
                 <Text variant="body" style={styles.prefTitle}>Mostrar custos e orçamento</Text>
                 <Text variant="label" style={styles.muted}>Preços e orçamento nas refeições.</Text>
               </View>
-              <Switch accessibilityLabel="Mostrar custos e orçamento" value={showCosts} onValueChange={saveFlag(setShowCosts)} />
+              <Toggle accessibilityLabel="Mostrar custos e orçamento" value={showCosts} onValueChange={saveFlag(setShowCosts)} />
             </View>
           )}
 
@@ -256,7 +273,7 @@ export default function HouseScreen() {
               <Text variant="body" style={styles.prefTitle}>Mostrar validades sugeridas</Text>
               <Text variant="label" style={styles.muted}>Prazos de conservação (USDA FoodKeeper) nos produtos.</Text>
             </View>
-            <Switch accessibilityLabel="Mostrar validades sugeridas" value={showExpiry} onValueChange={saveFlag(setShowExpiry)} />
+            <Toggle accessibilityLabel="Mostrar validades sugeridas" value={showExpiry} onValueChange={saveFlag(setShowExpiry)} />
           </View>
 
           {hasModule('money') && (
@@ -265,7 +282,7 @@ export default function HouseScreen() {
                 <Text variant="body" style={styles.prefTitle}>Explicações com IA</Text>
                 <Text variant="label" style={styles.muted}>Botão «Explica-me» na análise de despesas: a IA escreve, em linguagem simples, números já calculados.</Text>
               </View>
-              <Switch accessibilityLabel="Explicações com IA" value={showAiExplain} onValueChange={saveFlag(setShowAiExplain)} />
+              <Toggle accessibilityLabel="Explicações com IA" value={showAiExplain} onValueChange={saveFlag(setShowAiExplain)} />
             </View>
           )}
 
@@ -343,8 +360,12 @@ const styles = StyleSheet.create({
   prefText: { flex: 1, gap: 2 },
   prefTitle: { color: colors.ink },
   input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
-  inviteBox: { gap: 12, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.card, padding: spacing.sm, alignItems: 'center' },
-  code: { color: colors.ink, letterSpacing: 3, textAlign: 'center' },
+  inviteBox: { gap: 10, borderRadius: radius.card, paddingVertical: spacing.sm, alignItems: 'center' },
+  code: { color: colors.primary, letterSpacing: 2, textAlign: 'center' },
+  avatars: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  avatarsText: { flexShrink: 1, flexBasis: 140, flexGrow: 1 },
+  personHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  personText: { flex: 1 },
   warn: { gap: 12, backgroundColor: colors.warnBg, borderRadius: radius.card, padding: spacing.sm },
   warnText: { color: colors.warnText },
   modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

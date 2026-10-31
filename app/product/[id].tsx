@@ -1,9 +1,10 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
+import { Toggle } from '@/components/Toggle';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
@@ -401,7 +402,7 @@ export default function ProductScreen() {
                 <Text variant="button" style={styles.cardTitle}>Essencial</Text>
                 <Text variant="label" style={styles.hint}>Se faltar, aparece nos lembretes diários (ex.: leite).</Text>
               </View>
-              <Switch value={essential} onValueChange={toggleEssential} />
+              <Toggle value={essential} onValueChange={toggleEssential} />
             </View>
 
             {!isLevel && Number(product.total) > 0 ? (

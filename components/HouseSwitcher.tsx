@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { Text } from '@/components/Text';
+import { Toggle } from '@/components/Toggle';
 import { useHousehold } from '@/lib/household';
 import { colors } from '@/lib/theme';
 

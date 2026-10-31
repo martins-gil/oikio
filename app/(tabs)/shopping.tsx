@@ -1,13 +1,15 @@
 import { Screen } from '@/components/Screen';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
+import { formatEuros } from '@/lib/money';
+import { useShowCosts } from '@/lib/settings';
 import { formatAmount, stepFor, type ShopItem } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
@@ -32,7 +34,9 @@ function itemDetail(i: ShopItem): string | null {
 export default function ShoppingScreen() {
   const router = useRouter();
   const { household } = useHousehold();
+  const { showCosts } = useShowCosts();
   const [items, setItems] = useState<ShopItem[] | null>(null);
+  const [prices, setPrices] = useState<Map<string, number>>(new Map()); // cêntimos por unidade base, dos talões confirmados
   const [text, setText] = useState('');
   const [editing, setEditing] = useState<string | null>(null); // item aberto para definir quantidade
   const [qtyText, setQtyText] = useState('');
@@ -58,6 +62,8 @@ export default function ShoppingScreen() {
       return;
     }
     setItems((data ?? []) as unknown as ShopItem[]);
+    const { data: pr } = await supabase.from('v_product_prices').select('product_id, cents_per_base_unit').eq('household_id', household.id);
+    setPrices(new Map((pr ?? []).map((r: { product_id: string; cents_per_base_unit: number }) => [r.product_id, Number(r.cents_per_base_unit)])));
   }, [household]);
 
   useFocusEffect(
@@ -117,6 +123,13 @@ export default function ShoppingScreen() {
     load();
   };
 
+  // Tirar da lista: mantém premido o item (pede confirmação)
+  const askRemove = (item: ShopItem) =>
+    Alert.alert(`Tirar «${itemName(item)}» da lista?`, undefined, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Tirar', style: 'destructive', onPress: () => remove(item) },
+    ]);
+
   const remove = async (item: ShopItem) => {
     setItems((prev) => prev?.filter((i) => i.id !== item.id) ?? prev);
     await supabase.from('shopping_list_items').delete().eq('id', item.id);
@@ -133,9 +146,12 @@ export default function ShoppingScreen() {
 
   const open = items.filter((i) => !i.checked_at);
   const bought = items.filter((i) => i.checked_at);
+  // Estimativa: só dos itens com produto, quantidade e preço conhecido (talões confirmados)
+  const priced = open.filter((i) => i.product_id && i.quantity && prices.has(i.product_id));
+  const estimate = Math.round(priced.reduce((sum, i) => sum + (i.quantity ?? 0) * (prices.get(i.product_id!) ?? 0), 0));
 
   return (
-    <Screen title="Compras" subtitle="O que falta comprar">
+    <Screen title="Compras" subtitle={open.length === 0 ? 'Nada por comprar' : `${open.length} por comprar`}>
     <View style={styles.flex}>
       <View style={styles.addRow}>
         <TextInput
@@ -154,6 +170,21 @@ export default function ShoppingScreen() {
 
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {open.length === 0 && <Text variant="section" style={styles.empty}>Nada por comprar 🎉</Text>}
+        {open.length > 0 && (
+          <View style={styles.summary}>
+            <View style={styles.summaryText}>
+              <Text variant="label" style={styles.detail}>{showCosts && priced.length > 0 ? 'Estimativa' : 'Por comprar'}</Text>
+              <Text variant="section" style={styles.summaryValue}>
+                {showCosts && priced.length > 0 ? formatEuros(estimate) : `${open.length} ${open.length === 1 ? 'item' : 'itens'}`}
+              </Text>
+            </View>
+            <View style={styles.summaryChip}>
+              <Text variant="label" style={styles.summaryChipText}>
+                {showCosts && priced.length > 0 ? `${priced.length} de ${open.length} com preço` : 'Toca no círculo ao comprar'}
+              </Text>
+            </View>
+          </View>
+        )}
         {open.map((i) => {
           const unit = unitOf(i);
           const isEditing = editing === i.id;
@@ -163,14 +194,16 @@ export default function ShoppingScreen() {
                 <Pressable style={styles.check} onPress={() => buy(i)} accessibilityRole="button" accessibilityLabel={`Marcar ${itemName(i)} como comprado`}>
                   <View style={styles.circle} />
                 </Pressable>
-                <Pressable style={styles.rowMain} onPress={() => openEditor(i)}>
+                <Pressable
+                  style={styles.rowMain}
+                  onPress={() => openEditor(i)}
+                  onLongPress={() => askRemove(i)}
+                  accessibilityActions={[{ name: 'delete', label: 'Tirar da lista' }]}
+                  onAccessibilityAction={() => askRemove(i)}>
                   <View style={styles.rowText}>
-                    <Text variant="body" style={styles.name}>{itemName(i)}</Text>
+                    <Text variant="button" style={styles.name}>{itemName(i)}</Text>
                     <Text variant="label" style={styles.detail}>{itemDetail(i) ?? 'Toca para definir a quantidade'}</Text>
                   </View>
-                </Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={`Tirar ${itemName(i)} da lista`} style={styles.removeButton} onPress={() => remove(i)}>
-                  <Text variant="section" style={styles.remove}>✕</Text>
                 </Pressable>
               </View>
               {isEditing && (
@@ -213,24 +246,24 @@ export default function ShoppingScreen() {
           <View style={styles.group}>
             <Text variant="section" style={styles.section}>Comprado hoje</Text>
             {bought.map((i) => (
-              <View key={i.id} style={[styles.row, styles.rowDone]}>
+              <Pressable key={i.id} style={[styles.row, styles.rowDone]} onLongPress={() => askRemove(i)}>
                 <View style={[styles.rowMain, styles.rowMainDone]}>
-                  <Text variant="section" style={styles.doneMark}>✅</Text>
+                  <View style={styles.circleDone}>
+                    <Text variant="body" style={styles.doneMark}>✓</Text>
+                  </View>
                   <View style={styles.rowText}>
-                    <Text variant="body" style={[styles.name, styles.strike]}>{itemName(i)}</Text>
+                    <Text variant="button" style={[styles.name, styles.strike]}>{itemName(i)}</Text>
                     {itemDetail(i) && <Text variant="label" style={styles.detail}>{itemDetail(i)}</Text>}
                   </View>
                 </View>
-                <Pressable accessibilityRole="button" accessibilityLabel={`Tirar ${itemName(i)} da lista`} style={styles.removeButton} onPress={() => remove(i)}>
-                  <Text variant="section" style={styles.remove}>✕</Text>
-                </Pressable>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
       </ScrollView>
       <View style={styles.footer}>
-        <Button title="🧾 Registar compra" variant="secondary" onPress={() => router.push('/receipt')} />
+        {items.length > 0 && <Text variant="label" style={styles.hint}>Mantém premido um item para o tirar da lista.</Text>}
+        <Button title="Registar a compra" onPress={() => router.push('/receipt')} />
       </View>
       <Toast message={toast} onHide={hideToast} />
     </View>
@@ -247,7 +280,7 @@ const styles = StyleSheet.create({
   addText: { color: colors.white },
   disabled: { opacity: 0.4 },
   container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
-  footer: { padding: spacing.md, paddingTop: spacing.sm, backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.border },
+  footer: { padding: spacing.md, paddingTop: spacing.sm, backgroundColor: colors.bg },
   empty: { textAlign: 'center', color: colors.ink, marginTop: 24 },
   group: { gap: 8, marginTop: 16 },
   section: { color: colors.ink },
@@ -257,8 +290,15 @@ const styles = StyleSheet.create({
   item: { gap: 0 },
   rowMainDone: { paddingLeft: 8 },
   check: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  circle: { width: 32, height: 32, borderRadius: 16, borderWidth: 3, borderColor: colors.primary, backgroundColor: colors.white },
-  doneMark: { color: colors.success },
+  circle: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: colors.placeholder, backgroundColor: colors.white },
+  circleDone: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' },
+  doneMark: { color: colors.white },
+  summary: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.white, ...shadow },
+  summaryText: { gap: 2 },
+  summaryValue: { color: colors.ink },
+  summaryChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: radius.chip, backgroundColor: colors.lavender },
+  summaryChipText: { color: colors.primary },
+  hint: { color: colors.muted, textAlign: 'center', marginBottom: 8 },
   editor: { gap: 12, padding: spacing.sm, marginTop: -6, borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card, backgroundColor: colors.panel },
   editInput: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
   qtyRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
