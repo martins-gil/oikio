@@ -218,7 +218,7 @@ export const PRIVACY: LegalSection[] = [
       'Nas casas com mais pessoas, saís e a administração passa para outra pessoa. O que registaste fica para elas, sem o teu nome.',
       'Apagamos o que é só teu: perfil, tarefas pessoais, banco de horas, definições, lembretes, agradecimentos e trocas, e as despesas que pagaste.',
       'O teu e-mail e o acesso à conta deixam de existir.',
-      'Os dados podem permanecer nas cópias de segurança do nosso fornecedor durante o tempo limitado em que estas se mantêm, sem serem usados, e a lei pode obrigar-nos a guardar certos registos.',
+      'Os dados podem permanecer nas cópias de segurança do nosso fornecedor até 90 dias depois de apagares a conta, sem serem usados, e a lei pode obrigar-nos a guardar certos registos.',
     ],
   },
   {

@@ -13,8 +13,9 @@ Os textos estão em `lib/legal.ts` (ecrãs `app/terms.tsx` e `app/privacy.tsx`) 
    nas outras a administração passa a quem entrou primeiro e o que a pessoa registou fica sem o nome; apagam-se as tarefas pessoais, o banco de horas,
    as definições, os lembretes, os agradecimentos e trocas e **as despesas que pagou** (a ligação à pessoa é obrigatória nessa tabela; avaliar se as despesas
    partilhadas deviam ficar anónimas). **Fotos de talões** que tenham ficado no armazenamento (leitura falhada) não são apagadas pela função: confirmar.
-2. **Retenção:** não está definido o prazo das cópias de segurança do Supabase. A Política só diz que os dados podem ficar nelas durante o tempo limitado em
-   que se mantêm (o Homsy indica 90 dias). Confirmar o prazo real do plano do Supabase e escrevê-lo.
+2. **Retenção:** a Política diz «até 90 dias» nas cópias de segurança (o mesmo prazo que o Homsy indica). É um máximo seguro: segundo a documentação do
+   Supabase as cópias diárias guardam-se 7 dias no plano Pro, 14 no Team e até 30 no Enterprise (no plano gratuito, confirmar no painel). Se se mudar de plano,
+   rever. Mantém-se também o que a lei obrigue a guardar.
 3. **Contratos com subcontratantes (RGPD art. 28.º):** convém confirmar e guardar os acordos de tratamento de dados com Supabase, Anthropic, Resend,
    Expo e Google (Firebase). Confirmar também onde cada um trata os dados, e as garantias das transferências para fora da UE (cláusulas-tipo).
 4. **Dados de saúde (alergias):** a nota de alergia livre e as restrições são dados de categoria especial (art. 9.º). Está previsto o consentimento
