@@ -241,6 +241,7 @@ export default function HouseScreen() {
             </View>
           )}
 
+          <Button title="🏠 Perfil da casa e tarefas sugeridas" variant="secondary" onPress={() => router.push('/starter')} />
           <Button title="🔔 Horas dos lembretes" variant="secondary" onPress={() => router.push('/notifications')} />
           {hasModule('meals') && <Button title="🍽️ Perfil de cozinha" variant="secondary" onPress={() => router.push('/kitchen')} />}
         </View>
