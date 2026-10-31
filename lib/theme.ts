@@ -20,6 +20,8 @@ export const colors = {
   panel: '#F5F1EA', // fundo subtil de blocos
   borderStrong: '#DAD5EB', // contornos mais visíveis
   backdrop: '#ECE8F1', // fundo atrás de cartões centrados
+  pinkText: '#B33267', // rosa mais escuro, para texto sobre fundo claro (contraste ≥ 4.5)
+  pinkTint: '#FDE7F0', // fundo suave do rosa (etiquetas, avisos)
   dangerBg: '#FDECEA',
   dangerText: '#8A2C22',
   warnBg: '#FFF4E5',

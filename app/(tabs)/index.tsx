@@ -6,6 +6,7 @@ import { Text } from '@/components/Text';
 
 import { Screen } from '@/components/Screen';
 import { ActionSheet, type SheetOption } from '@/components/ActionSheet';
+import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { DateSheet } from '@/components/DateSheet';
 import { KudosForm } from '@/components/KudosForm';
@@ -13,7 +14,7 @@ import { ProgressArc } from '@/components/ProgressArc';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { addDaysIso, localDate, mondayOf } from '@/lib/money';
-import { friendlyTaskError } from '@/lib/schedule';
+import { describeSchedule, friendlyTaskError, type TaskRow } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
 import { useModules } from '@/lib/settings';
 import { formatAmount } from '@/lib/stock';
@@ -31,7 +32,7 @@ type Occurrence = {
   assigned_to: string | null;
   completed_by: string | null;
   completed_at?: string | null;
-  tasks: { title: string; task_consumptions: Consumption[] } | null;
+  tasks: ({ title: string; task_consumptions: Consumption[] } & Pick<TaskRow, 'recurrence' | 'times_per_period' | 'period' | 'interval_days' | 'rrule'>) | null;
 };
 
 type Swap = {
@@ -53,7 +54,7 @@ type Kudos = {
 type SummaryRow = { user_id: string; tasks_done: number; effort_points: number; kudos_points: number };
 
 const OCC_SELECT =
-  'id, task_id, due_date, status, assigned_to, completed_by, completed_at, tasks!inner(title, scope, task_consumptions(quantity, products(name, base_unit)))';
+  'id, task_id, due_date, status, assigned_to, completed_by, completed_at, tasks!inner(title, scope, recurrence, times_per_period, period, interval_days, rrule, task_consumptions(quantity, products(name, base_unit)))';
 
 // Dias de atraso entre duas datas AAAA-MM-DD
 const daysLate = (today: string, due: string) =>
@@ -423,7 +424,12 @@ export default function HomeScreen() {
           <View style={[styles.check, { borderColor: urgencyColor(urgency[o.task_id]) }]} />
         )}
         <View style={styles.taskText}>
-          <Text variant="body" style={[styles.taskTitle, isDone && styles.strike]}>{o.tasks?.title ?? 'Tarefa'}</Text>
+          <Text variant="button" style={[styles.taskTitle, isDone && styles.strike]}>{o.tasks?.title ?? 'Tarefa'}</Text>
+          {!isDone && o.tasks && (
+            <Text variant="label" style={styles.taskLine}>
+              {[describeSchedule(o.tasks), o.assigned_to ? (o.assigned_to === me ? 'Tu' : nameOf(o.assigned_to)) : 'Qualquer um'].join(' · ')}
+            </Text>
+          )}
           {!isDone && daysLate(todayStr, o.due_date) > 0 && (
             <Text variant="label" style={styles.late}>
               ⏰ em atraso há {daysLate(todayStr, o.due_date)} {daysLate(todayStr, o.due_date) === 1 ? 'dia' : 'dias'}
@@ -447,6 +453,9 @@ export default function HomeScreen() {
           )}
           {doneToday && <Text variant="label" style={styles.taskLine}>toca para desfazer</Text>}
         </View>
+        {(isDone ? o.completed_by : o.assigned_to) && (
+          <Avatar id={(isDone ? o.completed_by : o.assigned_to)!} name={nameOf(isDone ? o.completed_by : o.assigned_to)} />
+        )}
       </Pressable>
     );
   };
