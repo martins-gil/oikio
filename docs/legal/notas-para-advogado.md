@@ -9,11 +9,12 @@ Os textos estão em `lib/legal.ts` (ecrãs `app/terms.tsx` e `app/privacy.tsx`) 
 - `LEGAL.updated`: atualizar a data sempre que os textos mudarem.
 
 ## Lacunas da app que a Política já assume
-1. **Não existe «Apagar a minha conta» dentro da app.** A Política diz que, para já, o pedido faz-se por e-mail. A App Store (e o Google Play) exigem
-   apagar a conta dentro da app, quando a app permite criar contas. Tem de ser feito antes de publicar (função na base de dados que apaga a casa se
-   for o último membro, anonimiza o resto e apaga o utilizador; mais um botão em Casa).
-2. **Retenção:** não está definido o prazo das cópias de segurança do Supabase nem o que acontece ao histórico de tarefas feito por quem apaga a conta
-   numa casa partilhada. A Política só diz «apagamos ou tornamos anónimos».
+1. **Apagar a conta já existe** (Casa → «Apagar a minha conta», função `delete_my_account()`, 21 testes). Efeitos: casas com uma só pessoa apagam-se;
+   nas outras a administração passa a quem entrou primeiro e o que a pessoa registou fica sem o nome; apagam-se as tarefas pessoais, o banco de horas,
+   as definições, os lembretes, os agradecimentos e trocas e **as despesas que pagou** (a ligação à pessoa é obrigatória nessa tabela; avaliar se as despesas
+   partilhadas deviam ficar anónimas). **Fotos de talões** que tenham ficado no armazenamento (leitura falhada) não são apagadas pela função: confirmar.
+2. **Retenção:** não está definido o prazo das cópias de segurança do Supabase. A Política só diz que os dados podem ficar nelas durante o tempo limitado em
+   que se mantêm (o Homsy indica 90 dias). Confirmar o prazo real do plano do Supabase e escrevê-lo.
 3. **Contratos com subcontratantes (RGPD art. 28.º):** convém confirmar e guardar os acordos de tratamento de dados com Supabase, Anthropic, Resend,
    Expo e Google (Firebase). Confirmar também onde cada um trata os dados, e as garantias das transferências para fora da UE (cláusulas-tipo).
 4. **Dados de saúde (alergias):** a nota de alergia livre e as restrições são dados de categoria especial (art. 9.º). Está previsto o consentimento
@@ -32,3 +33,14 @@ Os textos estão em `lib/legal.ts` (ecrãs `app/terms.tsx` e `app/privacy.tsx`) 
 Texto revisto e preenchido; endereço público dos documentos (as lojas pedem um URL da Política de Privacidade, além da versão na app);
 botão de apagar conta; formulários de privacidade da App Store («Privacy Nutrition Label») e do Google Play («Data safety»), que têm de coincidir com
 a lista de dados do ponto 2 da Política.
+
+## Comparação com os textos do Homsy (lidos nas capturas de ecrã, só para ver o que cobrir; nada foi copiado)
+- **Linguagem.** O Homsy usa inglês jurídico norte-americano («indemnify, defend and hold harmless», «as is», «sole discretion», sem aviso e sem responsabilidade).
+  O nosso texto é PT-PT simples, em «tu», com um «Em resumo» no início de cada documento. Não adotámos três cláusulas deles que, na lei portuguesa e europeia
+  de consumo, podem ser abusivas: a indemnização geral do utilizador, a rescisão «a qualquer momento e por qualquer razão, sem aviso» e a exclusão total de garantias.
+- **O que adotámos como ideia (escrito de novo):** propriedade intelectual e licença limitada; serviços de terceiros; disposições gerais (nulidade parcial);
+  divulgação a autoridades por obrigação legal; câmara e fotos explicadas em separado; «sem cookies nem análise»; apagar a conta dentro da app e o que acontece às casas
+  (a secção sobre apagar conta deles foi a inspiração para o nosso ponto 9); retenção em cópias de segurança.
+- **O que não se aplica a nós e por isso não consta:** Google Calendar, Stripe e subscrições pagas, Google Analytics e eventos de utilização, Open Food Facts
+  e leitura de códigos de barras, camada «Pro».
+- **Onde ainda ficamos atrás:** não definimos o prazo das cópias de segurança (ponto 2), nem há página pública (URL) para a Política, que as lojas pedem.
