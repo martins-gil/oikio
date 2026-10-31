@@ -11,7 +11,8 @@ import { Button } from '@/components/Button';
 import { useHousehold } from '@/lib/household';
 import { describeForm, formToArgs } from '@/lib/schedule';
 import { LEVEL_COLOR, LEVEL_LABEL, type Level } from '@/lib/stock';
-import { normalizeTitle, PACKS, SUGGESTIONS, TASK_PRODUCT_HINTS } from '@/lib/taskSuggestions';
+import { addDaysIso, localDate } from '@/lib/money';
+import { normalizeTitle, packsFor, staggerStart, suggestionsFor, TASK_PRODUCT_HINTS, type HouseProfile } from '@/lib/taskSuggestions';
 import { supabase } from '@/lib/supabase';
 import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
@@ -59,7 +60,7 @@ export default function StarterScreen() {
   const [pets, setPets] = useState<Set<Pet>>(new Set());
   const [counts, setCounts] = useState<Counts>({ babies: 0, children: 0, teens: 0, adults: 2, seniors: 0 });
   const [profileReady, setProfileReady] = useState(false);
-  const [packs, setPacks] = useState<Set<string>>(new Set(PACKS.filter((p) => p.preselected).map((p) => p.key)));
+  const [packs, setPacks] = useState<Set<string>>(new Set());
   const [off, setOff] = useState<Set<string>>(new Set()); // tarefas desmarcadas na revisão
   const [have, setHave] = useState<Set<string> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -95,6 +96,7 @@ export default function StarterScreen() {
   }, [household]);
 
   const total = counts.babies + counts.children + counts.teens + counts.adults + counts.seniors;
+  const profile: HouseProfile = { homeType: homeType ?? 'apartment', outdoor, pets: [...pets], ...counts };
 
   const saveProfile = async () => {
     if (!household || !homeType || total < 1 || saving) return;
@@ -116,6 +118,8 @@ export default function StarterScreen() {
       setError(/adultos da casa/i.test(err.message) ? 'Só os adultos da casa podem alterar o perfil da casa.' : 'Não foi possível guardar. Tenta outra vez.');
       return;
     }
+    // Os temas que servem a esta casa vêm já marcados
+    setPacks(new Set(packsFor(profile).filter((k) => k.preselected(profile)).map((k) => k.key)));
     setStep('packs');
   };
 
@@ -127,9 +131,8 @@ export default function StarterScreen() {
   };
 
   // As tarefas dos temas escolhidos (sem repetidas e sem as que a casa já tem)
-  const titles = [...new Set(PACKS.filter((p) => packs.has(p.key)).flatMap((p) => p.titles))];
-  const tasks = SUGGESTIONS.filter((s) => titles.includes(s.form.title) && !have?.has(normalizeTitle(s.form.title)));
-  const chosen = tasks.filter((t) => !off.has(t.key));
+  const tasks = suggestionsFor(profile, packs).filter((t) => !have?.has(normalizeTitle(t.suggestion.form.title)));
+  const chosen = tasks.filter((t) => !off.has(t.suggestion.key));
 
   const create = async () => {
     if (!household || chosen.length === 0 || saving) return;
@@ -137,11 +140,13 @@ export default function StarterScreen() {
     setError(null);
     let ok = 0;
     const okTitles: string[] = [];
-    for (const s of chosen) {
-      const { error: err } = await supabase.rpc('save_task', formToArgs(household.id, s.form));
+    // As tarefas «X por semana» começam em dias diferentes, para «Hoje» não ficar com tudo no mesmo dia
+    const forms = staggerStart(chosen.map((c) => c.suggestion.form), localDate(), addDaysIso);
+    for (const f of forms) {
+      const { error: err } = await supabase.rpc('save_task', formToArgs(household.id, f));
       if (!err) {
         ok += 1;
-        okTitles.push(s.form.title);
+        okTitles.push(f.title);
       }
     }
     await supabase.rpc('ensure_today_occurrences', { p_household: household.id });
@@ -361,9 +366,9 @@ export default function StarterScreen() {
         {bar}
         <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
           <Text variant="title" style={styles.title}>Confirma a lista</Text>
-          <Text variant="body" style={styles.hint}>Tira o visto às que não fazem sentido. Ficam com uma frequência normal, que podes mudar depois.</Text>
+          <Text variant="body" style={styles.hint}>Ajustámos a frequência a quem vive em casa. Tira o visto às que não fazem sentido; podes mudar tudo depois.</Text>
           {tasks.length === 0 && <Text variant="body" style={styles.hint}>Já tens todas as tarefas destes temas. Volta atrás e escolhe outros.</Text>}
-          {tasks.map((s) => {
+          {tasks.map(({ suggestion: s, why }) => {
             const on = !off.has(s.key);
             return (
               <Pressable key={s.key} style={[styles.row, on && styles.rowOn]} onPress={() => toggle(off, s.key, setOff)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
@@ -371,6 +376,7 @@ export default function StarterScreen() {
                 <View style={styles.flex}>
                   <Text variant="button" style={styles.rowTitle}>{s.form.title}</Text>
                   <Text variant="label" style={styles.small}>{describeForm(s.form)}</Text>
+                  {why ? <Text variant="label" style={styles.why}>{why}</Text> : null}
                 </View>
               </Pressable>
             );
@@ -391,7 +397,7 @@ export default function StarterScreen() {
       <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         <Text variant="title" style={styles.title}>O que fazem em casa?</Text>
         <Text variant="body" style={styles.hint}>Escolhe os temas que servem à vossa casa. Depois confirmas as tarefas, uma a uma.</Text>
-        {PACKS.map((p) => {
+        {packsFor(profile).map((p) => {
           const on = packs.has(p.key);
           return (
             <Pressable key={p.key} style={[styles.row, on && styles.rowOn]} onPress={() => toggle(packs, p.key, setPacks)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
@@ -429,6 +435,7 @@ const styles = StyleSheet.create({
   title: { color: colors.ink, textAlign: 'center' },
   hint: { color: colors.muted, textAlign: 'center' },
   small: { color: colors.muted },
+  why: { color: colors.primary },
   question: { color: colors.ink, marginTop: spacing.xs },
   total: { color: colors.muted, textAlign: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
