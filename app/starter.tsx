@@ -61,6 +61,7 @@ export default function StarterScreen() {
   const [counts, setCounts] = useState<Counts>({ babies: 0, children: 0, teens: 0, adults: 2, seniors: 0 });
   const [profileReady, setProfileReady] = useState(false);
   const [packs, setPacks] = useState<Set<string>>(new Set());
+  const [autoPacks, setAutoPacks] = useState<Set<string>>(new Set()); // temas marcados pela app (só deles se esconde o que não é essencial)
   const [off, setOff] = useState<Set<string>>(new Set()); // tarefas desmarcadas na revisão
   const [have, setHave] = useState<Set<string> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -119,7 +120,9 @@ export default function StarterScreen() {
       return;
     }
     // Os temas que servem a esta casa vêm já marcados
-    setPacks(new Set(packsFor(profile).filter((k) => k.preselected(profile)).map((k) => k.key)));
+    const auto = new Set(packsFor(profile).filter((k) => k.preselected(profile)).map((k) => k.key));
+    setPacks(auto);
+    setAutoPacks(auto);
     setStep('packs');
   };
 
@@ -131,7 +134,10 @@ export default function StarterScreen() {
   };
 
   // As tarefas dos temas escolhidos (sem repetidas e sem as que a casa já tem)
-  const tasks = suggestionsFor(profile, packs).filter((t) => !have?.has(normalizeTitle(t.suggestion.form.title)));
+  // Dos temas marcados pela app só se mostram as essenciais; as outras ficam nas «Sugestões», já marcadas
+  const wanted = suggestionsFor(profile, packs).filter((t) => !have?.has(normalizeTitle(t.suggestion.form.title)));
+  const tasks = wanted.filter((t) => !(t.later && autoPacks.has(t.pack)));
+  const laterCount = wanted.length - tasks.length;
   const chosen = tasks.filter((t) => !off.has(t.suggestion.key));
 
   const create = async () => {
@@ -368,6 +374,11 @@ export default function StarterScreen() {
           <Text variant="title" style={styles.title}>Confirma a lista</Text>
           <Text variant="body" style={styles.hint}>Ajustámos a frequência a quem vive em casa. Tira o visto às que não fazem sentido; podes mudar tudo depois.</Text>
           {tasks.length === 0 && <Text variant="body" style={styles.hint}>Já tens todas as tarefas destes temas. Volta atrás e escolhe outros.</Text>}
+          {laterCount > 0 && (
+            <Text variant="label" style={styles.small}>
+              Há mais {laterCount} {laterCount === 1 ? 'sugestão' : 'sugestões'} para a vossa casa (roupa de cama, brinquedos, manutenção…). Ficam em «💡 Sugestões», no ecrã Hoje, já marcadas, para juntarem quando quiserem.
+            </Text>
+          )}
           {tasks.map(({ suggestion: s, why }) => {
             const on = !off.has(s.key);
             return (

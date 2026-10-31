@@ -37,3 +37,11 @@ Testes: `supabase/tests/household_profile.sql`.
 - `staggerStart()` espalha o dia de início das tarefas «X por semana» pelos 7 dias seguintes (as mais pesadas primeiro, no dia mais
   leve), para «Hoje» não ficar com tudo no primeiro dia. Usa `p_start_date` de `save_task`; não mexe na geração de ocorrências
   nem no modo «Equilibrada».
+
+## Só o essencial no arranque
+- No arranque só se criam as tarefas **essenciais** dos temas que a app marcou (lista `LATER` em `lib/taskSuggestions.ts` com as que ficam
+  para depois: passar a ferro, toalhas, lençóis, brinquedos, manutenção anual…). Se a pessoa marcar um tema por si (por exemplo «Limpeza regular»),
+  vê todas as tarefas desse tema.
+- As que ficaram para depois aparecem **já marcadas** no ecrã «💡 Sugestões» (a partir de «Hoje» ou «Estado da casa»), em «Para a vossa casa»,
+  com o motivo de cada uma e a frequência ajustada ao agregado. Basta confirmar; começam em dias espalhados (`staggerStart`).
+- Exemplo (moradia com jardim, 2 adultos, 1 bebé, 1 criança e gato): 15 essenciais no arranque e 11 ficam para as Sugestões.

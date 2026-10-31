@@ -218,7 +218,7 @@ export const PACKS: Pack[] = [
     title: 'Manutenção da casa',
     detail: 'Caldeira, detetores de fumo, filtros e caleiras',
     visible: all,
-    preselected: (p) => p.homeType === 'house',
+    preselected: () => false,
     entries: [
       e('Revisão da caldeira ou do esquentador'), e('Verificar detetores de fumo e extintor'), e('Limpar o filtro do exaustor'),
       e('Limpar ralos e sifões'), e('Limpar caleiras e algerozes', (p) => p.homeType === 'house'),
@@ -294,20 +294,30 @@ function tune(title: string, p: HouseProfile): Tuned {
   }
 }
 
-export type TunedSuggestion = { suggestion: Suggestion; why: string | null };
+// Tarefas que NÃO são essenciais no primeiro dia: no arranque só se criam as essenciais dos temas já marcados;
+// estas ficam já marcadas no ecrã «Sugestões» para a pessoa as juntar quando quiser.
+const LATER = new Set([
+  'Passar a ferro', 'Mudar as toalhas', 'Mudar os lençóis', 'Limpar o trocador e o cantinho do bebé', 'Ver as fraldas e o leite do bebé',
+  'Arrumar os brinquedos', 'Lavar os brinquedos', 'Ver o material escolar', 'Dar banho ao cão', 'Lavar a caixa da areia do gato',
+  'Limpar a varanda', 'Regar as plantas', 'Limpar o quintal', 'Ver as receitas e as consultas',
+  'Revisão da caldeira ou do esquentador', 'Verificar detetores de fumo e extintor', 'Limpar o filtro do exaustor',
+  'Limpar ralos e sifões', 'Limpar caleiras e algerozes',
+]);
+
+export type TunedSuggestion = { suggestion: Suggestion; why: string | null; pack: string; later: boolean };
 
 // As tarefas dos temas escolhidos (sem repetidas), já ajustadas ao agregado
 export function suggestionsFor(p: HouseProfile, packKeys: Set<string>): TunedSuggestion[] {
-  const titles = [
-    ...new Set(
-      PACKS.filter((k) => packKeys.has(k.key) && k.visible(p)).flatMap((k) => k.entries.filter((en) => !en.when || en.when(p)).map((en) => en.title)),
-    ),
-  ];
-  return titles.flatMap((t) => {
-    const base = SUGGESTIONS.find((s) => s.form.title === t);
-    if (!base) return [];
-    const { patch, why } = tune(t, p);
-    return [{ suggestion: { ...base, form: { ...base.form, ...patch } }, why }];
+  const items = PACKS.filter((k) => packKeys.has(k.key) && k.visible(p)).flatMap((k) =>
+    k.entries.filter((en) => !en.when || en.when(p)).map((en) => ({ title: en.title, pack: k.key })),
+  );
+  const seen = new Set<string>();
+  return items.flatMap(({ title, pack }) => {
+    const base = SUGGESTIONS.find((s) => s.form.title === title);
+    if (!base || seen.has(title)) return [];
+    seen.add(title);
+    const { patch, why } = tune(title, p);
+    return [{ suggestion: { ...base, form: { ...base.form, ...patch } }, why, pack, later: LATER.has(title) }];
   });
 }
 
