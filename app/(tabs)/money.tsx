@@ -7,6 +7,9 @@ import { Text, TextInput } from '@/components/Text';
 import { Toggle } from '@/components/Toggle';
 
 import { Button } from '@/components/Button';
+import { Pill } from '@/components/Pill';
+import { ProductIcon } from '@/components/ProductIcon';
+import { CATEGORY_ICON_KEY } from '@/lib/productIcon';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
@@ -26,14 +29,6 @@ type Expense = {
 };
 
 const CATEGORIES = ['Supermercado', 'Casa', 'Contas', 'Saúde', 'Lazer', 'Outros'];
-const CATEGORY_ICON: Record<string, string> = {
-  Supermercado: '🛒',
-  Casa: '🏠',
-  Contas: '🧾',
-  Saúde: '💊',
-  Lazer: '🎉',
-  Outros: '📦',
-};
 
 type Budget = { category: string; monthly_cents: number };
 
@@ -233,22 +228,6 @@ export default function MoneyScreen() {
           {privateTotal > 0 && <Text variant="label" style={styles.small}>🔒 Só tuas: {formatEuros(privateTotal)}</Text>}
         </View>
 
-        <View style={styles.card}>
-          <Text variant="section" style={styles.title}>Onde foi o dinheiro</Text>
-          {sharedTotal === 0 && <Text variant="label" style={styles.small}>Ainda sem despesas partilhadas neste mês.</Text>}
-          {[...spentBy].sort((a, b) => b[1] - a[1]).map(([c, v]) => (
-            <View key={c} style={styles.shareBlock}>
-              <View style={styles.headRow}>
-                <Text variant="body" style={styles.budgetName}>{CATEGORY_ICON[c] ?? '📦'} {c}</Text>
-                <Text variant="button" style={styles.budgetSpent}>{formatEuros(v)}</Text>
-              </View>
-              <View style={styles.track}>
-                <View style={[styles.fill, { width: `${Math.max(4, Math.round((v / sharedTotal) * 100))}%`, backgroundColor: colors.primary }]} />
-              </View>
-            </View>
-          ))}
-        </View>
-
         {adding && (
         <View style={styles.card}>
           <Text variant="section" style={styles.title}>Nova despesa</Text>
@@ -314,7 +293,7 @@ export default function MoneyScreen() {
                 onLongPress={e.paid_by === me ? () => askDelete(e) : undefined}
                 accessibilityActions={e.paid_by === me ? [{ name: 'delete', label: 'Apagar despesa' }] : undefined}
                 onAccessibilityAction={() => askDelete(e)}>
-                <Text variant="section" style={styles.tileIcon}>{CATEGORY_ICON[e.category ?? 'Outros'] ?? '📦'}</Text>
+                <ProductIcon iconKey={CATEGORY_ICON_KEY[e.category ?? 'Outros'] ?? 'cat_other'} size={44} />
                 <View style={styles.rowMain}>
                   <Text variant="button" style={styles.rowTitle}>
                     {e.description || e.category || 'Sem descrição'} {!e.is_shared && '🔒'}
@@ -326,41 +305,43 @@ export default function MoneyScreen() {
                 <Text variant="button" style={styles.amountOut}>-{formatEuros(e.amount_cents)}</Text>
               </Pressable>
             ))}
-            <View style={styles.card}>
-              <Text variant="section" style={styles.title}>Orçamentos</Text>
-              <Text variant="label" style={styles.small}>Toca numa categoria para definir quanto queres gastar por mês. Contam as despesas partilhadas.</Text>
-              {CATEGORIES.map((c) => {
-                const budget = budgets.find((b) => b.category === c)?.monthly_cents ?? null;
-                const spent = spentBy.get(c) ?? 0;
-                const pct = budget ? Math.round((spent / budget) * 100) : 0;
-                return (
-                  <View key={c} style={styles.budgetBlock}>
-                    <Pressable style={styles.budgetRow} onPress={() => openBudget(c)}>
-                      <View style={styles.tile}>
-                        <Text variant="section" style={styles.tileIcon}>{CATEGORY_ICON[c]}</Text>
-                      </View>
-                      <View style={styles.flex}>
-                        <View style={styles.headRow}>
-                          <Text variant="body" style={styles.budgetName}>{c}</Text>
-                          <Text variant="label" style={styles.budgetAmounts}>
-                            <Text variant="label" style={styles.budgetSpent}>{formatEuros(spent)}</Text>
-                            {budget !== null ? ` / ${formatEuros(budget)}` : ''}
-                          </Text>
-                        </View>
-                        <View style={styles.track}>
-                          {budget !== null && (
-                            <View style={[styles.fill, { width: `${Math.min(pct, 100)}%`, backgroundColor: barColor(pct) }]} />
-                          )}
-                        </View>
-                        <Text variant="label" style={[styles.small, budget !== null && spent > budget && { color: colors.pink }]}>
-                          {budget === null
-                            ? 'Sem orçamento · toca para definir'
-                            : spent > budget
-                              ? `⚠ Excedeu em ${formatEuros(spent - budget)}`
-                              : `Ainda tens ${formatEuros(budget - spent)}`}
+            <Text variant="section" style={styles.title}>Por categoria</Text>
+            <Text variant="label" style={styles.small}>Toca numa categoria para definir quanto queres gastar por mês. Contam as despesas partilhadas.</Text>
+            {CATEGORIES.map((c) => {
+              const budget = budgets.find((b) => b.category === c)?.monthly_cents ?? null;
+              const spent = spentBy.get(c) ?? 0;
+              const pct = budget ? Math.round((spent / budget) * 100) : 0;
+              const share = sharedTotal > 0 ? Math.round((spent / sharedTotal) * 100) : 0;
+              const fill = budget !== null ? Math.min(pct, 100) : share;
+              return (
+                <View key={c} style={styles.catBlock}>
+                  <Pressable style={styles.catCard} onPress={() => openBudget(c)} accessibilityRole="button">
+                    <View style={styles.catTop}>
+                      <ProductIcon iconKey={CATEGORY_ICON_KEY[c]} />
+                      <View style={styles.catText}>
+                        <Text variant="button" style={styles.budgetName}>{c}</Text>
+                        <Text variant="label" style={styles.small}>
+                          <Text variant="label" style={styles.budgetSpent}>{formatEuros(spent)}</Text>
+                          {budget !== null ? ` / ${formatEuros(budget)}` : ''}
                         </Text>
                       </View>
-                    </Pressable>
+                      {budget !== null ? (
+                        <Pill tone={pct >= 100 ? 'bad' : pct >= 75 ? 'warn' : 'ok'}>{pct >= 100 ? 'Excedeu' : pct >= 75 ? 'A chegar' : 'Dentro'}</Pill>
+                      ) : spent > 0 ? (
+                        <Pill tone="info">{`${share}% do total`}</Pill>
+                      ) : null}
+                    </View>
+                    <View style={styles.track}>
+                      {fill > 0 && <View style={[styles.fill, { width: `${Math.max(4, fill)}%`, backgroundColor: budget !== null ? barColor(pct) : colors.primary }]} />}
+                    </View>
+                    <Text variant="label" style={[styles.small, budget !== null && spent > budget && { color: colors.pinkText }]}>
+                      {budget === null
+                        ? 'Sem orçamento · toca para definir'
+                        : spent > budget
+                          ? `⚠ Excedeu em ${formatEuros(spent - budget)}`
+                          : `Ainda tens ${formatEuros(budget - spent)}`}
+                    </Text>
+                  </Pressable>
                     {editing === c && (
                       <View style={styles.editor}>
                         <Text variant="label" style={styles.label}>Valor por mês</Text>
@@ -385,11 +366,9 @@ export default function MoneyScreen() {
                         </View>
                       </View>
                     )}
-                  </View>
-                );
-              })}
-            </View>
-
+                </View>
+              );
+            })}
           </>
         )}
       </ScrollView>
@@ -415,9 +394,9 @@ const styles = StyleSheet.create({
   input: { minHeight: fieldMinHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.button, backgroundColor: colors.white, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink },
   amount: { textAlign: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
-  chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
-  chipText: { color: colors.primary },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
+  chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { color: colors.ink },
   chipTextOn: { color: colors.white },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, minHeight: 48 },
   switchLabel: { flex: 1, color: colors.ink },
@@ -435,7 +414,10 @@ const styles = StyleSheet.create({
   budgetBlock: { gap: 8 },
   budgetRow: { flexDirection: 'row', gap: 12, alignItems: 'center', minHeight: 64 },
   tile: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.lavender, alignItems: 'center', justifyContent: 'center' },
-  tileIcon: { color: colors.ink },
+  catBlock: { gap: 0 },
+  catCard: { gap: 10, padding: 14, borderRadius: radius.card, backgroundColor: colors.white, ...shadow },
+  catTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  catText: { flex: 1, gap: 2 },
   total: { color: colors.ink },
   summaryChip: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 6, borderRadius: radius.chip, backgroundColor: colors.lavender },
   summaryChipText: { color: colors.primary },

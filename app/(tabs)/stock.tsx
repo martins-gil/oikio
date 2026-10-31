@@ -180,9 +180,7 @@ export default function StockScreen() {
           if (items.length === 0 && filter === null) return null;
           return (
             <View key={pl.key} style={styles.section}>
-              <Text variant="section" style={styles.sectionTitle}>
-                {pl.emoji} {pl.label}
-              </Text>
+              <Text variant="section" style={styles.sectionTitle}>{pl.label}</Text>
               {items.length === 0 && <Text variant="label" style={styles.hint}>Nada aqui. Escreve um produto em cima e fica nesta secção.</Text>}
               {items.map((p) => {
                 const state = productState(p);
@@ -256,9 +254,9 @@ const styles = StyleSheet.create({
   addText: { color: colors.white },
   disabled: { opacity: 0.4 },
   filters: { gap: 8, paddingVertical: 2 },
-  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
-  chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
-  chipText: { color: colors.primary },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
+  chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { color: colors.ink },
   chipTextOn: { color: colors.white },
   section: { gap: 8, marginTop: 8 },
   sectionTitle: { color: colors.ink },

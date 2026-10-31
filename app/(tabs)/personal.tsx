@@ -234,9 +234,14 @@ export default function PersonalScreen() {
           <Text variant="section" style={styles.section}>As minhas tarefas</Text>
           {tasks.length === 0 && <Text variant="label" style={styles.hint}>Ainda não tens tarefas pessoais.</Text>}
           {tasks.map((t) => (
-            <View key={t.id} style={styles.card}>
+            <Pressable
+              key={t.id}
+              style={styles.card}
+              onLongPress={() => askDelete(t)}
+              accessibilityActions={[{ name: 'delete', label: 'Apagar tarefa' }]}
+              onAccessibilityAction={() => askDelete(t)}>
               <View style={styles.cardMain}>
-                <Text variant="body" style={styles.taskTitle}>{t.title}</Text>
+                <Text variant="button" style={styles.taskTitle}>{t.title}</Text>
                 <Text variant="label" style={styles.line}>
                   {describeFrequency(t)} · {lastDone(t)}
                 </Text>
@@ -246,11 +251,9 @@ export default function PersonalScreen() {
                   </Pressable>
                 )}
               </View>
-              <Pressable accessibilityRole="button" accessibilityLabel={`Apagar ${t.title}`} style={styles.removeButton} onPress={() => askDelete(t)}>
-                <Text variant="section" style={styles.remove}>✕</Text>
-              </Pressable>
-            </View>
+            </Pressable>
           ))}
+          {tasks.length > 0 && <Text variant="label" style={styles.line}>Mantém premida uma tarefa para a apagar.</Text>}
         </View>
 
         <View style={styles.group}>
@@ -320,8 +323,8 @@ const styles = StyleSheet.create({
   addText: { color: colors.white },
   disabled: { opacity: 0.4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
-  chipOn: { backgroundColor: colors.pink, borderColor: colors.pink },
-  chipText: { color: colors.primary },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
+  chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { color: colors.ink },
   chipTextOn: { color: colors.white },
 });

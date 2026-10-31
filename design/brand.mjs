@@ -70,8 +70,8 @@ export const ICONS = {
     <g stroke="${m}"><path d="M11.5 14 H18.5 Q22 14 22 17.5 V25 Q22 28.5 18.5 28.5 H11.5 Q8 28.5 8 25 V17.5 Q8 14 11.5 14 Z"/><path d="M12 14 V10 H18 V14"/></g>
     <g stroke="${a}"><path d="M12 10 H22 L25.5 12.2"/><path d="M27.3 8.2 H29.5"/><path d="M27.8 12.4 H30"/><path d="M26.6 16.2 H28.6"/><path d="M12.5 21.5 H17.5"/></g>`,
   dinheiro: (m, a) => `
-    <g stroke="${m}"><path d="M6.5 6 H25.5"/><rect x="3" y="9" width="26" height="16" rx="3"/><path d="M7.5 14 V14.01"/><path d="M24.5 20 V20.01"/></g>
-    <circle cx="16" cy="17" r="3.8" stroke="${a}"/>`,
+    <g stroke="${m}"><circle cx="13.5" cy="18.5" r="10.5"/><path d="M18 6.4A10.5 10.5 0 0 1 29.5 13.5A10.5 10.5 0 0 1 25.5 21.8"/></g>
+    <g stroke="${a}"><path d="M17.4 14.2A5.2 5.2 0 1 0 17.4 22.8"/><path d="M8.6 17.1H15.8"/><path d="M8.6 20H15.8"/></g>`,
   pessoal: (m, a) => `
     <g stroke="${m}"><circle cx="13.5" cy="10" r="4.6"/><path d="M4.5 27.5 Q4.5 19 13.5 19 Q18 19 20.5 21.2"/></g>
     <g stroke="${a}"><rect x="19.5" y="22.5" width="9" height="6.5" rx="1.6"/><path d="M21.5 22.5 V20.7 Q21.5 18.2 24 18.2 Q26.5 18.2 26.5 20.7 V22.5"/></g>`,

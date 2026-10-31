@@ -145,8 +145,9 @@ export default function HoursScreen() {
         </View>
 
         {list.length === 0 && entries !== null && <Text variant="label" style={styles.hint}>Ainda sem registos.</Text>}
+        {list.length > 0 && <Text variant="label" style={styles.hint}>Mantém premido um registo para o apagar.</Text>}
         {list.map((e) => (
-          <View key={e.id} style={styles.row}>
+          <Pressable key={e.id} style={styles.row} onLongPress={() => askDelete(e)} accessibilityActions={[{ name: 'delete', label: 'Apagar registo' }]} onAccessibilityAction={() => askDelete(e)}>
             <View style={styles.rowMain}>
               <Text variant="section" style={styles.rowTitle}>
                 {kind === 'hour_bank' && e.minutes > 0 ? '+' : ''}
@@ -155,10 +156,7 @@ export default function HoursScreen() {
               <Text variant="label" style={styles.line}>{e.label ?? (e.minutes < 0 ? 'Folga' : kind === 'hour_bank' ? 'Horas extra' : 'Consulta')}</Text>
               <Text variant="label" style={styles.small}>{e.entry_date.split('-').reverse().join('/')}</Text>
             </View>
-            <Pressable style={styles.removeButton} accessibilityRole="button" accessibilityLabel="Apagar registo" onPress={() => askDelete(e)}>
-              <Text variant="section" style={styles.remove}>✕</Text>
-            </Pressable>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
       <Toast message={toast} onHide={hideToast} />

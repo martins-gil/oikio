@@ -98,12 +98,16 @@ Componentes partilhados do redesenho (usar em vez de repetir código):
 - `CheckCircle`: visto redondo de 32 nas listas de escolha (cor + sinal ✓).
 - `FavoriteStar`: estrela das favoritas com alvo de 48.
 - `ProgressArc`: gráfico de progresso em arco aberto com gradiente da marca (roxo → rosa → amarelo → verde) e ponta luminosa; número grande ao centro (ecrã Hoje). Contas em `lib/arc.ts`.
+- `ProductIcon`: desenho do produto (assets/products, 52 por defeito; 110 na ficha) escolhido pelo nome em lib/productIcon.ts, com desenhos por local como alternativa e os das categorias de despesas. Os desenhos geram-se com design/products.mjs.
 - `Avatar`: bolinha com a inicial da pessoa (cores da marca, sempre a mesma por pessoa); `Pill`: etiqueta de estado (ok / aviso / mau / info: cor + texto); `Toggle`: interruptor menta.
 - `ProgressBar`: passos dos assistentes (segmentos + «Passo 2 de 5» em texto). `CountStepper`: nome + quantidade com botões − e + de 48 (pessoas, doses).
 - Cabeçalho do sistema (Stack): título na variante `section` (21).
 
 Padrões de ecrã adotados:
 - Maquetes aprovadas (palette B): cartões brancos com cantos 20; produtos com ícone (emoji), nome, quantidade, etiqueta de estado e barra de nível;
+  chips: inativo com contorno suave e texto escuro, ativo em roxo cheio com texto branco (nunca rosa);
+  produtos e compras com o desenho do produto à esquerda (nas compras, tocar no desenho marca como comprado); dinheiro com um cartão por categoria
+  (desenho, valor, etiqueta de estado e barra);
   tarefas com círculo de visto, nome em Montserrat, «frequência · quem» e avatar à direita; apagar é por toque longo (sem ✕ em cada linha),
   com a dica «Mantém premido…» no ecrã; ações principais num botão roxo cheio fixo em baixo (Registar a compra, Nova despesa).
 - Botão principal fixo no rodapé (formulários, talão, ficha do produto,
