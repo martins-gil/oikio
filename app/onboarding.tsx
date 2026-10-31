@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CheckCircle } from '@/components/CheckCircle';
+import { ProductIcon } from '@/components/ProductIcon';
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
@@ -146,8 +147,8 @@ export default function OnboardingScreen() {
                 accessibilityState={{ checked: selected, disabled: blocked }}
                 style={[styles.row, selected && styles.rowSelected, blocked && styles.rowBlocked]}
                 onPress={() => toggle(t.id)}>
-                <Text variant="section" style={styles.emoji}>{t.emoji}</Text>
-                <Text variant="body" style={styles.rowText}>{t.name}</Text>
+                <ProductIcon name={t.name} place={placeOf(t.location ?? t.product_categories?.default_location ?? 'other')} size={44} />
+                <Text variant="button" style={styles.rowText}>{t.name}</Text>
                 <CheckCircle on={selected} />
               </Pressable>
             );
@@ -175,7 +176,7 @@ export default function OnboardingScreen() {
       <View style={styles.flex}>
         <Stack.Screen options={{ title: `${index + 1} de ${chosen.length}` }} />
         <ScrollView style={styles.flex} contentContainerStyle={styles.centered}>
-          <Text variant="display" style={styles.emojiBig}>{t.emoji}</Text>
+          <ProductIcon name={t.name} place={placeOf(t.location ?? t.product_categories?.default_location ?? 'other')} size={110} />
           <Text variant="title" style={styles.title}>Quanto resta de {t.name}?</Text>
           {saving ? (
             <ActivityIndicator color={colors.primary} />
@@ -217,10 +218,13 @@ export default function OnboardingScreen() {
           const task = describeTask(t);
           return (
             <View key={id} style={styles.card}>
-              <Text variant="button" style={styles.cardTitle}>
-                {t.emoji} {t.name}
-                {row?.level ? ` — ${LEVEL_LABEL[row.level]}` : ''}
-              </Text>
+              <View style={styles.cardHead}>
+                <ProductIcon name={t.name} place={placeOf(t.location ?? t.product_categories?.default_location ?? 'other')} size={40} />
+                <Text variant="button" style={styles.cardTitle}>
+                  {t.name}
+                  {row?.level ? ` — ${LEVEL_LABEL[row.level]}` : ''}
+                </Text>
+              </View>
               {task && <Text variant="label" style={styles.cardLine}>Tarefa criada: {task}</Text>}
               {row?.below_min && <Text variant="label" style={styles.cardLine}>🛒 Entrou na lista de compras</Text>}
             </View>
@@ -246,7 +250,7 @@ const styles = StyleSheet.create({
   rowSelected: { backgroundColor: colors.lavender },
   rowBlocked: { opacity: 0.4 },
   emoji: { color: colors.ink },
-  emojiBig: { color: colors.ink, textAlign: 'center' },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowText: { flex: 1, color: colors.ink },
   levelButton: { minHeight: 64, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderRadius: radius.card, paddingVertical: 16, backgroundColor: colors.white },
   card: { borderRadius: radius.card, padding: spacing.sm, gap: 4, backgroundColor: colors.white, ...shadow },

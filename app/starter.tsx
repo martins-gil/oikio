@@ -6,6 +6,7 @@ import { CheckCircle } from '@/components/CheckCircle';
 import { CountStepper } from '@/components/CountStepper';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Text, TextInput } from '@/components/Text';
+import { ProductIcon } from '@/components/ProductIcon';
 
 import { Button } from '@/components/Button';
 import { formatInviteCode, inviteMessage, useHousehold } from '@/lib/household';
@@ -470,10 +471,9 @@ export default function StarterScreen() {
               <View key={key} style={[styles.linkCard, l.on && styles.rowOn]}>
                 <Pressable style={styles.linkHead} onPress={() => patchLink(key, { on: !l.on })} accessibilityRole="checkbox" accessibilityState={{ checked: l.on }}>
                   <CheckCircle on={l.on} />
+                  <ProductIcon name={h.product} place="cleaning" size={44} />
                   <View style={styles.flex}>
-                    <Text variant="button" style={styles.rowTitle}>
-                      {h.emoji} {t}
-                    </Text>
+                    <Text variant="button" style={styles.rowTitle}>{t}</Text>
                     <Text variant="label" style={styles.small}>gasta {h.product}</Text>
                   </View>
                 </Pressable>

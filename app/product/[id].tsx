@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text, TextInput } from '@/components/Text';
+import { ProductIcon } from '@/components/ProductIcon';
 import { Toggle } from '@/components/Toggle';
 
 import { Button } from '@/components/Button';
@@ -240,6 +241,9 @@ export default function ProductScreen() {
     <View style={styles.flex}>
       <Stack.Screen options={{ title: product.name }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+        <View style={styles.iconHero}>
+          <ProductIcon name={product.name} place={placeOf(product.location)} size={110} />
+        </View>
         {isLevel ? (
           <>
             <Text variant="label" style={styles.label}>Quanto resta?</Text>
@@ -426,6 +430,7 @@ export default function ProductScreen() {
 }
 
 const styles = StyleSheet.create({
+  iconHero: { alignItems: 'center', paddingVertical: 4 },
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },

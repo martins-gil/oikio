@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
+import { ProductIcon } from '@/components/ProductIcon';
 
 import { dateText, SOURCE_NOTE, STATE_COLOR, STATE_LABEL, type OverviewRow } from '@/lib/expiry';
 import { useHousehold } from '@/lib/household';
@@ -41,9 +42,12 @@ export default function ExpiryScreen() {
 
   const line = (r: OverviewRow) => (
     <Pressable key={r.product_id} style={styles.row} accessibilityRole="button" onPress={() => router.push({ pathname: '/product/[id]', params: { id: r.product_id } })}>
-      <View style={[styles.dot, { backgroundColor: STATE_COLOR[r.state] }]} />
+      <ProductIcon name={r.name} size={44} />
       <View style={styles.flex}>
-        <Text variant="body" style={styles.name}>{r.name}</Text>
+        <View style={styles.nameRow}>
+          <View style={[styles.dot, { backgroundColor: STATE_COLOR[r.state] }]} />
+          <Text variant="button" style={styles.name}>{r.name}</Text>
+        </View>
         <Text variant="label" style={styles.small}>
           {formatAmount(r.total, r.base_unit)} · {STATE_LABEL[r.state]} · até {dateText(r.until_date)}
           {r.days_left < 0 ? ` (há ${-r.days_left} ${r.days_left === -1 ? 'dia' : 'dias'})` : r.days_left <= 7 ? ` (${r.days_left} ${r.days_left === 1 ? 'dia' : 'dias'})` : ''}
@@ -79,7 +83,8 @@ const styles = StyleSheet.create({
   card: { gap: 8, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   title: { color: colors.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 6 },
-  dot: { width: 16, height: 16, borderRadius: 8 },
+  dot: { width: 14, height: 14, borderRadius: 7 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   name: { color: colors.ink },
   small: { color: colors.muted },
   source: { color: colors.muted },

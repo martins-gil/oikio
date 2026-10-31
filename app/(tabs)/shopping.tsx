@@ -10,7 +10,8 @@ import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { formatEuros } from '@/lib/money';
 import { useShowCosts } from '@/lib/settings';
-import { formatAmount, stepFor, type ShopItem } from '@/lib/stock';
+import { ProductIcon } from '@/components/ProductIcon';
+import { formatAmount, placeOf, stepFor, type ShopItem } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
@@ -51,7 +52,7 @@ export default function ShoppingScreen() {
     startOfToday.setHours(0, 0, 0, 0);
     const { data, error } = await supabase
       .from('shopping_list_items')
-      .select('id, product_id, free_text, quantity, unit, reason, checked_at, products(name, base_unit)')
+      .select('id, product_id, free_text, quantity, unit, reason, checked_at, products(name, base_unit, location)')
       .eq('household_id', household.id)
       // por comprar + o que foi riscado hoje
       .or(`checked_at.is.null,checked_at.gte.${startOfToday.toISOString()}`)
@@ -180,7 +181,7 @@ export default function ShoppingScreen() {
             </View>
             <View style={styles.summaryChip}>
               <Text variant="label" style={styles.summaryChipText}>
-                {showCosts && priced.length > 0 ? `${priced.length} de ${open.length} com preço` : 'Toca no círculo ao comprar'}
+                {showCosts && priced.length > 0 ? `${priced.length} de ${open.length} com preço` : 'Toca no desenho ao comprar'}
               </Text>
             </View>
           </View>
@@ -192,7 +193,7 @@ export default function ShoppingScreen() {
             <View key={i.id} style={styles.item}>
               <View style={styles.row}>
                 <Pressable style={styles.check} onPress={() => buy(i)} accessibilityRole="button" accessibilityLabel={`Marcar ${itemName(i)} como comprado`}>
-                  <View style={styles.circle} />
+                  <ProductIcon name={itemName(i)} place={placeOf(i.products?.location ?? 'other')} />
                 </Pressable>
                 <Pressable
                   style={styles.rowMain}
@@ -248,8 +249,11 @@ export default function ShoppingScreen() {
             {bought.map((i) => (
               <Pressable key={i.id} style={[styles.row, styles.rowDone]} onLongPress={() => askRemove(i)}>
                 <View style={[styles.rowMain, styles.rowMainDone]}>
-                  <View style={styles.circleDone}>
-                    <Text variant="body" style={styles.doneMark}>✓</Text>
+                  <View style={styles.doneIcon}>
+                    <ProductIcon name={itemName(i)} place={placeOf(i.products?.location ?? 'other')} />
+                    <View style={styles.circleDone}>
+                      <Text variant="label" style={styles.doneMark}>✓</Text>
+                    </View>
                   </View>
                   <View style={styles.rowText}>
                     <Text variant="button" style={[styles.name, styles.strike]}>{itemName(i)}</Text>
@@ -262,7 +266,7 @@ export default function ShoppingScreen() {
         )}
       </ScrollView>
       <View style={styles.footer}>
-        {items.length > 0 && <Text variant="label" style={styles.hint}>Mantém premido um item para o tirar da lista.</Text>}
+        {items.length > 0 && <Text variant="label" style={styles.hint}>Toca no desenho para marcar como comprado. Mantém premido para tirar da lista.</Text>}
         <Button title="Registar a compra" onPress={() => router.push('/receipt')} />
       </View>
       <Toast message={toast} onHide={hideToast} />
@@ -284,14 +288,14 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: colors.ink, marginTop: 24 },
   group: { gap: 8, marginTop: 16 },
   section: { color: colors.ink },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 64, paddingLeft: 8, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 72, paddingLeft: 8, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
   rowDone: { opacity: 0.6 },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   item: { gap: 0 },
   rowMainDone: { paddingLeft: 8 },
-  check: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  circle: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: colors.placeholder, backgroundColor: colors.white },
-  circleDone: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' },
+  check: { width: 60, height: 60, alignItems: 'center', justifyContent: 'center' },
+  doneIcon: { width: 60, height: 60, alignItems: 'center', justifyContent: 'center' },
+  circleDone: { position: 'absolute', right: 2, bottom: 2, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' },
   doneMark: { color: colors.white },
   summary: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.white, ...shadow },
   summaryText: { gap: 2 },

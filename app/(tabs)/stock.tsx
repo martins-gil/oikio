@@ -7,7 +7,7 @@ import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Pill, type PillTone } from '@/components/Pill';
-import { productEmoji } from '@/lib/productIcon';
+import { ProductIcon } from '@/components/ProductIcon';
 import { useHousehold } from '@/lib/household';
 import { useModules, useShowExpiry } from '@/lib/settings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,16 +34,6 @@ export default function StockScreen() {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Place | null>(null); // null = tudo, por secções
-  const [icons, setIcons] = useState<Map<string, string>>(new Map()); // emoji dos produtos sugeridos, pelo nome
-
-  useEffect(() => {
-    supabase
-      .from('product_templates')
-      .select('name, emoji')
-      .then(({ data }) =>
-        setIcons(new Map((data ?? []).filter((t: { emoji: string | null }) => t.emoji).map((t: { name: string; emoji: string }) => [t.name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(), t.emoji]))),
-      );
-  }, []);
 
   const load = useCallback(async () => {
     if (!household) return;
@@ -206,7 +196,7 @@ export default function StockScreen() {
                     accessibilityActions={[{ name: 'delete', label: 'Apagar produto' }]}
                     onAccessibilityAction={() => askDelete(p)}>
                     <View style={styles.itemTop}>
-                      <Text variant="section" style={styles.itemIcon}>{productEmoji(p.name, placeOf(p.location), icons)}</Text>
+                      <ProductIcon name={p.name} place={placeOf(p.location)} />
                       <View style={styles.itemText}>
                         <Text variant="button" style={styles.itemName}>{p.name}</Text>
                         <Text variant="label" style={styles.itemValue}>{formatAmount(p.total, p.base_unit)}</Text>
@@ -278,7 +268,6 @@ const styles = StyleSheet.create({
   linkText: { color: colors.primary },
   item: { gap: 10, padding: 14, borderRadius: radius.card, ...shadow, backgroundColor: colors.white },
   itemTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  itemIcon: { color: colors.ink },
   itemText: { flex: 1, gap: 2 },
   itemName: { color: colors.ink },
   itemValue: { color: colors.muted },

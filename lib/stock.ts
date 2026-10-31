@@ -71,7 +71,7 @@ export type ShopItem = {
   unit: string | null; // só nos itens sem produto (ex.: «Cebola — 2 un»)
   reason: 'manual' | 'min_stock' | 'recipe';
   checked_at: string | null;
-  products: { name: string; base_unit: string } | null;
+  products: { name: string; base_unit: string; location: string | null } | null;
 };
 
 export const STOCK_COLUMNS = 'product_id, name, base_unit, tracking_mode, total, min_stock, level, below_min, location';
