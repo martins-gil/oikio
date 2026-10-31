@@ -14,6 +14,7 @@ export const colors = {
   mint: '#CFF0E6',
   peach: '#FFE5B8',
   white: '#FFFFFF',
+  black: '#000000', // botão «Continuar com a Apple» (regras da marca da Apple)
   placeholder: '#8F8ABF', // texto de ajuda nos campos
   panel: '#F4F3FF', // fundo subtil de blocos
   borderStrong: '#DCD9F5', // contornos mais visíveis

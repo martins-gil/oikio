@@ -6,6 +6,7 @@ import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
+import { SocialButtons } from '@/components/SocialButtons';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 
@@ -34,6 +35,8 @@ export default function SignInScreen() {
 
   return (
     <AuthScreen logo title="Entrar com a minha conta" subtitle="Para recuperar a tua casa neste telemóvel.">
+      <SocialButtons mode="signin" onDone={() => router.replace('/')} />
+      <Text variant="label" style={styles.or}>ou com o teu e-mail</Text>
       <Field
         label="E-mail"
         value={email}
@@ -64,6 +67,7 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
+  or: { color: colors.muted, textAlign: 'center' },
   linkRow: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
   link: { color: colors.primary },
 });

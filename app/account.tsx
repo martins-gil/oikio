@@ -6,6 +6,7 @@ import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
+import { SocialButtons } from '@/components/SocialButtons';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
@@ -80,6 +81,8 @@ export default function AccountScreen() {
             Sem isto, se perderes ou mudares de telemóvel, perdes a casa. Com e-mail e palavra-passe, entras em
             qualquer telemóvel e ela lá está.
           </Text>
+          <SocialButtons mode="link" onDone={() => setStage('done')} />
+          <Text variant="label" style={styles.hint}>ou com e-mail e palavra-passe</Text>
           <Field
             label="O teu e-mail"
             value={email}
