@@ -1,5 +1,6 @@
 // Tipos e textos da análise de despesas (M15). Os números vêm das funções SQL de supabase/migrations/20261115090000_spending_analysis.sql.
 import { formatEuros } from '@/lib/money';
+import { colors } from '@/lib/theme';
 
 export type ScoreRow = {
   month: string; // 'AAAA-MM-01'
@@ -29,7 +30,7 @@ export const monthShort = (iso: string) => MONTHS[Number(iso.slice(5, 7)) - 1];
 // Cor da nota: verde → amarelo → rosa, como o resto da app
 export function scoreColor(score: number | null): string {
   if (score === null) return '#C9C6E6';
-  return score >= 75 ? '#35B38A' : score >= 50 ? '#E59A1E' : '#DC4F89';
+  return score >= 75 ? colors.successText : score >= 50 ? colors.warn : colors.pink;
 }
 
 export function scoreWord(score: number): string {

@@ -1,6 +1,8 @@
 // Indicador verde → vermelho. ratio = tempo desde a última vez ÷ intervalo esperado
 // (0 = acabada de fazer, 1 = na altura de repetir, > 1 = em atraso). null = sem dados.
 
+import { colors } from '@/lib/theme';
+
 export type TaskStatus = {
   task_id: string;
   title: string;
@@ -13,10 +15,10 @@ export type TaskStatus = {
 
 export function urgencyColor(ratio: number | null | undefined): string {
   if (ratio === null || ratio === undefined) return '#C9C5EC';
-  if (ratio <= 0.5) return '#35B38A'; // verde
-  if (ratio <= 0.85) return '#FFBF67'; // amarelo
+  if (ratio <= 0.5) return colors.success; // verde
+  if (ratio <= 0.85) return colors.accent; // amarelo
   if (ratio <= 1) return '#F28C6B'; // laranja
-  return '#DC4F89'; // rosa (em atraso)
+  return colors.pink; // rosa (em atraso)
 }
 
 // 0..1 para a largura da barra

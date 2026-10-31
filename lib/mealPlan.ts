@@ -1,6 +1,7 @@
 // Tipos e ajudas do plano semanal (M15b). A forma vem de supabase/functions/plan-week.
 import type { Meal } from '@/lib/meals';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 
 export type PlannedMeal = Meal & { date: string; slot: string; slot_index: number; favorite_id?: string; is_prep?: boolean; serves?: number[]; from_freezer?: boolean };
 export type PlanSlot = { date: string; slot: string };
@@ -35,7 +36,7 @@ export async function callPlanWeek(body: Record<string, unknown>): Promise<{ pla
 // Cor do total contra o orçamento: verde → amarelo → rosa, como o resto da app
 export function budgetColor(total: number, budget: number): string {
   const r = total / budget;
-  return r <= 0.85 ? '#35B38A' : r <= 1 ? '#E59A1E' : '#DC4F89';
+  return r <= 0.85 ? colors.successText : r <= 1 ? colors.warn : colors.pink;
 }
 
 // Datas em Lisboa (AAAA-MM-DD) e segunda-feira da semana

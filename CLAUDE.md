@@ -26,7 +26,7 @@ Qualquer ação diária em ≤ 2 toques. Nenhum campo obrigatório além do nome
 - `docs/` — decisões de produto e desenho
 
 ## Marca e aspeto
-- Nome: **NestKeep** ("Your home in flow."). Cores em `lib/theme.ts`: roxo `#5C4DB1`, amarelo `#FFBF67`, rosa `#DC4F89`, lavanda `#DFDEFF`.
+- Nome: **NestKeep** ("Your home in flow."). Cores em `lib/theme.ts`: roxo `#5C4DB1`, amarelo `#FFBF67`, rosa `#DC4F89`, lavanda `#EAE6FA`, fundo quente `#FAF7F2`, menta `#2FBF9B` (verde de sucesso; `successText` `#17816A` quando é texto). A barra de baixo é uma pílula só com ícones (Hoje, Compras, Produtos, Dinheiro, Pessoal).
 - Letras: Montserrat (títulos) e Ubuntu (texto), em `assets/fonts/`. Usar `Text`/`TextInput` de `components/Text` (não os do React Native).
 - Cada separador usa `components/Screen` (cabeçalho roxo + folha branca arredondada); a barra de baixo é `components/TabBar`.
 - Ícones e logótipo gerados em `design/` (ver `design/README.md`); cores de urgência: verde → amarelo → rosa (em atraso).

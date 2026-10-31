@@ -2,7 +2,6 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Text } from '@/components/Text';
 import { useModules, type ModuleKey } from '@/lib/settings';
 import { colors, shadow } from '@/lib/theme';
 
@@ -26,7 +25,7 @@ const LABELS: Record<keyof typeof ICONS, string> = {
   personal: 'Pessoal',
 };
 
-// Barra de baixo: cartão branco arredondado, com o separador ativo numa pílula lavanda
+// Barra de baixo em pílula: só os ícones (o nome fica para o leitor de ecrã), o separador ativo numa bolha lavanda
 export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { has } = useModules();
@@ -44,6 +43,7 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
             <Pressable
               key={route.key}
               accessibilityRole="tab"
+              accessibilityLabel={LABELS[key]}
               accessibilityState={{ selected: focused }}
               style={[styles.item, focused && styles.itemOn]}
               onPress={() => {
@@ -51,9 +51,6 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
                 if (!focused && !event.defaultPrevented) navigateToTab(route.key);
               }}>
               <Image source={focused ? icon.on : icon.off} style={styles.icon} resizeMode="contain" />
-              <Text variant="label" style={[styles.label, focused && styles.labelOn]} numberOfLines={1}>
-                {LABELS[key]}
-              </Text>
             </Pressable>
           );
         })}
@@ -63,11 +60,9 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { backgroundColor: colors.bg, paddingHorizontal: 12, paddingTop: 6 },
-  bar: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: colors.white, borderRadius: 26, paddingVertical: 8, paddingHorizontal: 6, ...shadow, shadowOpacity: 0.16, shadowRadius: 14 },
-  item: { flex: 1, minHeight: 64, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 6, marginHorizontal: 2, borderRadius: 20 },
+  wrap: { backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 6 },
+  bar: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: colors.white, borderRadius: 34, paddingVertical: 8, paddingHorizontal: 8, ...shadow, shadowOpacity: 0.16, shadowRadius: 14 },
+  item: { flex: 1, height: 56, maxWidth: 76, alignItems: 'center', justifyContent: 'center', marginHorizontal: 2, borderRadius: 28 },
   itemOn: { backgroundColor: colors.lavender },
-  icon: { width: 28, height: 28 },
-  label: { color: colors.muted, textAlign: 'center' },
-  labelOn: { color: colors.primary },
+  icon: { width: 32, height: 32 },
 });

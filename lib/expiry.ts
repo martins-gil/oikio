@@ -1,4 +1,6 @@
 // Tipos e textos das validades sugeridas (M16). Os prazos vêm do USDA FoodKeeper (tabela food_shelf_life); nada é inventado.
+import { colors } from '@/lib/theme';
+
 export type ExpiryState = 'ok' | 'soon' | 'over' | 'no_data' | 'no_stock' | 'not_food' | 'no_match' | 'no_limit';
 type Storage = { status: string | null; min_days: number | null; max_days: number | null };
 
@@ -34,7 +36,7 @@ export type OverviewRow = {
 
 export const SOURCE_NOTE = 'Fonte: USDA FoodKeeper (dados abertos). É uma sugestão: a data impressa na embalagem prevalece e, em caso de dúvida, não consumas.';
 
-export const STATE_COLOR: Record<'ok' | 'soon' | 'over', string> = { ok: '#35B38A', soon: '#E59A1E', over: '#DC4F89' };
+export const STATE_COLOR: Record<'ok' | 'soon' | 'over', string> = { ok: colors.successText, soon: colors.warn, over: colors.pink };
 export const STATE_LABEL: Record<'ok' | 'soon' | 'over', string> = { ok: 'Dentro do prazo', soon: 'A ficar tarde', over: 'Passou do prazo sugerido' };
 export const STORAGE_LABEL = { pantry: 'despensa', fridge: 'frigorífico', freezer: 'congelador' } as const;
 

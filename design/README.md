@@ -10,7 +10,7 @@ node build-brand.mjs          # escreve em design/out/
 ```
 Depois copiar os ficheiros de `out/` para `assets/` (icon, android-icon-*, splash-icon, brand/, tabs/).
 
-Cores: roxo `#5C4DB1`, amarelo `#FFBF67`, rosa `#DC4F89`, lavanda `#DFDEFF`. Tipos de letra: Montserrat (títulos) e Ubuntu (texto).
+Cores: roxo `#5C4DB1`, amarelo `#FFBF67`, rosa `#DC4F89`, lavanda `#EAE6FA`. Tipos de letra: Montserrat (títulos) e Ubuntu (texto).
 
 ## Ícones dos equipamentos de cozinha
 `equipment.mjs` gera `assets/equipment/*.png` (fogão, forno, air fryer, Bimby…) no estilo NestKeep.

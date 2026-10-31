@@ -1,5 +1,7 @@
 // Tipos escritos à mão (só o que o M2 usa); os gerados pelo Supabase ficam para mais tarde.
 
+import { colors } from '@/lib/theme';
+
 export type Level = 'full' | 'half' | 'low';
 export type StockLevel = Level | 'empty';
 
@@ -11,9 +13,9 @@ export const LEVEL_LABEL: Record<StockLevel, string> = {
 };
 
 export const LEVEL_COLOR: Record<StockLevel, string> = {
-  full: '#35B38A',
-  half: '#E59A1E', // amarelo mais escuro, para se ler em texto
-  low: '#DC4F89',
+  full: colors.successText,
+  half: colors.warn, // amarelo mais escuro, para se ler em texto
+  low: colors.pink,
   empty: '#999999',
 };
 

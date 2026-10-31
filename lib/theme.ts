@@ -3,22 +3,23 @@ export const colors = {
   primary: '#5C4DB1', // roxo
   accent: '#FFBF67', // amarelo
   pink: '#DC4F89',
-  lavender: '#DFDEFF',
-  bg: '#F6F5FF', // fundo dos ecrãs
+  lavender: '#EAE6FA',
+  bg: '#FAF7F2', // fundo dos ecrãs (branco quente)
   card: '#FFFFFF',
-  border: '#ECEAFB',
-  ink: '#1F1B4D', // texto principal
-  muted: '#6F6AA0', // texto secundário
+  border: '#EFEAE2',
+  ink: '#231F4F', // texto principal
+  muted: '#6B6790', // texto secundário
   faint: '#9C97C9', // ícones e texto inativos
-  success: '#35B38A',
-  mint: '#CFF0E6',
+  success: '#2FBF9B', // menta: preenchimentos, barras e visto
+  successText: '#17816A', // o mesmo verde, mais escuro, para texto (contraste ≥ 4.5)
+  mint: '#D5F3EA',
   peach: '#FFE5B8',
   white: '#FFFFFF',
   black: '#000000', // botão «Continuar com a Apple» (regras da marca da Apple)
   placeholder: '#8F8ABF', // texto de ajuda nos campos
-  panel: '#F4F3FF', // fundo subtil de blocos
-  borderStrong: '#DCD9F5', // contornos mais visíveis
-  backdrop: '#E9E8F4', // fundo atrás de cartões centrados
+  panel: '#F5F1EA', // fundo subtil de blocos
+  borderStrong: '#DAD5EB', // contornos mais visíveis
+  backdrop: '#ECE8F1', // fundo atrás de cartões centrados
   dangerBg: '#FDECEA',
   dangerText: '#8A2C22',
   warnBg: '#FFF4E5',
@@ -26,7 +27,7 @@ export const colors = {
   warn: '#E59A1E',
   overlay: 'rgba(0,0,0,0.4)', // fundo escurecido atrás de folhas
   onPrimarySoft: 'rgba(255,255,255,0.18)', // realce sobre o roxo
-  hairline: 'rgba(31,27,77,0.08)', // divisor muito subtil
+  hairline: 'rgba(35,31,79,0.08)', // divisor muito subtil
 };
 
 export const fonts = {

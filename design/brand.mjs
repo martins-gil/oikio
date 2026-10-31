@@ -64,14 +64,14 @@ export const ICONS = {
     <g stroke="${m}"><path d="M3.5 15 L16 4.5 L28.5 15"/><path d="M22 9.5 V5.5 H25.2 V12"/><path d="M7 13.5 V25 Q7 27.2 9.2 27.2 H22.8 Q25 27.2 25 25 V13.5"/></g>
     <path stroke="${a}" d="M11.5 18.5 L15 22 L21.5 14.5"/>`,
   compras: (m, a) => `
-    <g stroke="${m}"><path d="M10.5 12 L14 5.5"/><path d="M21.5 12 L18 5.5"/><path d="M3.5 12 H28.5"/><path d="M5.8 12 L8 24.8 Q8.4 27.2 10.8 27.2 H21.2 Q23.6 27.2 24 24.8 L26.2 12"/></g>
-    <circle cx="16" cy="18.5" r="3" stroke="${a}"/>`,
+    <g stroke="${m}"><path d="M3.5 5.5 H7 L10 21 H24.6 L27.4 10 H8.4"/></g>
+    <g stroke="${a}"><circle cx="12.4" cy="26.2" r="1.9"/><circle cx="22.4" cy="26.2" r="1.9"/><path d="M13.5 15.5 H22"/></g>`,
   consumiveis: (m, a) => `
     <g stroke="${m}"><path d="M11.5 14 H18.5 Q22 14 22 17.5 V25 Q22 28.5 18.5 28.5 H11.5 Q8 28.5 8 25 V17.5 Q8 14 11.5 14 Z"/><path d="M12 14 V10 H18 V14"/></g>
     <g stroke="${a}"><path d="M12 10 H22 L25.5 12.2"/><path d="M27.3 8.2 H29.5"/><path d="M27.8 12.4 H30"/><path d="M26.6 16.2 H28.6"/><path d="M12.5 21.5 H17.5"/></g>`,
   dinheiro: (m, a) => `
-    <circle cx="16" cy="16" r="12" stroke="${m}"/>
-    <g stroke="${a}"><path d="M19.8 12.2 A5.6 5.6 0 1 0 19.8 19.8"/><path d="M10 14.6 H18"/><path d="M10 17.4 H18"/></g>`,
+    <g stroke="${m}"><path d="M6.5 6 H25.5"/><rect x="3" y="9" width="26" height="16" rx="3"/><path d="M7.5 14 V14.01"/><path d="M24.5 20 V20.01"/></g>
+    <circle cx="16" cy="17" r="3.8" stroke="${a}"/>`,
   pessoal: (m, a) => `
     <g stroke="${m}"><circle cx="13.5" cy="10" r="4.6"/><path d="M4.5 27.5 Q4.5 19 13.5 19 Q18 19 20.5 21.2"/></g>
     <g stroke="${a}"><rect x="19.5" y="22.5" width="9" height="6.5" rx="1.6"/><path d="M21.5 22.5 V20.7 Q21.5 18.2 24 18.2 Q26.5 18.2 26.5 20.7 V22.5"/></g>`,

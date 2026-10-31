@@ -21,8 +21,11 @@ ecrã, detalhes delicados. Não deve parecer um painel de controlo corporativo.
 ## 3. Marca (já existe: não substituir)
 - Nome: NestKeep ("Your home in flow.").
 - Cores (em lib/theme.ts): roxo #5C4DB1 (base), amarelo #FFBF67 e rosa #DC4F89
-  (acentos e estados), lavanda #DFDEFF, fundo #F6F5FF, texto #1F1B4D,
-  texto secundário #6F6AA0.
+  (acentos e estados), lavanda #EAE6FA, fundo quente #FAF7F2, texto #231F4F,
+  texto secundário #6B6790; verde de sucesso menta #2FBF9B (em texto, o mais
+  escuro #17816A para contraste ≥ 4.5).
+- Barra de baixo: pílula só com ícones de linha (Hoje, Compras com carrinho,
+  Produtos, Dinheiro com notas, Pessoal); o separador ativo numa bolha lavanda.
 - Urgência: verde → amarelo → rosa (em atraso).
 - Letras: Montserrat (a fonte do logo) em títulos e botões; Ubuntu no texto
   corrente. Ficheiros em assets/fonts/.
