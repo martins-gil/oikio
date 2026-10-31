@@ -6,6 +6,7 @@ import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
+import { LegalConsent } from '@/components/LegalConsent';
 import { SocialButtons } from '@/components/SocialButtons';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
@@ -62,6 +63,7 @@ export default function SignInScreen() {
       <Pressable style={styles.linkRow} onPress={() => router.push('/forgot-password')} accessibilityRole="button">
         <Text variant="button" style={styles.link}>Esqueci a palavra-passe</Text>
       </Pressable>
+      <LegalConsent action="entrar" />
     </AuthScreen>
   );
 }

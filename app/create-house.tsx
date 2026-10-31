@@ -6,6 +6,7 @@ import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
+import { LegalConsent } from '@/components/LegalConsent';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
@@ -54,6 +55,7 @@ export default function CreateHouseScreen() {
       <Text variant="label" style={styles.orText}>ou</Text>
       <Button title="Tenho um convite" variant="secondary" onPress={() => router.push('/join')} />
       {!household && <Button title="Já tenho conta" variant="secondary" onPress={() => router.push('/sign-in')} />}
+      <LegalConsent action="criar a casa" />
     </AuthScreen>
   );
 }

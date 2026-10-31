@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, View } from 'r
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
+import { LegalConsent } from '@/components/LegalConsent';
 import { Toast } from '@/components/Toast';
 import { formatInviteCode, GAMIFICATION_LABEL, inviteMessage, ROLE_LABEL, useHousehold, type GamificationMode, type Member } from '@/lib/household';
 import { useSession } from '@/lib/session';
@@ -284,6 +285,7 @@ export default function HouseScreen() {
             <Text variant="button" style={styles.dangerText}>Terminar sessão</Text>
           </Pressable>
         </View>
+        <LegalConsent action="usar a app" />
       </ScrollView>
       <Toast message={toast} onHide={hideToast} />
     </View>

@@ -77,6 +77,8 @@ export default function RootLayout() {
           <Stack.Screen name="kitchen" options={{ title: 'Perfil de cozinha' }} />
           <Stack.Screen name="houses" options={{ headerShown: false }} />
           <Stack.Screen name="starter" options={{ title: 'Começar' }} />
+          <Stack.Screen name="terms" options={{ title: 'Termos de Serviço' }} />
+          <Stack.Screen name="privacy" options={{ title: 'Política de Privacidade' }} />
           <Stack.Screen name="expiry" options={{ title: 'Validades' }} />
           <Stack.Screen name="favorites" options={{ title: 'Favoritas' }} />
           <Stack.Screen name="plan" options={{ title: 'Plano da semana' }} />

@@ -6,6 +6,7 @@ import { AuthScreen, ErrorText, Field } from '@/components/AuthScreen';
 import { Text } from '@/components/Text';
 
 import { Button } from '@/components/Button';
+import { LegalConsent } from '@/components/LegalConsent';
 import { SocialButtons } from '@/components/SocialButtons';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
@@ -96,6 +97,7 @@ export default function AccountScreen() {
             onSubmitEditing={sendEmail}
           />
           <Button title={busy ? 'A enviar…' : 'Enviar e-mail de confirmação'} disabled={!email.includes('@') || busy} onPress={sendEmail} />
+          <LegalConsent action="proteger a conta" />
         </>
       )}
 

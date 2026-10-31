@@ -255,6 +255,9 @@ export default function KitchenScreen() {
               placeholder="Ex.: alergia a kiwi"
               returnKeyType="done"
             />
+            <Text variant="label" style={styles.consent}>
+              As alergias são dados de saúde. Ao escrevê-las, aceitas que a app as use só para filtrar as sugestões de refeições. Podes apagá-las quando quiseres.
+            </Text>
           </>
         )}
       </ScrollView>
@@ -275,6 +278,7 @@ export default function KitchenScreen() {
 }
 
 const styles = StyleSheet.create({
+  consent: { color: colors.muted },
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   progress: { flexDirection: 'row', gap: 4, paddingHorizontal: spacing.md, paddingTop: 12 },
