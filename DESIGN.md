@@ -94,6 +94,7 @@ Componentes partilhados do redesenho (usar em vez de repetir código):
   de conta, com logótipo, etiqueta sempre visível por cima do campo e erros com ⚠.
 - `CheckCircle`: visto redondo de 32 nas listas de escolha (cor + sinal ✓).
 - `FavoriteStar`: estrela das favoritas com alvo de 48.
+- `ProgressArc`: gráfico de progresso em arco aberto com gradiente da marca (roxo → rosa → amarelo → verde) e ponta luminosa; número grande ao centro (ecrã Hoje). Contas em `lib/arc.ts`.
 - `ProgressBar`: passos dos assistentes (segmentos + «Passo 2 de 5» em texto). `CountStepper`: nome + quantidade com botões − e + de 48 (pessoas, doses).
 - Cabeçalho do sistema (Stack): título na variante `section` (21).
 

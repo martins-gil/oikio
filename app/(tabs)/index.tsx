@@ -9,7 +9,7 @@ import { ActionSheet, type SheetOption } from '@/components/ActionSheet';
 import { Button } from '@/components/Button';
 import { DateSheet } from '@/components/DateSheet';
 import { KudosForm } from '@/components/KudosForm';
-import { ProgressRing } from '@/components/ProgressRing';
+import { ProgressArc } from '@/components/ProgressArc';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { addDaysIso, localDate, mondayOf } from '@/lib/money';
@@ -512,12 +512,22 @@ export default function HomeScreen() {
           <View style={styles.heroText}>
             <Text variant="section" style={styles.hello}>Olá{myName ? `, ${myName}` : ''} 👋</Text>
             <Text variant="label" style={styles.heroLine}>
-              {weekTotal === 0
-                ? 'Ainda sem tarefas esta semana'
-                : `${doneWeek.length} de ${weekTotal} tarefas feitas${current ? ' esta semana' : ' nessa semana'}`}
+              {weekTotal === 0 ? 'Ainda sem tarefas esta semana' : current ? 'O progresso desta semana' : 'O progresso dessa semana'}
             </Text>
           </View>
-          <ProgressRing percent={weekPercent} />
+          <ProgressArc
+            percent={weekPercent}
+            value={String(doneWeek.length)}
+            unit={weekTotal === 0 ? 'tarefas feitas' : `de ${weekTotal} ${weekTotal === 1 ? 'tarefa feita' : 'tarefas feitas'}`}
+            caption={weekTotal === 0 ? undefined : `${Math.round(weekPercent)}% ${current ? 'da semana' : 'dessa semana'}`}
+          />
+          {weekTotal > 0 && (
+            <View style={styles.heroChip}>
+              <Text variant="label" style={styles.heroChipText}>
+                {pending.length === 0 ? '🎉 Está tudo feito' : `Faltam ${pending.length} ${pending.length === 1 ? 'tarefa' : 'tarefas'}`}
+              </Text>
+            </View>
+          )}
         </View>
 
         {current && renderStrip(true)}
@@ -795,8 +805,10 @@ const styles = StyleSheet.create({
   protect: { gap: 4, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.peach },
   protectTitle: { color: colors.ink },
   protectText: { color: colors.ink },
-  hero: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
-  heroText: { flex: 1, gap: 4 },
+  hero: { gap: 12, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
+  heroText: { gap: 4 },
+  heroChip: { alignSelf: 'center', minHeight: 40, justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.chip, backgroundColor: colors.lavender },
+  heroChipText: { color: colors.primary },
   hello: { color: colors.ink },
   heroLine: { color: colors.muted },
   strip: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
