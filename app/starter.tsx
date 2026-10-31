@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CheckCircle } from '@/components/CheckCircle';
+import { CountStepper } from '@/components/CountStepper';
+import { ProgressBar } from '@/components/ProgressBar';
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
@@ -13,7 +15,37 @@ import { normalizeTitle, PACKS, SUGGESTIONS, TASK_PRODUCT_HINTS } from '@/lib/ta
 import { supabase } from '@/lib/supabase';
 import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
-type Step = 'packs' | 'review' | 'link' | 'done';
+type Step = 'home' | 'people' | 'packs' | 'review' | 'link' | 'done';
+type HomeType = 'apartment' | 'house' | 'shared';
+type Outdoor = 'none' | 'balcony' | 'garden';
+type Pet = 'dog' | 'cat' | 'other';
+type Counts = { babies: number; children: number; teens: number; adults: number; seniors: number };
+
+const HOME_TYPES: { key: HomeType; title: string; detail: string; emoji: string }[] = [
+  { key: 'apartment', title: 'Apartamento', detail: 'Num prédio, com outras frações', emoji: '🏢' },
+  { key: 'house', title: 'Moradia', detail: 'Uma casa só para a família', emoji: '🏡' },
+  { key: 'shared', title: 'Casa partilhada', detail: 'Quartos ou casa com outras pessoas', emoji: '🏘️' },
+];
+const OUTDOORS: { key: Outdoor; title: string }[] = [
+  { key: 'none', title: 'Não' },
+  { key: 'balcony', title: 'Varanda ou terraço' },
+  { key: 'garden', title: 'Jardim ou quintal' },
+];
+const PETS: { key: Pet; title: string }[] = [
+  { key: 'dog', title: '🐕 Cão' },
+  { key: 'cat', title: '🐈 Gato' },
+  { key: 'other', title: '🐾 Outros' },
+];
+const AGES: { key: keyof Counts; title: string; detail: string; max: number }[] = [
+  { key: 'babies', title: 'Bebés', detail: '0 a 2 anos', max: 10 },
+  { key: 'children', title: 'Crianças', detail: '3 a 12 anos', max: 10 },
+  { key: 'teens', title: 'Adolescentes', detail: '13 a 17 anos', max: 10 },
+  { key: 'adults', title: 'Adultos', detail: '18 a 64 anos', max: 20 },
+  { key: 'seniors', title: 'Seniores', detail: '65 anos ou mais', max: 10 },
+];
+// Os passos que a barra mostra (a confirmação das tarefas e a ligação a produtos contam como «Tarefas»)
+const BAR_TOTAL = 3;
+const barIndex = (step: Step) => (step === 'home' ? 0 : step === 'people' ? 1 : 2);
 type Link = { on: boolean; perUse: string; pack: string; level: Level };
 const num = (t: string) => Number(t.replace(',', '.'));
 
@@ -21,7 +53,12 @@ const num = (t: string) => Number(t.replace(',', '.'));
 export default function StarterScreen() {
   const router = useRouter();
   const { household } = useHousehold();
-  const [step, setStep] = useState<Step>('packs');
+  const [step, setStep] = useState<Step>('home');
+  const [homeType, setHomeType] = useState<HomeType | null>(null);
+  const [outdoor, setOutdoor] = useState<Outdoor>('none');
+  const [pets, setPets] = useState<Set<Pet>>(new Set());
+  const [counts, setCounts] = useState<Counts>({ babies: 0, children: 0, teens: 0, adults: 2, seniors: 0 });
+  const [profileReady, setProfileReady] = useState(false);
   const [packs, setPacks] = useState<Set<string>>(new Set(PACKS.filter((p) => p.preselected).map((p) => p.key)));
   const [off, setOff] = useState<Set<string>>(new Set()); // tarefas desmarcadas na revisão
   const [have, setHave] = useState<Set<string> | null>(null);
@@ -40,7 +77,47 @@ export default function StarterScreen() {
       .neq('scope', 'personal')
       .is('deleted_at', null)
       .then(({ data }) => setHave(new Set((data ?? []).map((t: { title: string }) => normalizeTitle(t.title)))));
+    // Se a casa já tem perfil (voltaram a este ecrã), mostra o que já foi respondido
+    supabase
+      .from('household_profile')
+      .select('home_type, outdoor, pets, babies, children, teens, adults, seniors')
+      .eq('household_id', household.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setHomeType(data.home_type as HomeType);
+          setOutdoor(data.outdoor as Outdoor);
+          setPets(new Set(data.pets as Pet[]));
+          setCounts({ babies: data.babies, children: data.children, teens: data.teens, adults: data.adults, seniors: data.seniors });
+        }
+        setProfileReady(true);
+      });
   }, [household]);
+
+  const total = counts.babies + counts.children + counts.teens + counts.adults + counts.seniors;
+
+  const saveProfile = async () => {
+    if (!household || !homeType || total < 1 || saving) return;
+    setSaving(true);
+    setError(null);
+    const { error: err } = await supabase.rpc('save_household_profile', {
+      p_household: household.id,
+      p_home_type: homeType,
+      p_outdoor: outdoor,
+      p_pets: [...pets],
+      p_babies: counts.babies,
+      p_children: counts.children,
+      p_teens: counts.teens,
+      p_adults: counts.adults,
+      p_seniors: counts.seniors,
+    });
+    setSaving(false);
+    if (err) {
+      setError(/adultos da casa/i.test(err.message) ? 'Só os adultos da casa podem alterar o perfil da casa.' : 'Não foi possível guardar. Tenta outra vez.');
+      return;
+    }
+    setStep('packs');
+  };
 
   const toggle = (set: Set<string>, key: string, apply: (s: Set<string>) => void) => {
     const next = new Set(set);
@@ -78,7 +155,7 @@ export default function StarterScreen() {
     setStep(rows.length > 0 ? 'link' : 'done');
   };
 
-  if (!household || have === null) {
+  if (!household || have === null || !profileReady) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.primary} />
@@ -133,10 +210,77 @@ export default function StarterScreen() {
 
   const unitWord = (u: string) => (u === 'dose' ? 'doses' : 'un');
 
+  const bar = <ProgressBar current={barIndex(step)} total={BAR_TOTAL} />;
+
+  if (step === 'home') {
+    return (
+      <View style={styles.flex}>
+        <Stack.Screen options={{ title: 'Começar' }} />
+        {bar}
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+          <Text variant="title" style={styles.title}>Como é a vossa casa?</Text>
+          <Text variant="body" style={styles.hint}>Assim sugerimos as tarefas certas para a vossa casa. Podem mudar mais tarde.</Text>
+          {HOME_TYPES.map((h) => {
+            const on = homeType === h.key;
+            return (
+              <Pressable key={h.key} style={[styles.row, on && styles.rowOn]} onPress={() => setHomeType(h.key)} accessibilityRole="radio" accessibilityState={{ checked: on }}>
+                <Text variant="section" style={styles.emoji}>{h.emoji}</Text>
+                <View style={styles.flex}>
+                  <Text variant="button" style={styles.rowTitle}>{h.title}</Text>
+                  <Text variant="label" style={styles.small}>{h.detail}</Text>
+                </View>
+                <CheckCircle on={on} />
+              </Pressable>
+            );
+          })}
+          <Text variant="section" style={styles.question}>Têm espaço exterior?</Text>
+          <View style={styles.chips}>
+            {OUTDOORS.map((o) => (
+              <Chip key={o.key} label={o.title} on={outdoor === o.key} onPress={() => setOutdoor(o.key)} />
+            ))}
+          </View>
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button title="Continuar" disabled={!homeType} onPress={() => setStep('people')} />
+          <Button title="Agora não" variant="secondary" onPress={() => router.dismissTo('/')} />
+        </View>
+      </View>
+    );
+  }
+
+  if (step === 'people') {
+    return (
+      <View style={styles.flex}>
+        <Stack.Screen options={{ title: 'Começar' }} />
+        {bar}
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <Text variant="title" style={styles.title}>Quem vive em casa?</Text>
+          <Text variant="body" style={styles.hint}>Só precisamos de saber quantas pessoas há em cada idade. Não guardamos nomes nem datas de nascimento.</Text>
+          {AGES.map((a) => (
+            <CountStepper key={a.key} label={a.title} detail={a.detail} max={a.max} value={counts[a.key]} onChange={(v) => setCounts((c) => ({ ...c, [a.key]: v }))} />
+          ))}
+          <Text variant="body" style={styles.total}>{total === 1 ? 'Vive 1 pessoa em casa' : `Vivem ${total} pessoas em casa`}</Text>
+          <Text variant="section" style={styles.question}>Têm animais?</Text>
+          <View style={styles.chips}>
+            {PETS.map((p) => (
+              <Chip key={p.key} label={p.title} on={pets.has(p.key)} onPress={() => toggle(pets, p.key, (n) => setPets(n as Set<Pet>))} />
+            ))}
+          </View>
+          {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button title={saving ? 'A guardar…' : 'Continuar'} disabled={total < 1 || saving} onPress={saveProfile} />
+          <Button title="Voltar" variant="secondary" disabled={saving} onPress={() => { setError(null); setStep('home'); }} />
+        </View>
+      </View>
+    );
+  }
+
   if (step === 'link') {
     return (
       <View style={styles.flex}>
         <Stack.Screen options={{ title: 'Produtos das tarefas' }} />
+        {bar}
         <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <Text variant="title" style={styles.title}>Ligar produtos às tarefas</Text>
           <Text variant="body" style={styles.hint}>
@@ -214,6 +358,7 @@ export default function StarterScreen() {
     return (
       <View style={styles.flex}>
         <Stack.Screen options={{ title: 'As tuas tarefas' }} />
+        {bar}
         <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
           <Text variant="title" style={styles.title}>Confirma a lista</Text>
           <Text variant="body" style={styles.hint}>Tira o visto às que não fazem sentido. Ficam com uma frequência normal, que podes mudar depois.</Text>
@@ -242,6 +387,7 @@ export default function StarterScreen() {
   return (
     <View style={styles.flex}>
       <Stack.Screen options={{ title: 'Começar' }} />
+      {bar}
       <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         <Text variant="title" style={styles.title}>O que fazem em casa?</Text>
         <Text variant="body" style={styles.hint}>Escolhe os temas que servem à vossa casa. Depois confirmas as tarefas, uma a uma.</Text>
@@ -261,9 +407,18 @@ export default function StarterScreen() {
       </ScrollView>
       <View style={styles.footer}>
         <Button title="Continuar" disabled={packs.size === 0} onPress={() => setStep('review')} />
-        <Button title="Agora não" variant="secondary" onPress={() => router.dismissTo('/')} />
+        <Button title="Voltar" variant="secondary" onPress={() => setStep('people')} />
       </View>
     </View>
+  );
+}
+
+// Escolha em botão redondo (≥ 48): cor + ✓, nunca só cor
+function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+  return (
+    <Pressable style={[styles.chip, on && styles.chipOn]} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }}>
+      <Text variant="button" style={on ? styles.chipTextOn : styles.chipText}>{on ? '✓ ' : ''}{label}</Text>
+    </Pressable>
   );
 }
 
@@ -274,6 +429,13 @@ const styles = StyleSheet.create({
   title: { color: colors.ink, textAlign: 'center' },
   hint: { color: colors.muted, textAlign: 'center' },
   small: { color: colors.muted },
+  question: { color: colors.ink, marginTop: spacing.xs },
+  total: { color: colors.muted, textAlign: 'center' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { minHeight: 48, justifyContent: 'center', borderWidth: 2, borderColor: colors.borderStrong, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 18, backgroundColor: colors.white },
+  chipOn: { borderColor: colors.primary, backgroundColor: colors.lavender },
+  chipText: { color: colors.ink },
+  chipTextOn: { color: colors.primary },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   rowOn: { backgroundColor: colors.lavender },
   rowTitle: { color: colors.ink },
