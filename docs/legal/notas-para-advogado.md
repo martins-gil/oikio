@@ -11,8 +11,9 @@ Os textos estão em `lib/legal.ts` (ecrãs `app/terms.tsx` e `app/privacy.tsx`) 
 ## Lacunas da app que a Política já assume
 1. **Apagar a conta já existe** (Casa → «Apagar a minha conta», função `delete_my_account()`, 21 testes). Efeitos: casas com uma só pessoa apagam-se;
    nas outras a administração passa a quem entrou primeiro e o que a pessoa registou fica sem o nome; apagam-se as tarefas pessoais, o banco de horas,
-   as definições, os lembretes, os agradecimentos e trocas e **as despesas que pagou** (a ligação à pessoa é obrigatória nessa tabela; avaliar se as despesas
-   partilhadas deviam ficar anónimas). **Fotos de talões** que tenham ficado no armazenamento (leitura falhada) não são apagadas pela função: confirmar.
+   as definições, os lembretes, os agradecimentos e trocas e as despesas «só minhas». As **despesas partilhadas** que pagou ficam na casa sem o nome dela
+   (`expenses.paid_by` passou a poder ficar vazio). Apagar o utilizador direto no painel do Supabase, em vez de pela app, deixaria despesas «só minhas» órfãs
+   (invisíveis, mas guardadas): apagar contas só pela app. **Fotos de talões** que tenham ficado no armazenamento (leitura falhada) não são apagadas pela função: confirmar.
 2. **Retenção:** a Política diz «até 90 dias» nas cópias de segurança (o mesmo prazo que o Homsy indica). É um máximo seguro: segundo a documentação do
    Supabase as cópias diárias guardam-se 7 dias no plano Pro, 14 no Team e até 30 no Enterprise (no plano gratuito, confirmar no painel). Se se mudar de plano,
    rever. Mantém-se também o que a lei obrigue a guardar.

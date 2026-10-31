@@ -16,7 +16,7 @@ import { devHint } from '@/lib/errors';
 
 type Expense = {
   id: string;
-  paid_by: string;
+  paid_by: string | null; // vazio: a pessoa que pagou já apagou a conta
   is_shared: boolean;
   amount_cents: number;
   category: string | null;
@@ -182,7 +182,7 @@ export default function MoneyScreen() {
     load();
   };
 
-  const nameOf = (id: string) => (id === me ? 'Tu' : (members.find((m) => m.user_id === id)?.display_name ?? 'Outra pessoa'));
+  const nameOf = (id: string | null) => (id === null ? 'Quem já saiu' : id === me ? 'Tu' : (members.find((m) => m.user_id === id)?.display_name ?? 'Outra pessoa'));
 
   if (!household) {
     return (
@@ -195,7 +195,7 @@ export default function MoneyScreen() {
   const list = expenses ?? [];
   const sharedTotal = list.filter((e) => e.is_shared).reduce((s, e) => s + e.amount_cents, 0);
   const privateTotal = list.filter((e) => !e.is_shared).reduce((s, e) => s + e.amount_cents, 0);
-  const byPerson = new Map<string, number>();
+  const byPerson = new Map<string | null, number>();
   for (const e of list.filter((x) => x.is_shared)) byPerson.set(e.paid_by, (byPerson.get(e.paid_by) ?? 0) + e.amount_cents);
   const spentBy = new Map<string, number>();
   for (const e of list.filter((x) => x.is_shared)) {

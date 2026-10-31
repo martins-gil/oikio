@@ -35,7 +35,7 @@ begin
   insert into task_occurrences(task_id, household_id, due_date, status, assigned_to, completed_by)
     values (t1, h1, current_date - 1, 'done', A, A);
   insert into task_occurrences(task_id, household_id, due_date, status, assigned_to) values (t1, h1, current_date, 'pending', A);
-  insert into expenses(household_id, paid_by, amount_cents) values (h1, A, 1000), (h1, B, 2000);
+  insert into expenses(household_id, paid_by, amount_cents, is_shared) values (h1, A, 1000, true), (h1, B, 2000, true), (h1, A, 500, false), (h1, B, 700, false);
   insert into time_entries(user_id, kind, minutes) values (A, 'appointment', 30), (B, 'appointment', 45);
   insert into user_settings(user_id) values (A), (B);
   insert into push_tokens(user_id, token) values (A, 'tokenA'), (B, 'tokenB');
@@ -67,7 +67,16 @@ begin
   perform pg_temp.assert_eq('X10 a tarefa pessoal do outro fica', (select count(*)::text from tasks where id = t3), '1');
   perform pg_temp.assert_eq('X11 o histórico fica sem nome', (select coalesce(completed_by::text, 'sem nome') from task_occurrences where due_date = current_date - 1), 'sem nome');
   perform pg_temp.assert_eq('X12 o que estava por fazer fica livre', (select count(*)::text from task_occurrences where status = 'pending' and assigned_to is null), '1');
-  perform pg_temp.assert_eq('X13 as despesas dela desaparecem e as do outro ficam', (select string_agg(amount_cents::text, ',') from expenses where household_id = h1), '2000');
+  perform pg_temp.assert_eq('X13 a despesa partilhada dela fica na casa, sem o nome dela', (select count(*)::text || coalesce(max(paid_by::text), '-') from expenses where household_id = h1 and is_shared and amount_cents = 1000), '1-');
+  perform pg_temp.assert_eq('X13b a despesa «só minha» dela desaparece', (select count(*)::text from expenses where amount_cents = 500), '0');
+  perform pg_temp.assert_eq('X13c as despesas do outro ficam como estavam', (select string_agg(amount_cents::text || ':' || paid_by::text, ',' order by amount_cents) from expenses where paid_by = B), '700:' || B::text || ',2000:' || B::text);
+  -- a casa continua a ver a despesa partilhada sem pagador; a «só minha» do B continua só dele
+  set local role authenticated;
+  perform set_config('request.jwt.claim.sub', B::text, true);
+  perform pg_temp.assert_eq('X13d o outro vê a partilhada sem pagador', (select count(*)::text from expenses where amount_cents = 1000), '1');
+  begin update expenses set amount_cents = 1 where amount_cents = 1000; get diagnostics n = row_count; exception when others then n := 0; end;
+  reset role;
+  perform pg_temp.assert_eq('X13e ninguém altera a despesa sem pagador', n::text, '0');
   perform pg_temp.assert_eq('X14 o banco de horas dela desaparece', (select string_agg(minutes::text, ',') from time_entries), '45');
   perform pg_temp.assert_eq('X15 definições e lembretes dela desaparecem', (select count(*)::text from user_settings where user_id = A) || (select count(*)::text from push_tokens where user_id = A), '00');
   perform pg_temp.assert_eq('X16 os do outro ficam', (select count(*)::text from user_settings where user_id = B) || (select count(*)::text from push_tokens where user_id = B), '11');
