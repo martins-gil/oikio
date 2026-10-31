@@ -1,6 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { CheckCircle } from '@/components/CheckCircle';
 import { CountStepper } from '@/components/CountStepper';
@@ -8,7 +8,10 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
-import { useHousehold } from '@/lib/household';
+import { formatInviteCode, inviteMessage, useHousehold } from '@/lib/household';
+import { DEFAULT_PREFS, loadPrefs, registerForPush, saveErrorText, savePrefs, STATUS_TEXT, type Prefs } from '@/lib/notifications';
+import { useSession } from '@/lib/session';
+import { MODULES, useModules, type ModuleKey } from '@/lib/settings';
 import { describeForm, formToArgs } from '@/lib/schedule';
 import { LEVEL_COLOR, LEVEL_LABEL, type Level } from '@/lib/stock';
 import { addDaysIso, localDate } from '@/lib/money';
@@ -16,7 +19,7 @@ import { normalizeTitle, packsFor, staggerStart, suggestionsFor, TASK_PRODUCT_HI
 import { supabase } from '@/lib/supabase';
 import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
-type Step = 'home' | 'people' | 'packs' | 'review' | 'link' | 'done';
+type Step = 'home' | 'people' | 'packs' | 'review' | 'link' | 'extras' | 'reminders' | 'invite' | 'done';
 type HomeType = 'apartment' | 'house' | 'shared';
 type Outdoor = 'none' | 'balcony' | 'garden';
 type Pet = 'dog' | 'cat' | 'other';
@@ -45,8 +48,8 @@ const AGES: { key: keyof Counts; title: string; detail: string; max: number }[] 
   { key: 'seniors', title: 'Seniores', detail: '65 anos ou mais', max: 10 },
 ];
 // Os passos que a barra mostra (a confirmação das tarefas e a ligação a produtos contam como «Tarefas»)
-const BAR_TOTAL = 3;
-const barIndex = (step: Step) => (step === 'home' ? 0 : step === 'people' ? 1 : 2);
+const barIndex = (step: Step) =>
+  step === 'home' ? 0 : step === 'people' ? 1 : step === 'extras' ? 3 : step === 'reminders' ? 4 : step === 'invite' ? 5 : 2;
 type Link = { on: boolean; perUse: string; pack: string; level: Level };
 const num = (t: string) => Number(t.replace(',', '.'));
 
@@ -54,12 +57,21 @@ const num = (t: string) => Number(t.replace(',', '.'));
 export default function StarterScreen() {
   const router = useRouter();
   const { household } = useHousehold();
+  const { session } = useSession();
+  const me = session?.user.id;
+  const { has: hasModule, setModules, loaded: modulesLoaded } = useModules();
   const [step, setStep] = useState<Step>('home');
   const [homeType, setHomeType] = useState<HomeType | null>(null);
   const [outdoor, setOutdoor] = useState<Outdoor>('none');
   const [pets, setPets] = useState<Set<Pet>>(new Set());
   const [counts, setCounts] = useState<Counts>({ babies: 0, children: 0, teens: 0, adults: 2, seniors: 0 });
   const [profileReady, setProfileReady] = useState(false);
+  const [extras, setExtras] = useState<Set<ModuleKey>>(new Set());
+  const extrasStarted = useRef(false);
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const [wantReminders, setWantReminders] = useState(true);
+  const [reminderNote, setReminderNote] = useState<string | null>(null);
+  const [invite, setInvite] = useState<{ token: string; expires_at: string } | null>(null);
   const [packs, setPacks] = useState<Set<string>>(new Set());
   const [autoPacks, setAutoPacks] = useState<Set<string>>(new Set()); // temas marcados pela app (só deles se esconde o que não é essencial)
   const [off, setOff] = useState<Set<string>>(new Set()); // tarefas desmarcadas na revisão
@@ -92,9 +104,35 @@ export default function StarterScreen() {
           setPets(new Set(data.pets as Pet[]));
           setCounts({ babies: data.babies, children: data.children, teens: data.teens, adults: data.adults, seniors: data.seniors });
         }
-        setProfileReady(true);
+        // Os lembretes ficam como a pessoa já os tem (numa conta nova: ligados, às 9h e às 17h)
+        if (!me) return setProfileReady(true);
+        loadPrefs(me).then((p) => {
+          setPrefs(p);
+          setWantReminders(p.enabled);
+          setProfileReady(true);
+        });
       });
-  }, [household]);
+  }, [household, me]);
+
+  // Os módulos que a pessoa já tem ligados vêm marcados (só da primeira vez)
+  useEffect(() => {
+    if (!modulesLoaded || extrasStarted.current) return;
+    extrasStarted.current = true;
+    setExtras(new Set((['meals', 'money', 'personal'] as ModuleKey[]).filter((k) => hasModule(k))));
+  }, [modulesLoaded, hasModule]);
+
+  // Convidar só faz sentido para o administrador e se vive mais alguém em casa
+  const skipInvite = household?.role !== 'admin' || counts.babies + counts.children + counts.teens + counts.adults + counts.seniors < 2;
+  const barTotal = skipInvite ? 5 : 6;
+
+  useEffect(() => {
+    if (step !== 'invite' || invite || !household) return;
+    supabase.rpc('get_or_create_invite', { p_household: household.id }).then(({ data, error: err }) => {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (err || !row) setError('Não foi possível criar o convite agora. Podem fazê-lo depois, no ecrã Casa.');
+      else setInvite(row as { token: string; expires_at: string });
+    });
+  }, [step, invite, household]);
 
   const total = counts.babies + counts.children + counts.teens + counts.adults + counts.seniors;
   const profile: HouseProfile = { homeType: homeType ?? 'apartment', outdoor, pets: [...pets], ...counts };
@@ -163,10 +201,10 @@ export default function StarterScreen() {
     // Tarefas que costumam gastar um produto (detergente, pastilhas…): oferece ligá-las já
     const rows = okTitles.flatMap((t) => (TASK_PRODUCT_HINTS[t] ?? []).map((h) => ({ t, h })));
     setLinks(Object.fromEntries(rows.map(({ t, h }) => [`${t}|${h.product}`, { on: true, perUse: String(h.perUse), pack: String(h.pack), level: 'full' as Level }])));
-    setStep(rows.length > 0 ? 'link' : 'done');
+    setStep(rows.length > 0 ? 'link' : 'extras');
   };
 
-  if (!household || have === null || !profileReady) {
+  if (!household || have === null || !profileReady || !modulesLoaded) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.primary} />
@@ -216,12 +254,52 @@ export default function StarterScreen() {
     }
     setSaving(false);
     if (failed > 0) setError(`${failed} ligação(ões) não ficaram feitas. Podes ligá-las abrindo a tarefa, em «Gasta produtos».`);
-    setStep('done');
+    setStep('extras');
   };
 
   const unitWord = (u: string) => (u === 'dose' ? 'doses' : 'un');
 
-  const bar = <ProgressBar current={barIndex(step)} total={BAR_TOTAL} />;
+  const bar = <ProgressBar current={barIndex(step)} total={barTotal} />;
+
+  const saveExtras = async () => {
+    if (saving) return;
+    setSaving(true);
+    setError(null);
+    const ok = await setModules([...extras]);
+    setSaving(false);
+    if (!ok) return setError('Não foi possível guardar. Tenta outra vez.');
+    setStep('reminders');
+  };
+
+  const afterReminders = () => {
+    setError(null);
+    setStep(skipInvite ? 'done' : 'invite');
+  };
+
+  const saveReminders = async () => {
+    if (!me || saving) return;
+    if (reminderNote) return afterReminders(); // já viram o aviso: seguem
+    setSaving(true);
+    setError(null);
+    const { error: err } = await savePrefs(me, { ...prefs, enabled: wantReminders });
+    if (err) {
+      setSaving(false);
+      return setError(saveErrorText(err.message));
+    }
+    if (wantReminders) {
+      const result = await registerForPush(true);
+      if (result !== 'ok') {
+        setSaving(false);
+        return setReminderNote(STATUS_TEXT[result]); // não bloqueia: ficam guardados e dá para ativar mais tarde
+      }
+    }
+    setSaving(false);
+    afterReminders();
+  };
+
+  const shareInvite = async () => {
+    if (invite) await Share.share({ message: inviteMessage(invite.token, invite.expires_at) });
+  };
 
   if (step === 'home') {
     return (
@@ -287,6 +365,94 @@ export default function StarterScreen() {
     );
   }
 
+  if (step === 'extras') {
+    return (
+      <View style={styles.flex}>
+        <Stack.Screen options={{ title: 'Começar' }} />
+        {bar}
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+          <Text variant="title" style={styles.title}>O que mais querem acompanhar?</Text>
+          <Text variant="body" style={styles.hint}>As tarefas, os produtos e as compras já lá estão. Estas partes são opcionais e só aparecem para ti; cada pessoa escolhe as suas.</Text>
+          {MODULES.map((m) => {
+            const on = extras.has(m.key);
+            return (
+              <Pressable key={m.key} style={[styles.row, on && styles.rowOn]} onPress={() => toggle(extras, m.key, (n) => setExtras(n as Set<ModuleKey>))} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
+                <Text variant="section" style={styles.emoji}>{m.emoji}</Text>
+                <View style={styles.flex}>
+                  <Text variant="button" style={styles.rowTitle}>{m.title}</Text>
+                  <Text variant="label" style={styles.small}>{m.detail}</Text>
+                </View>
+                <CheckCircle on={on} />
+              </Pressable>
+            );
+          })}
+          {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button title={saving ? 'A guardar…' : 'Continuar'} disabled={saving} onPress={saveExtras} />
+        </View>
+      </View>
+    );
+  }
+
+  if (step === 'reminders') {
+    return (
+      <View style={styles.flex}>
+        <Stack.Screen options={{ title: 'Começar' }} />
+        {bar}
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+          <Text variant="title" style={styles.title}>Querem lembretes?</Text>
+          <Text variant="body" style={styles.hint}>Um aviso no telemóvel com o que há para fazer e o que está a acabar.</Text>
+          {[
+            { on: true, title: 'Sim, lembrem-me', detail: `Às ${prefs.hour_first}h${prefs.hour_second != null ? ` e às ${prefs.hour_second}h` : ''}. Podem mudar as horas depois.` },
+            { on: false, title: 'Sem lembretes', detail: 'Vou ver a app sozinho(a).' },
+          ].map((o) => (
+            <Pressable key={o.title} style={[styles.row, wantReminders === o.on && styles.rowOn]} onPress={() => { setWantReminders(o.on); setReminderNote(null); }} accessibilityRole="radio" accessibilityState={{ checked: wantReminders === o.on }}>
+              <View style={styles.flex}>
+                <Text variant="button" style={styles.rowTitle}>{o.title}</Text>
+                <Text variant="label" style={styles.small}>{o.detail}</Text>
+              </View>
+              <CheckCircle on={wantReminders === o.on} />
+            </Pressable>
+          ))}
+          {reminderNote && <Text variant="label" style={styles.note}>{reminderNote} A escolha ficou guardada; podem continuar e ativar mais tarde em Casa → Horas dos lembretes.</Text>}
+          {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button title={saving ? 'A guardar…' : 'Continuar'} disabled={saving} onPress={saveReminders} />
+        </View>
+      </View>
+    );
+  }
+
+  if (step === 'invite') {
+    return (
+      <View style={styles.flex}>
+        <Stack.Screen options={{ title: 'Começar' }} />
+        {bar}
+        <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
+          <Text variant="title" style={styles.title}>Convidem quem vive convosco</Text>
+          <Text variant="body" style={styles.hint}>Quem entrar vê as mesmas tarefas e a lista de compras. Basta abrir a app, tocar em «Tenho um convite» e escrever este código.</Text>
+          {invite ? (
+            <View style={styles.inviteBox}>
+              <Text variant="display" style={styles.code}>{formatInviteCode(invite.token)}</Text>
+              <Text variant="label" style={styles.small}>
+                Vale até {new Date(invite.expires_at).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })} e só pode ser usado uma vez.
+              </Text>
+            </View>
+          ) : error ? null : (
+            <ActivityIndicator color={colors.primary} />
+          )}
+          {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
+        </ScrollView>
+        <View style={styles.footer}>
+          {invite && <Button title="Partilhar o código" onPress={shareInvite} />}
+          <Button title={invite ? 'Continuar' : 'Fazer mais tarde'} variant={invite ? 'secondary' : 'primary'} onPress={() => setStep('done')} />
+        </View>
+      </View>
+    );
+  }
+
   if (step === 'link') {
     return (
       <View style={styles.flex}>
@@ -334,7 +500,7 @@ export default function StarterScreen() {
         </ScrollView>
         <View style={styles.footer}>
           <Button title={saving ? 'A ligar…' : 'Ligar'} disabled={saving} onPress={applyLinks} />
-          <Button title="Agora não" variant="secondary" disabled={saving} onPress={() => setStep('done')} />
+          <Button title="Agora não" variant="secondary" disabled={saving} onPress={() => setStep('extras')} />
         </View>
       </View>
     );
@@ -345,9 +511,11 @@ export default function StarterScreen() {
       <View style={styles.flex}>
         <Stack.Screen options={{ title: 'Tudo pronto' }} />
         <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
-          <Text variant="title" style={styles.title}>Tarefas criadas ✅</Text>
+          <Text variant="title" style={styles.title}>Tudo pronto ✅</Text>
           <Text variant="body" style={styles.hint}>
-            {created} {created === 1 ? 'tarefa já aparece' : 'tarefas já aparecem'} no ecrã «Hoje». Podes ajustar a frequência ou quem faz, a qualquer momento, em cada tarefa.
+            {created > 0
+              ? `${created} ${created === 1 ? 'tarefa já aparece' : 'tarefas já aparecem'} no ecrã «Hoje». Podes ajustar a frequência ou quem faz, a qualquer momento, em cada tarefa.`
+              : 'A vossa casa está pronta. Podem juntar tarefas a qualquer momento, no ecrã «Hoje».'}
           </Text>
           <View style={styles.tip}>
             <Text variant="button" style={styles.tipTitle}>💡 O truque da app</Text>
@@ -458,6 +626,9 @@ const styles = StyleSheet.create({
   rowOn: { backgroundColor: colors.lavender },
   rowTitle: { color: colors.ink },
   emoji: { color: colors.ink },
+  inviteBox: { alignItems: 'center', gap: 8, padding: spacing.md, borderRadius: radius.card, backgroundColor: colors.lavender },
+  code: { color: colors.primary, textAlign: 'center' },
+  note: { color: colors.warnText, backgroundColor: colors.warnBg, padding: 14, borderRadius: radius.card },
   tip: { gap: 4, padding: spacing.sm, borderRadius: radius.card, backgroundColor: colors.lavender },
   tipTitle: { color: colors.ink },
   tipText: { color: colors.muted },

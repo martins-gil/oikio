@@ -146,6 +146,15 @@ export const ROLE_LABEL: Record<Member['role'], string> = {
 export const formatInviteCode = (code: string) =>
   [code.slice(0, 4), code.slice(4, 8), code.slice(8)].filter(Boolean).join('-');
 
+// Texto que se partilha com o código do convite
+export const inviteMessage = (token: string, expiresAt: string) => {
+  const until = new Date(expiresAt).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' });
+  return (
+    `Entra na nossa casa no NestKeep! Abre a app, toca em "Tenho um convite" e escreve o código:\n\n` +
+    `${formatInviteCode(token)}\n\n(válido até ${until})`
+  );
+};
+
 export const GAMIFICATION_LABEL: Record<GamificationMode, string> = {
   off: 'Desligado',
   weekly_summary: 'Resumo semanal',

@@ -23,8 +23,9 @@ type Ctx = {
   loaded: boolean;
   set: (key: BoolKey, value: boolean) => Promise<boolean>;
   setModule: (key: ModuleKey, on: boolean) => Promise<boolean>;
+  setModules: (keys: ModuleKey[]) => Promise<boolean>; // define todos de uma vez
 };
-const SettingsContext = createContext<Ctx>({ settings: DEFAULTS, loaded: false, set: async () => false, setModule: async () => false });
+const SettingsContext = createContext<Ctx>({ settings: DEFAULTS, loaded: false, set: async () => false, setModule: async () => false, setModules: async () => false });
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const { session } = useSession();
@@ -91,7 +92,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [save, settings.modules],
   );
 
-  return <SettingsContext.Provider value={{ settings, loaded, set, setModule }}>{children}</SettingsContext.Provider>;
+  const setModules = useCallback(
+    async (keys: ModuleKey[]) => {
+      const next = [...new Set(keys)];
+      const before = settings.modules;
+      setSettings((s) => ({ ...s, modules: next }));
+      const ok = await save({ modules: next });
+      if (!ok) setSettings((s) => ({ ...s, modules: before }));
+      return ok;
+    },
+    [save, settings.modules],
+  );
+
+  return <SettingsContext.Provider value={{ settings, loaded, set, setModule, setModules }}>{children}</SettingsContext.Provider>;
 }
 
 export const useSettings = () => useContext(SettingsContext);
@@ -116,6 +129,6 @@ export function useShowAiExplain() {
 
 // Módulos opcionais ligados por esta pessoa
 export function useModules() {
-  const { settings, loaded, setModule } = useSettings();
-  return { has: (key: ModuleKey) => settings.modules.includes(key), loaded, setModule };
+  const { settings, loaded, setModule, setModules } = useSettings();
+  return { has: (key: ModuleKey) => settings.modules.includes(key), loaded, setModule, setModules };
 }

@@ -6,7 +6,7 @@ import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/Toast';
-import { formatInviteCode, GAMIFICATION_LABEL, ROLE_LABEL, useHousehold, type GamificationMode, type Member } from '@/lib/household';
+import { formatInviteCode, GAMIFICATION_LABEL, inviteMessage, ROLE_LABEL, useHousehold, type GamificationMode, type Member } from '@/lib/household';
 import { useSession } from '@/lib/session';
 import { MODULES, useModules, useShowAiExplain, useShowCosts, useShowExpiry } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
@@ -100,12 +100,7 @@ export default function HouseScreen() {
 
   const shareInvite = async () => {
     if (!invite) return;
-    const until = new Date(invite.expires_at).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' });
-    await Share.share({
-      message:
-        `Entra na nossa casa no NestKeep! Abre a app, toca em "Tenho um convite" e escreve o código:\n\n` +
-        `${formatInviteCode(invite.token)}\n\n(válido até ${until})`,
-    });
+    await Share.share({ message: inviteMessage(invite.token, invite.expires_at) });
   };
 
   const setMode = async (mode: GamificationMode) => {

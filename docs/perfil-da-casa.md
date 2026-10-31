@@ -45,3 +45,15 @@ Testes: `supabase/tests/household_profile.sql`.
 - As que ficaram para depois aparecem **já marcadas** no ecrã «💡 Sugestões» (a partir de «Hoje» ou «Estado da casa»), em «Para a vossa casa»,
   com o motivo de cada uma e a frequência ajustada ao agregado. Basta confirmar; começam em dias espalhados (`staggerStart`).
 - Exemplo (moradia com jardim, 2 adultos, 1 bebé, 1 criança e gato): 15 essenciais no arranque e 11 ficam para as Sugestões.
+
+## O assistente completo (`app/starter.tsx`)
+Passos, com barra «Passo X de 6» (5 se não há convite): **A casa** → **Quem vive em casa** → **Tarefas** (temas, confirmação e ligação a
+produtos) → **O que mais querem acompanhar?** (módulos Refeições, Dinheiro e Pessoal, definição pessoal de cada um; grava todos de uma vez
+com `setModules`) → **Querem lembretes?** (sim/não; se sim, guarda as preferências e pede a permissão do telemóvel; se a permissão falhar,
+a escolha fica guardada e aparece o aviso de como ativar mais tarde) → **Convidem quem vive convosco** (código de `get_or_create_invite`
+e botão partilhar; só para o administrador e se vive mais alguém em casa).
+Também se abre a partir de Casa → «Perfil da casa e tarefas sugeridas», e mostra o que já estava respondido.
+
+## Ainda por fazer (M22b)
+Adaptar as refeições ao agregado (`suggest-meals`, `plan-week` e o perfil de cozinha) é uma alteração a Edge Functions, que se publicam
+à parte e com aprovação própria. Os avisos de alimentação para bebés e crianças terão de vir de fonte oficial (DGS/SNS), não da IA.
