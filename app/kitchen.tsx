@@ -52,13 +52,18 @@ export default function KitchenScreen() {
   useEffect(() => {
     if (!household) return;
     (async () => {
-      const [p, b] = await Promise.all([
+      const [p, b, hp] = await Promise.all([
         supabase.from('cooking_profiles').select(PROFILE_COLUMNS).eq('household_id', household.id).maybeSingle(),
         supabase.from('expense_budgets').select('monthly_cents').eq('household_id', household.id).eq('category', 'Supermercado').maybeSingle(),
+        supabase.from('household_profile').select('babies, children, teens, adults, seniors').eq('household_id', household.id).maybeSingle(),
       ]);
       if (p.error) setToast(/does not exist|schema cache/i.test(p.error.message) ? devHint('Falta aplicar a migração do perfil: corre "npx supabase db push".') : 'Não foi possível carregar o perfil.');
       if (p.data) setProfile(p.data as CookingProfile);
-      else setProfile({ ...DEFAULT_PROFILE, diners: Math.min(12, Math.max(1, members.length || 2)) });
+      else {
+        // Sem perfil de cozinha ainda: o número de pessoas vem do perfil da casa (ou dos membros)
+        const total = hp.data ? hp.data.babies + hp.data.children + hp.data.teens + hp.data.adults + hp.data.seniors : 0;
+        setProfile({ ...DEFAULT_PROFILE, diners: Math.min(12, Math.max(1, total || members.length || 2)) });
+      }
       if (b.data) setMoneyWeekly(Math.round((Number(b.data.monthly_cents) * 12) / 52));
       setLoading(false);
     })();

@@ -2,6 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
+import { AgeNotice } from '@/components/AgeNotice';
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
@@ -156,6 +157,7 @@ export default function PlanScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <AgeNotice />
         <View style={styles.chips}>
           {(['this', 'next'] as const).map((w) => {
             const monday = w === 'next' ? nextMonday : thisMonday;

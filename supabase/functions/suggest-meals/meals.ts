@@ -1,12 +1,15 @@
 // Valida e limpa as refeições que a IA propôs. A IA só PROPÕE: aqui garantimos que a receita é possível com o equipamento
 // da casa, usa stock que existe, não contraria as alergias/restrições e que os preços vêm dos talões (nunca da IA).
 
+import { ageViolation, type Mix } from '../_shared/household.ts';
+
 export const EQUIPMENT_KEYS = [
   'stove', 'oven', 'microwave', 'air_fryer', 'pressure_cooker', 'slow_cooker', 'thermomix', 'blender',
   'food_processor', 'stand_mixer', 'grill', 'toaster', 'rice_cooker', 'steamer',
 ];
 // O que a receita pode conter (a IA marca; o servidor compara com as restrições da casa)
-export const CONTAINS_KEYS = ['gluten', 'lactose', 'nuts', 'shellfish', 'eggs', 'fish', 'pork', 'meat', 'animal_products'];
+// «honey» e «whole_nuts» servem as regras por idade (ver _shared/household.ts)
+export const CONTAINS_KEYS = ['gluten', 'lactose', 'nuts', 'shellfish', 'eggs', 'fish', 'pork', 'meat', 'animal_products', 'honey', 'whole_nuts'];
 export const UNITS = ['un', 'g', 'ml', 'dose', 'rolo'];
 export const DIFFICULTIES = ['fácil', 'média', 'difícil'];
 
@@ -18,6 +21,7 @@ export type Context = {
   prices: Map<string, number>; // cêntimos por unidade base, dos talões confirmados
   equipment: string[]; // equipamento da casa
   restrictions: string[]; // restrições da casa
+  mix?: Mix | null; // quem vive em casa, por idade (sem perfil da casa: sem regras por idade)
 };
 
 export type CleanMeal = {
@@ -45,7 +49,7 @@ const FORBIDS: Record<string, string[]> = {
   fish: ['fish'],
   pork: ['pork'],
   vegetarian: ['meat', 'fish', 'shellfish', 'pork'],
-  vegan: ['meat', 'fish', 'shellfish', 'pork', 'eggs', 'lactose', 'animal_products'],
+  vegan: ['meat', 'fish', 'shellfish', 'pork', 'eggs', 'lactose', 'animal_products', 'honey'],
 };
 
 // Devolve a restrição violada, ou null se a receita é compatível
@@ -79,6 +83,8 @@ export function cleanMeals(raw: unknown, ctx: Context, max = 3): { meals: CleanM
     // alergias e restrições: nunca passa uma receita que as contrarie
     const contains = strList(m.contains).filter((k) => CONTAINS_KEYS.includes(k));
     if (violation(contains, ctx.restrictions)) { dropped++; continue; }
+    // idades: sem mel para bebés, sem frutos secos inteiros para bebés e crianças
+    if (ageViolation(contains, ctx.mix)) { dropped++; continue; }
 
     // o que usa do stock: só produtos que existem, e nunca mais do que há
     const used = new Map<string, { quantity: number; note: string | null }>();

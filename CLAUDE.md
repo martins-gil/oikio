@@ -145,7 +145,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M19 Módulos opcionais por pessoa (Refeições, Dinheiro, Pessoal; só o núcleo numa conta nova), ecrã Casa reorganizado e mensagens sem texto técnico; ver `docs/modulos.md`
 - [x] M20 Tarefas primeiro: tarefa ↔ produtos no formulário, «Hoje» primeiro, arranque por tarefas, formulário e produtos mais simples; ver `docs/tarefas-primeiro.md`
 - [x] M21 Redesenho de legibilidade e elegância: escala de tipos e medidas em `lib/theme.ts`, `Text` com `variant`, todos os ecrãs e componentes redesenhados segundo `DESIGN.md` (texto ≥ 15, campos 56, alvos de toque ≥ 48, botão principal fixo em baixo); componentes partilhados `AuthScreen` (entrada e conta) e `CheckCircle` (listas de escolha)
-- [x] M22 Arranque por perguntas: perfil da casa (tipo, exterior, animais, pessoas por idade), tarefas essenciais sugeridas por perfil com motivo e dias de início espalhados, restantes em «Sugestões» já marcadas, módulos, lembretes e convite no fim; falta (M22b) adaptar as refeições ao agregado; ver `docs/perfil-da-casa.md`
+- [x] M22 Arranque por perguntas: perfil da casa (tipo, exterior, animais, pessoas por idade), tarefas essenciais sugeridas por perfil com motivo e dias de início espalhados, restantes em «Sugestões» já marcadas, módulos, lembretes e convite no fim; M22b: as refeições (`suggest-meals`, `plan-week`) usam as idades (porções e sem mel/frutos secos inteiros para bebés e crianças, no servidor); ver `docs/perfil-da-casa.md` e `docs/refeicoes.md`
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas

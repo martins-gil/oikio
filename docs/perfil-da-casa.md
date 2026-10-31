@@ -54,6 +54,6 @@ a escolha fica guardada e aparece o aviso de como ativar mais tarde) → **Convi
 e botão partilhar; só para o administrador e se vive mais alguém em casa).
 Também se abre a partir de Casa → «Perfil da casa e tarefas sugeridas», e mostra o que já estava respondido.
 
-## Ainda por fazer (M22b)
-Adaptar as refeições ao agregado (`suggest-meals`, `plan-week` e o perfil de cozinha) é uma alteração a Edge Functions, que se publicam
-à parte e com aprovação própria. Os avisos de alimentação para bebés e crianças terão de vir de fonte oficial (DGS/SNS), não da IA.
+## Refeições (M22b)
+As refeições passaram a usar o agregado: porções por idade e regras de segurança para bebés e crianças, aplicadas no servidor.
+Ver `docs/refeicoes.md` (inclui as fontes e o que ainda falta confirmar com a DGS).

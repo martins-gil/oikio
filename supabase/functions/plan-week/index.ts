@@ -13,6 +13,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk@1.3.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { AI_MODEL_MEALS } from '../_shared/ai.ts';
+import { mixFromRow, peopleLine, ageViolation } from '../_shared/household.ts';
 import { cleanMeals, violation, type Known, type StockItem } from '../suggest-meals/meals.ts';
 import { addDays, allocate, dayName, favoriteMeal, freezerMeal, planSchema, placeFavorites, planWeek, totals, type FavoriteRow, type PlannedMeal, type Slot } from './plan.ts';
 
@@ -33,7 +34,8 @@ const SYSTEM = `És um cozinheiro prático que planeia a semana de uma casa port
 
 Recebes uma lista numerada de refeições a planear (posição 0, 1, 2…). Propõe UMA refeição para cada posição, indicando em «slot_index» a posição.
 Regras que nunca podes quebrar:
-- Respeita SEMPRE as restrições e alergias. Em «contains» marca tudo o que a receita contém (glúten, lactose, frutos secos, marisco, ovos, peixe, porco, carne, produtos animais). Em caso de dúvida sobre um ingrediente, marca-o.
+- Respeita SEMPRE as restrições e alergias. Em «contains» marca tudo o que a receita contém (glúten, lactose, frutos secos, marisco, ovos, peixe, porco, carne, produtos animais, mel como «honey» e frutos secos inteiros, sem moer, como «whole_nuts»). Em caso de dúvida sobre um ingrediente, marca-o.
+- Se a casa tem bebés ou crianças, não uses mel nem frutos secos inteiros e ajusta as quantidades às porções indicadas. Não dês conselhos de saúde nem de alimentação infantil: isso não é o teu papel.
 - Usa SÓ o equipamento que a casa tem; em «equipment» lista o que a receita usa.
 - Varia: não repitas a mesma receita nem o mesmo ingrediente principal em refeições seguidas.
 @@FAV@@@@BUY@@@@BATCH@@- Dá prioridade ao que foi comprado há mais tempo (e ao que tem validade mais próxima): planeia essas refeições para os primeiros dias.
@@ -90,6 +92,10 @@ Deno.serve(async (req) => {
 
   const { data: profile } = await supabase.from('cooking_profiles').select('*').eq('household_id', hid).maybeSingle();
   if (!profile) return json({ ok: false, error: 'Preenche primeiro o perfil de cozinha.', needs_profile: true });
+
+  // Quem vive em casa, por idade (se a casa já preencheu o perfil da casa)
+  const { data: hp } = await supabase.from('household_profile').select('babies, children, teens, adults, seniors').eq('household_id', hid).maybeSingle();
+  const mix = mixFromRow(hp);
 
   let favorites: FavoriteRow[] = [];
   if (favoriteIds.length > 0 && !swapPlan) {
@@ -186,7 +192,7 @@ Deno.serve(async (req) => {
 
   const userText = [
     swapPlan ? 'Pedido: propõe uma refeição alternativa para a posição indicada.' : 'Pedido: planeia a semana.',
-    `Pessoas: ${profile.diners}`,
+    mix ? peopleLine(mix) : `Pessoas: ${profile.diners}`,
     `Estilo: ${profile.cook_style === 'batch' ? 'marmitas (porções grandes para vários dias)' : 'fresco a cada refeição'}`,
     `Vontades: ${(profile.cravings as string[]).join(', ') || 'sem preferência'}`,
     `Equipamento: ${(profile.equipment as string[]).join(', ') || 'só o básico'}`,
@@ -242,7 +248,7 @@ Deno.serve(async (req) => {
   }
 
   // Valida cada refeição (restrições, equipamento, stock existente) e reparte o stock por ordem de posição
-  const ctx = { stock, known, prices, equipment: profile.equipment as string[], restrictions: profile.restrictions as string[] };
+  const ctx = { stock, known, prices, equipment: profile.equipment as string[], restrictions: profile.restrictions as string[], mix };
   const byIndex = new Map<number, Record<string, unknown>>();
   for (const m of Array.isArray(parsed.meals) ? parsed.meals : []) {
     const i = m.slot_index;
@@ -282,7 +288,7 @@ Deno.serve(async (req) => {
     const f = favId ? favById.get(favId) : undefined;
     if (f) {
       const needs = f.meal.equipment ?? [];
-      if (needs.some((k) => !ctx.equipment.includes(k)) || violation(f.meal.contains ?? [], ctx.restrictions)) {
+      if (needs.some((k) => !ctx.equipment.includes(k)) || violation(f.meal.contains ?? [], ctx.restrictions) || ageViolation(f.meal.contains ?? [], mix)) {
         dropped++; // a favorita não serve a esta casa (restrição ou equipamento): fica a proposta normal
       } else {
         fresh.push({ ...favoriteMeal(f, remaining, prices, known), date: slots[i].date, slot: slots[i].slot, slot_index: i, favorite_id: f.id });

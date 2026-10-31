@@ -2,6 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { AgeNotice } from '@/components/AgeNotice';
 import { Text, TextInput } from '@/components/Text';
 
 import { Button } from '@/components/Button';
@@ -160,6 +161,7 @@ export default function MealsScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <AgeNotice />
         <View style={styles.card}>
           <Text variant="body" style={styles.summary}>
             {profile.diners} {profile.diners === 1 ? 'pessoa' : 'pessoas'} · {schedule}
