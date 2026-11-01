@@ -11,6 +11,7 @@ import { Button } from '@/components/Button';
 import { DateSheet } from '@/components/DateSheet';
 import { KudosForm } from '@/components/KudosForm';
 import { ProgressArc } from '@/components/ProgressArc';
+import { TipCard } from '@/components/TipCard';
 import { Toast } from '@/components/Toast';
 import { useHousehold } from '@/lib/household';
 import { addDaysIso, localDate, mondayOf } from '@/lib/money';
@@ -631,6 +632,8 @@ export default function HomeScreen() {
             {showScheduled && scheduled.map((o) => renderTask(o, false))}
           </View>
         )}
+
+        {current && <TipCard onHidden={() => setToast('Dicas desligadas. Podes voltar a ligá-las em Casa.')} />}
 
         {canManage && (
           <View style={styles.actions}>

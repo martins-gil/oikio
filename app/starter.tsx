@@ -12,7 +12,7 @@ import { Button } from '@/components/Button';
 import { formatInviteCode, inviteMessage, useHousehold } from '@/lib/household';
 import { DEFAULT_PREFS, loadPrefs, registerForPush, saveErrorText, savePrefs, STATUS_TEXT, type Prefs } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
-import { MODULES, useModules, type ModuleKey } from '@/lib/settings';
+import { MODULES, useModules, useShowTips, type ModuleKey } from '@/lib/settings';
 import { describeForm, formToArgs } from '@/lib/schedule';
 import { LEVEL_COLOR, LEVEL_LABEL, type Level } from '@/lib/stock';
 import { addDaysIso, localDate } from '@/lib/money';
@@ -61,6 +61,8 @@ export default function StarterScreen() {
   const { session } = useSession();
   const me = session?.user.id;
   const { has: hasModule, setModules, loaded: modulesLoaded } = useModules();
+  const { showTips, setShowTips } = useShowTips();
+  const [wantTips, setWantTips] = useState(true);
   const [step, setStep] = useState<Step>('home');
   const [homeType, setHomeType] = useState<HomeType | null>(null);
   const [outdoor, setOutdoor] = useState<Outdoor>('none');
@@ -266,7 +268,7 @@ export default function StarterScreen() {
     if (saving) return;
     setSaving(true);
     setError(null);
-    const ok = await setModules([...extras]);
+    const ok = (await setModules([...extras])) && (wantTips === showTips || (await setShowTips(wantTips)));
     setSaving(false);
     if (!ok) return setError('Não foi possível guardar. Tenta outra vez.');
     setStep('reminders');
@@ -387,6 +389,15 @@ export default function StarterScreen() {
               </Pressable>
             );
           })}
+          <Text variant="section" style={styles.title}>Queres receber dicas?</Text>
+          <Pressable style={[styles.row, wantTips && styles.rowOn]} onPress={() => setWantTips(!wantTips)} accessibilityRole="checkbox" accessibilityState={{ checked: wantTips }}>
+            <Text variant="section" style={styles.emoji}>💡</Text>
+            <View style={styles.flex}>
+              <Text variant="button" style={styles.rowTitle}>Sabias que…</Text>
+              <Text variant="label" style={styles.small}>Uma dica no Resumo de 3 em 3 dias (conservação de alimentos, limpeza, roupa, segurança), sempre com a fonte. Podes desligar em Casa.</Text>
+            </View>
+            <CheckCircle on={wantTips} />
+          </Pressable>
           {error && <Text variant="label" style={styles.error}>⚠ {error}</Text>}
         </ScrollView>
         <View style={styles.footer}>

@@ -12,7 +12,7 @@ import { Toast } from '@/components/Toast';
 import { devHint } from '@/lib/errors';
 import { formatInviteCode, GAMIFICATION_LABEL, inviteMessage, ROLE_LABEL, useHousehold, type GamificationMode, type Member } from '@/lib/household';
 import { useSession } from '@/lib/session';
-import { MODULES, useModules, useShowAiExplain, useShowCosts, useShowExpiry } from '@/lib/settings';
+import { MODULES, useModules, useShowAiExplain, useShowCosts, useShowExpiry, useShowTips } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { colors, fieldMinHeight, radius, shadow, spacing } from '@/lib/theme';
 
@@ -29,6 +29,7 @@ export default function HouseScreen() {
   const { showCosts, setShowCosts } = useShowCosts();
   const { showExpiry, setShowExpiry } = useShowExpiry();
   const { showAiExplain, setShowAiExplain } = useShowAiExplain();
+  const { showTips, setShowTips } = useShowTips();
   const { has: hasModule, setModule } = useModules();
 
   const [name, setName] = useState<string | null>(null); // null = ainda não editado
@@ -274,6 +275,14 @@ export default function HouseScreen() {
               <Text variant="label" style={styles.muted}>Prazos de conservação (USDA FoodKeeper) nos produtos.</Text>
             </View>
             <Toggle accessibilityLabel="Mostrar validades sugeridas" value={showExpiry} onValueChange={saveFlag(setShowExpiry)} />
+          </View>
+
+          <View style={styles.prefRow}>
+            <View style={styles.prefText}>
+              <Text variant="body" style={styles.prefTitle}>💡 Dicas «Sabias que…»</Text>
+              <Text variant="label" style={styles.muted}>Uma dica nova no Resumo de 3 em 3 dias, sempre com a fonte.</Text>
+            </View>
+            <Toggle accessibilityLabel="Dicas Sabias que" value={showTips} onValueChange={saveFlag(setShowTips)} />
           </View>
 
           {hasModule('money') && (

@@ -111,6 +111,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Várias casas (M18): uma pessoa pode estar em até 10 casas; a casa ativa guarda-se no telemóvel (`useHousehold().household`); `leave_household()`, `make_admin()`; as funções de IA recebem `household_id`. Ver `docs/varias-casas.md`.
 - Explica-me (M17): `explain-spending` (a IA só redige; recusa números que não estão nos dados), `ai_explanations` (cache, histórico e limite), `user_settings.show_ai_explain` (pessoal).
 - Análise (M15): `spending_scores()`, `budget_suggestions()`, `loss_insights()` (só despesas partilhadas, só membros) `discard_product()` («Deitei fora» → movimento `waste`); produtos apagam-se só por `delete_product()` (apagar é lógico, `deleted_at`, nunca `delete` na tabela). Ver `docs/analise-de-despesas.md`.
+- Dicas «Sabias que…» (M23): `lib/tips.ts` (só com fonte fiável, mostrada no cartão), `components/TipCard.tsx` no Resumo, muda de 3 em 3 dias; `user_settings.show_tips` (pessoal, ligada por defeito; Casa e arranque). Ver `docs/dicas.md`.
 - Marcar ocorrência como `done` dispara o trigger que desconta consumíveis e atribui pontos.
 
 ## Forma de trabalhar comigo
@@ -149,6 +150,7 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - [x] M20 Tarefas primeiro: tarefa ↔ produtos no formulário, «Hoje» primeiro, arranque por tarefas, formulário e produtos mais simples; ver `docs/tarefas-primeiro.md`
 - [x] M21 Redesenho de legibilidade e elegância: escala de tipos e medidas em `lib/theme.ts`, `Text` com `variant`, todos os ecrãs e componentes redesenhados segundo `DESIGN.md` (texto ≥ 15, campos 56, alvos de toque ≥ 48, botão principal fixo em baixo); componentes partilhados `AuthScreen` (entrada e conta) e `CheckCircle` (listas de escolha)
 - [x] M22 Arranque por perguntas: perfil da casa (tipo, exterior, animais, pessoas por idade), tarefas essenciais sugeridas por perfil com motivo e dias de início espalhados, restantes em «Sugestões» já marcadas, módulos, lembretes e convite no fim; M22b: as refeições (`suggest-meals`, `plan-week`) usam as idades (porções e sem mel/frutos secos inteiros para bebés e crianças, no servidor); ver `docs/perfil-da-casa.md` e `docs/refeicoes.md`
+- [x] M23 Dicas «Sabias que…» no Resumo, com fonte, 3 em 3 dias, desligáveis; ver `docs/dicas.md`
 - [x] M10 Separador pessoal (privado)
 - [x] M11 Indicador verde→vermelho, trocas, pontos de agradecimento, resumo semanal
 - [x] M12 Despesas e banco de horas

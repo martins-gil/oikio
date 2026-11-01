@@ -13,10 +13,10 @@ export const MODULES: { key: ModuleKey; emoji: string; title: string; detail: st
   { key: 'personal', emoji: '🔒', title: 'Pessoal', detail: 'Tarefas só tuas e banco de horas.' },
 ];
 
-type Settings = { show_costs: boolean; show_expiry: boolean; show_ai_explain: boolean; modules: ModuleKey[] };
-type BoolKey = 'show_costs' | 'show_expiry' | 'show_ai_explain';
+type Settings = { show_costs: boolean; show_expiry: boolean; show_ai_explain: boolean; show_tips: boolean; modules: ModuleKey[] };
+type BoolKey = 'show_costs' | 'show_expiry' | 'show_ai_explain' | 'show_tips';
 
-const DEFAULTS: Settings = { show_costs: false, show_expiry: false, show_ai_explain: false, modules: [] };
+const DEFAULTS: Settings = { show_costs: false, show_expiry: false, show_ai_explain: false, show_tips: true, modules: [] };
 
 type Ctx = {
   settings: Settings;
@@ -39,7 +39,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (!me) return;
     let active = true;
     (async () => {
-      let { data, error } = await supabase.from('user_settings').select('show_costs, show_expiry, show_ai_explain, modules').eq('user_id', me).maybeSingle();
+      let { data, error } = await supabase.from('user_settings').select('show_costs, show_expiry, show_ai_explain, show_tips, modules').eq('user_id', me).maybeSingle();
       if (error) {
         // Falta aplicar a migração mais recente (colunas novas): lê só as definições mais antigas
         const old = await supabase.from('user_settings').select('show_costs').eq('user_id', me).maybeSingle();
@@ -51,6 +51,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         show_costs: !!row?.show_costs,
         show_expiry: !!row?.show_expiry,
         show_ai_explain: !!row?.show_ai_explain,
+        show_tips: row?.show_tips ?? true, // ligada por defeito (também antes de aplicar a migração)
         modules: ((row?.modules ?? []) as ModuleKey[]).filter((m) => MODULES.some((x) => x.key === m)),
       });
       setLoaded(true);
@@ -125,6 +126,12 @@ export function useShowExpiry() {
 export function useShowAiExplain() {
   const { settings, loaded, set } = useSettings();
   return { showAiExplain: settings.show_ai_explain, loaded, setShowAiExplain: (v: boolean) => set('show_ai_explain', v) };
+}
+
+// «Dicas» no Resumo (ligadas por defeito)
+export function useShowTips() {
+  const { settings, loaded, set } = useSettings();
+  return { showTips: settings.show_tips, loaded, setShowTips: (v: boolean) => set('show_tips', v) };
 }
 
 // Módulos opcionais ligados por esta pessoa
