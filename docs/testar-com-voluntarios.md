@@ -60,22 +60,30 @@ npx eas-cli build --profile preview --platform android
    Junta o novo link. Mais tarde dá para ter atualizações automáticas (EAS Update), mas é uma dependência nova e fica para depois.
 4. **Só Android** por agora. Quem tem iPhone não pode testar até haver conta Apple Developer (TestFlight).
 
-## Parte D: mensagem para os voluntários (copia e adapta)
-> Olá! Obrigado por aceitares testar a **Omyva**, uma app para organizar a casa (tarefas, compras, produtos, refeições e despesas).
+## Parte D: mensagem para os voluntários (copia, troca LINK e FORMULÁRIO)
+> Olá! Obrigado por aceitares testar a **Omyva**, uma app para organizar a casa: tarefas, compras, produtos, refeições e despesas.
 >
-> **É uma versão de teste** e pode ter erros. Só funciona em Android.
-> 1. Instala por este link: (link). O telemóvel vai pedir para permitir a instalação; é normal.
-> 2. Abre a app, escolhe «Criar a casa» e responde às perguntas (demora uns 2 minutos).
-> 3. Usa-a uns dias como usarias o papel ou as notas do telemóvel: marca tarefas, junta coisas à lista de compras, vê os produtos.
+> **É uma versão de teste e pode ter erros. Só funciona em Android.**
 >
-> **Os teus dados:** guardamos o que registas na app (casa, tarefas, compras…) e, se protegeres a conta, o e-mail. Não vendemos nada nem usamos publicidade. As alergias
-> que escreveres só servem para filtrar sugestões de refeições. Podes **apagar a conta quando quiseres**: Casa → «Apagar a minha conta». Os Termos e a Política estão na própria app.
-> Se não quiseres, não uses nomes reais de crianças (a app só pede quantas pessoas há em cada idade).
+> **Como instalar**
+> 1. Abre este link no telemóvel (ou lê o QR code): LINK
+> 2. Toca em **Install** (ou **Download**). Ao abrir o ficheiro, o telemóvel pede para permitir a instalação desta origem: aceita, é normal. Se aparecer o aviso do Play Protect, toca em **Instalar mesmo assim**.
+> 3. Abre a **Omyva**, escolhe «Criar a casa» e responde às perguntas (cerca de 2 minutos).
+> 4. Usa-a durante uns dias como usarias o papel ou as notas do telemóvel: marca tarefas, junta coisas à lista de compras, vê os produtos.
 >
-> **Aviso:** se mudares de telemóvel antes de «Proteger a conta» (Casa → Proteger a minha conta), perdes a tua casa. Se vais trocar de telemóvel, diz-me antes.
+> **Antes de começares**
+> - Se mudares de telemóvel antes de «Proteger a conta» (Casa → Proteger a minha conta), **perdes a tua casa**. Se vais trocar de telemóvel, diz-me antes.
+> - Para proteger a conta podes usar e-mail e palavra-passe ou Google. Ao tocar no botão do e-mail, o telemóvel pergunta «Abrir com a Omyva?»: aceita. Ao entrar com Google, pode aparecer «O Google não verificou esta app»: toca em **Avançadas → Ir para Omyva**. Para usares o Google, diz-me o teu e-mail Google para eu te autorizar.
+> - Para convidar o teu par: Casa → convidar, e envia o código.
 >
-> **O que eu gostava de saber:** o que foi fácil, o que te confundiu, o que te faltou, e se te lembras de abrir a app sem eu pedir. Responde aqui ou neste formulário: (link).
-> Contacto: privacidade@omyva.app
+> **Os teus dados**
+> Guardamos o que registas na app e, se protegeres a conta, o e-mail. Não vendemos dados nem há publicidade. As alergias que escreveres só servem para filtrar sugestões de refeições. Podes apagar a conta quando quiseres: Casa → «Apagar a minha conta». Política: omyva.app/privacidade/ · Contacto: privacidade@omyva.app
+> Se não quiseres, não uses nomes reais de crianças: a app só pede quantas pessoas há em cada idade.
+>
+> **O que eu gostava de saber**
+> O que foi fácil, o que te confundiu, o que te faltou, e se te lembras de abrir a app sem eu pedir. Responde aqui ou neste formulário: FORMULÁRIO. Se algo correr mal, manda uma captura de ecrã (sem dados pessoais visíveis).
+>
+> Obrigado!
 
 ## Parte E: recolher feedback
 - Um **grupo de WhatsApp** ou um **Google Forms** com 5 perguntas: (1) Quanto tempo demorou o arranque? (2) Que tarefa/ação foi mais fácil? (3) O que te confundiu? (4) O que faltou?
