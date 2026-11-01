@@ -38,20 +38,23 @@ export function TipCard({ onHidden }: { onHidden?: () => void }) {
   if (!tip) return null;
 
   return (
-    <View style={styles.card} accessibilityRole="summary">
-      <View style={styles.top}>
-        <ProductIcon iconKey={tip.icon} size={52} />
-        <View style={styles.flex}>
-          <Text variant="label" style={styles.kicker}>Sabias que… · {TIP_CATEGORY_LABEL[tip.category]}</Text>
-          <Text variant="button" style={styles.title}>{tip.title}</Text>
-        </View>
-      </View>
-      <Text variant="body" style={styles.text}>{tip.text}</Text>
-      <Text variant="label" style={styles.source}>Fonte: {tip.source}</Text>
-      <View style={styles.actions}>
+    <View style={styles.group}>
+      <View style={styles.headerRow}>
+        <Text variant="section" style={styles.sectionBig}>💡 Sabias que…</Text>
         <Pressable style={styles.action} onPress={() => setSkip((n) => n + 1)} accessibilityRole="button">
-          <Text variant="button" style={styles.actionText}>Outra dica</Text>
+          <Text variant="button" style={styles.actionText}>Outra dica ›</Text>
         </Pressable>
+      </View>
+      <View style={styles.card} accessibilityRole="summary">
+        <View style={styles.top}>
+          <ProductIcon iconKey={tip.icon} size={52} />
+          <View style={styles.flex}>
+            <Text variant="label" style={styles.kicker}>{TIP_CATEGORY_LABEL[tip.category]}</Text>
+            <Text variant="button" style={styles.title}>{tip.title}</Text>
+          </View>
+        </View>
+        <Text variant="body" style={styles.text}>{tip.text}</Text>
+        <Text variant="label" style={styles.source}>Fonte: {tip.source}</Text>
         <Pressable
           style={styles.action}
           accessibilityRole="button"
@@ -67,14 +70,16 @@ export function TipCard({ onHidden }: { onHidden?: () => void }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  card: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.card, backgroundColor: colors.lavender, ...shadow },
+  group: { gap: 8 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 48, gap: 12 },
+  sectionBig: { color: colors.ink, flexShrink: 1 },
+  card: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.card, backgroundColor: colors.card, ...shadow },
   top: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   kicker: { color: colors.primary },
   title: { color: colors.ink },
   text: { color: colors.ink },
-  source: { color: colors.ink },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.md },
+  source: { color: colors.muted },
   action: { minHeight: 48, justifyContent: 'center' },
   actionText: { color: colors.primary },
-  actionMuted: { color: colors.ink },
+  actionMuted: { color: colors.muted },
 });

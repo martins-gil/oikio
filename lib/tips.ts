@@ -83,6 +83,21 @@ export const TIPS: Tip[] = [
   { id: 'pets-xylitol', category: 'pets', icon: 'nuts', when: 'pets', source: 'ASPCA',
     title: 'Xilitol é perigoso para cães',
     text: 'Está em pastilhas sem açúcar, rebuçados e algumas manteigas de amendoim. Lê o rótulo antes de partilhar.' },
+  { id: 'food-wash-produce', category: 'food', icon: 'vegetables', source: 'FDA e CDC (EUA)',
+    title: 'Lava fruta e legumes só com água corrente',
+    text: 'Lava mesmo os que vais descascar, e não uses sabão, detergente nem lixívia: podem ficar absorvidos pelo alimento. Se vier em saco «pronto a comer» e já lavado, não precisas de o lavar outra vez.' },
+  { id: 'food-cut-produce', category: 'food', icon: 'fruit', source: 'CDC (EUA)',
+    title: 'Fruta ou legumes cortados vão ao frigorífico',
+    text: 'Depois de descascar, cortar ou cozinhar, guarda-os no frigorífico em menos de 2 horas.' },
+  { id: 'safety-co-heating', category: 'safety', icon: 'battery', source: 'Proteção Civil (ANEPC) e DGS',
+    title: 'Não aqueças a casa com o fogão ou o forno',
+    text: 'Fogão, forno, braseiros e grelhadores libertam monóxido de carbono, um gás sem cheiro. Mantém as divisões ventiladas. Com sintomas de intoxicação, sai para o ar livre e liga ao CIAV (800 250 250) ou, se for grave, ao 112.' },
+  { id: 'energy-washer-temp', category: 'laundry', icon: 'detergent', source: 'DECO PROteste',
+    title: 'Lava a 30–40 °C e poupas energia',
+    text: 'Cerca de 90 % da energia de uma lavagem vai para aquecer a água. Nas máquinas recentes, 30–40 °C chegam para roupa pouco suja. Espera por uma carga cheia, mas sem apertar a roupa.' },
+  { id: 'food-potato-onion', category: 'food', icon: 'potato', source: 'USDA FoodKeeper (via University of Maine Extension)',
+    title: 'Batatas e cebolas não precisam de frigorífico',
+    text: 'Conservam-se melhor num sítio fresco e seco, à temperatura ambiente.' },
 ];
 
 // Dica «ativa» nesta data: muda de 3 em 3 dias (dias de Lisboa, contados desde 1970).

@@ -24,6 +24,10 @@ Os sites oficiais não abriram por completo nesta pesquisa; vários pontos foram
 | Lavagem quente mensal; dobras da borracha | Beko | |
 | Cama a 60 °C; peluches no congelador 12 h | Allergy UK | ⚠ ficha de 2018 |
 | Detetor de fumo: teste mensal, 10 anos | NSW Fire & Rescue (outros bombeiros concordam) | |
+| Lavar fruta e legumes só com água; cortados ao frigorífico em 2 h | FDA e CDC | ⚠ páginas arquivadas (2008–2012), confirmar versão atual |
+| Não aquecer a casa com fogão/forno; ventilar | ANEPC e DGS | ⚠ via notícias (Notícias ao Minuto, DN); sem página oficial |
+| Lavar a 30–40 °C (90 % da energia é aquecer água) | DECO PROteste | ⚠ via resumo da pesquisa |
+| Batatas e cebolas à temperatura ambiente | USDA FoodKeeper | ⚠ via University of Maine Extension |
 | Chocolate, uvas/passas, cebola/alho, xilitol | ASPCA | ⚠ via resumos |
 
 ## Deixado de fora (por agora)
