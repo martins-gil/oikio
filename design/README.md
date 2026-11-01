@@ -1,4 +1,4 @@
-# Marca NestKeep
+# Marca Omyva
 
 Os ícones, o logótipo e os ícones dos separadores são gerados a partir de vetores (SVG) com o Chromium.
 Não fazem parte da app: servem para os voltar a gerar se mudar a cor ou o desenho.
@@ -18,5 +18,5 @@ Uso: `CHROME=<caminho do chromium> node products.mjs` (com `SHEET=1` gera també
 O nome do produto escolhe o desenho em `lib/productIcon.ts` (testes: `node --experimental-strip-types lib/productIcon.test.mjs`).
 
 ## Ícones dos equipamentos de cozinha
-`equipment.mjs` gera `assets/equipment/*.png` (fogão, forno, air fryer, Bimby…) no estilo NestKeep.
+`equipment.mjs` gera `assets/equipment/*.png` (fogão, forno, air fryer, Bimby…) no estilo Omyva.
 Uso (com `playwright-core` instalado e um Chromium): `CHROME=<caminho do chromium> node equipment.mjs`

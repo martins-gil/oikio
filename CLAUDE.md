@@ -1,4 +1,4 @@
-# NestKeep (App da Casa)
+# Omyva (App da Casa)
 
 App móvel (iOS e Android) para um casal gerir a casa: tarefas domésticas recorrentes,
 stock de consumíveis e alimentos, lista de compras, sugestões de refeições com IA,
@@ -26,7 +26,7 @@ Qualquer ação diária em ≤ 2 toques. Nenhum campo obrigatório além do nome
 - `docs/` — decisões de produto e desenho
 
 ## Marca e aspeto
-- Nome: **NestKeep** ("Your home in flow."). Cores em `lib/theme.ts`: roxo `#5C4DB1`, amarelo `#FFBF67`, rosa `#DC4F89`, lavanda `#EAE6FA`, fundo quente `#FAF7F2`, menta `#2FBF9B` (verde de sucesso; `successText` `#17816A` quando é texto). A barra de baixo é uma pílula só com ícones (Hoje, Compras, Produtos, Dinheiro, Pessoal).
+- Nome: **Omyva** ("Your home, effortless."). Cores em `lib/theme.ts`: roxo `#5C4DB1`, amarelo `#FFBF67`, rosa `#DC4F89`, lavanda `#EAE6FA`, fundo quente `#FAF7F2`, menta `#2FBF9B` (verde de sucesso; `successText` `#17816A` quando é texto). A barra de baixo é uma pílula só com ícones (Hoje, Compras, Produtos, Dinheiro, Pessoal).
 - Letras: Montserrat (títulos) e Ubuntu (texto), em `assets/fonts/`. Usar `Text`/`TextInput` de `components/Text` (não os do React Native).
 - Cada separador usa `components/Screen` (cabeçalho roxo + folha branca arredondada); a barra de baixo é `components/TabBar`.
 - Ícones e logótipo gerados em `design/` (ver `design/README.md`); cores de urgência: verde → amarelo → rosa (em atraso).
@@ -105,8 +105,8 @@ Esquema completo na primeira migração: `supabase/migrations/<data>_initial_sch
 - Lembretes de validade: o primeiro lembrete do dia junta o que está a acabar o prazo (`expiry_for_reminder()`, só servidor), para quem tem `show_expiry` e `notification_prefs.expiry`; `product_expiry_core()` é a conta sem sessão. Ver `docs/validades.md`.
 - Perfil da casa: `household_profile` (tipo de casa, exterior, animais e pessoas por faixa etária, só contagens, nunca nomes nem datas de nascimento); a app só lê, escreve por `save_household_profile()` (administradores e adultos). Serve o arranque por perguntas. Ver `docs/perfil-da-casa.md`.
 - Apagar a conta: `delete_my_account()` (Casa → «Apagar a minha conta»): apaga as casas onde a pessoa está sozinha, passa a administração nas outras, tira-lhe o nome ao que registou (as despesas partilhadas que pagou ficam com `paid_by` vazio; as «só minhas» apagam-se) e apaga o que era só dela; por fim apaga o utilizador. Testes em `supabase/tests/delete_account.sql`.
-- Entrar com Google/Apple: `lib/socialAuth.ts` + `components/SocialButtons.tsx` (navegador do sistema via `expo-web-browser`, regresso por `nestkeep://auth-callback`; chaves só no painel do Supabase); «Entrar» usa `signInWithOAuth`, «Proteger a conta» usa `linkIdentity`; a Apple fica «em breve» até `EXPO_PUBLIC_APPLE_LOGIN=1`. Ver `docs/login-google-apple.md`.
-- Termos e Política de Privacidade: rascunho em `lib/legal.ts` (ecrãs `terms` e `privacy`, `LegalConsent` nos ecrãs de entrada); dados da empresa e contacto por definir; falta a revisão de um advogado e um URL público da Política. Ver `docs/legal/notas-para-advogado.md`.
+- Entrar com Google/Apple: `lib/socialAuth.ts` + `components/SocialButtons.tsx` (navegador do sistema via `expo-web-browser`, regresso por `omyva://auth-callback`; chaves só no painel do Supabase); «Entrar» usa `signInWithOAuth`, «Proteger a conta» usa `linkIdentity`; a Apple fica «em breve» até `EXPO_PUBLIC_APPLE_LOGIN=1`. Ver `docs/login-google-apple.md`.
+- Termos e Política de Privacidade: rascunho em `lib/legal.ts` (ecrãs `terms` e `privacy`, `LegalConsent` nos ecrãs de entrada); responsável: Gil Martins (a título pessoal), contacto `privacidade@omyva.app`; falta a revisão de um advogado e um URL público da Política (`omyva.app/privacidade`). Ver `docs/legal/notas-para-advogado.md`.
 - E-mails da conta: SMTP próprio (Resend) configurado só no painel do Supabase; textos PT-PT em `supabase/email-templates/`; sem domínio verificado só chega ao dono da conta Resend. Ver `docs/email-proprio.md`.
 - Várias casas (M18): uma pessoa pode estar em até 10 casas; a casa ativa guarda-se no telemóvel (`useHousehold().household`); `leave_household()`, `make_admin()`; as funções de IA recebem `household_id`. Ver `docs/varias-casas.md`.
 - Explica-me (M17): `explain-spending` (a IA só redige; recusa números que não estão nos dados), `ai_explanations` (cache, histórico e limite), `user_settings.show_ai_explain` (pessoal).

@@ -1,5 +1,5 @@
 // Entrar (ou ligar a conta) com Google ou Apple. Abre o navegador do sistema (nunca uma janela dentro da app, que o Google recusa),
-// a pessoa autoriza e volta à app por `nestkeep://auth-callback` com a sessão. Quem escolhe os fornecedores é o painel do Supabase;
+// a pessoa autoriza e volta à app por `omyva://auth-callback` com a sessão. Quem escolhe os fornecedores é o painel do Supabase;
 // a app não guarda nenhuma chave deles. Ver docs/login-google-apple.md.
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -30,7 +30,7 @@ function readParams(url: string): URLSearchParams {
 }
 
 function friendly(provider: SocialProvider, raw: string): string {
-  if (/already|linked|exists|another user/i.test(raw)) return `Esta conta ${NAME[provider]} já está ligada a outra conta NestKeep.`;
+  if (/already|linked|exists|another user/i.test(raw)) return `Esta conta ${NAME[provider]} já está ligada a outra conta Omyva.`;
   if (/manual linking/i.test(raw)) return devHint('Falta ativar «Allow manual linking» no Supabase (Authentication → Sign In / Providers).');
   if (/not enabled|unsupported provider|provider is not/i.test(raw)) return devHint(`O ${NAME[provider]} ainda não está ligado no Supabase (Authentication → Providers).`);
   if (/denied|cancel/i.test(raw)) return `Cancelaste a entrada com ${NAME[provider]}.`;

@@ -1,4 +1,4 @@
-// Marca NestKeep: cores, tipos de letra e medidas partilhadas.
+// Marca Omyva: cores, tipos de letra e medidas partilhadas.
 export const colors = {
   primary: '#5C4DB1', // roxo
   accent: '#FFBF67', // amarelo

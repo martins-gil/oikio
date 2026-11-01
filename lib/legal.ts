@@ -1,10 +1,10 @@
-// Termos de Serviço e Política de Privacidade do NestKeep (RASCUNHO para um advogado rever; ver docs/legal/).
+// Termos de Serviço e Política de Privacidade da Omyva (RASCUNHO para um advogado rever; ver docs/legal/).
 // Os textos descrevem o que a app faz hoje. Se a app mudar (novos dados, novos fornecedores), estes textos mudam também.
-// Os dados da empresa e o contacto ainda não existem: preencher aqui (e só aqui).
+// O responsável e o contacto preenchem-se aqui (e só aqui). O e-mail tem de existir (ver docs/email-proprio.md, «Receber»).
 export const LEGAL = {
-  controller: '[nome ou empresa por definir]',
-  contactEmail: '[e-mail de contacto por definir]',
-  updated: '31 de outubro de 2026',
+  controller: 'Gil Martins', // responsável pelo tratamento, a título pessoal (confirmar o nome completo)
+  contactEmail: 'privacidade@omyva.app',
+  updated: '1 de novembro de 2026',
 };
 
 export type LegalSection = { title: string; paragraphs?: string[]; bullets?: string[] };
@@ -13,7 +13,7 @@ export const TERMS: LegalSection[] = [
   {
     title: 'Em resumo',
     bullets: [
-      'O NestKeep ajuda a organizar a casa. É para maiores de 18 anos e, por agora, é gratuito.',
+      'A Omyva ajuda a organizar a casa. É para maiores de 18 anos e, por agora, é gratuito.',
       'O que registas numa casa partilhada é visto pelas pessoas dessa casa; o que é pessoal, só tu vês.',
       'As sugestões de IA são propostas: tu confirmas e elas podem errar. Não são aconselhamento médico nem nutricional.',
       'Podes apagar a tua conta quando quiseres, na própria app.',
@@ -21,9 +21,9 @@ export const TERMS: LegalSection[] = [
     ],
   },
   {
-    title: '1. O que é o NestKeep',
+    title: '1. O que é a Omyva',
     paragraphs: [
-      `O NestKeep é uma aplicação para organizar a casa: tarefas, produtos e stock, lista de compras, refeições, despesas e lembretes. É disponibilizada por ${LEGAL.controller} («nós»). Ao usar a app, aceitas estes Termos.`,
+      `A Omyva é uma aplicação para organizar a casa: tarefas, produtos e stock, lista de compras, refeições, despesas e lembretes. É disponibilizada por ${LEGAL.controller} («nós»). Ao usar a app, aceitas estes Termos.`,
     ],
   },
   {
@@ -141,7 +141,7 @@ export const PRIVACY: LegalSection[] = [
   {
     title: '1. Quem é o responsável',
     paragraphs: [
-      `${LEGAL.controller} é o responsável pelo tratamento dos teus dados pessoais no NestKeep. Contacto: ${LEGAL.contactEmail}.`,
+      `${LEGAL.controller} é o responsável pelo tratamento dos teus dados pessoais na Omyva. Contacto: ${LEGAL.contactEmail}.`,
       'Esta Política explica que dados tratamos, para quê e que direitos tens, segundo o Regulamento Geral sobre a Proteção de Dados (RGPD).',
     ],
   },

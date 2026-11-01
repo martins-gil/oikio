@@ -18,7 +18,7 @@ export function AuthScreen({ title, subtitle, logo, children }: Props) {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.inner}>
-          {logo && <Image source={require('../assets/brand/logo-horizontal.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="NestKeep" />}
+          {logo && <Image source={require('../assets/brand/logo-horizontal.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="Omyva" />}
           <Text variant="title" style={styles.title}>{title}</Text>
           {subtitle ? <Text variant="body" style={styles.subtitle}>{subtitle}</Text> : null}
           {children}

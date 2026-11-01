@@ -150,7 +150,7 @@ export const formatInviteCode = (code: string) =>
 export const inviteMessage = (token: string, expiresAt: string) => {
   const until = new Date(expiresAt).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' });
   return (
-    `Entra na nossa casa no NestKeep! Abre a app, toca em "Tenho um convite" e escreve o código:\n\n` +
+    `Entra na nossa casa na Omyva! Abre a app, toca em "Tenho um convite" e escreve o código:\n\n` +
     `${formatInviteCode(token)}\n\n(válido até ${until})`
   );
 };

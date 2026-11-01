@@ -1,4 +1,4 @@
-// Lê os parâmetros de uma ligação de recuperação (nestkeep://reset-password#access_token=…&refresh_token=…)
+// Lê os parâmetros de uma ligação de recuperação (omyva://reset-password#access_token=…&refresh_token=…)
 // ou de um erro (…#error_code=otp_expired&error_description=…). Aceita parâmetros depois de "?" ou de "#".
 export function parseAuthLink(url: string): Record<string, string> {
   const out: Record<string, string> = {};
@@ -21,7 +21,7 @@ export function parseAuthLink(url: string): Record<string, string> {
 }
 
 // Endereço para onde o e-mail de recuperação devolve a pessoa à app (tem de estar nos "Redirect URLs" do Supabase)
-export const RESET_REDIRECT = 'nestkeep://reset-password';
+export const RESET_REDIRECT = 'omyva://reset-password';
 
 // ----- Guarda a última ligação de recuperação recebida -----
 // A ligação chega à app antes de o ecrã "Nova palavra-passe" existir; por isso é apanhada logo no arranque (app/_layout)

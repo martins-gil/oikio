@@ -4,16 +4,19 @@ import fs from 'fs';
 import path from 'path';
 
 const ROOT = path.resolve('.');
-const F = (pkg, w, name) => `file://${ROOT}/node_modules/@expo-google-fonts/${pkg}/${w}/${name}.ttf`;
-export const P = '#5C4DB1', Y = '#FFBF67', PINK = '#DC4F89', LAV = '#DFDEFF';
+import { fileURLToPath } from 'url';
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const FONTS = path.resolve(HERE, '../assets/fonts');
+export const P = '#5C4DB1', Y = '#FFBF67', PINK = '#DC4F89', LAV = '#EAE6FA';
 
+// as fontes são as da própria app (assets/fonts): não é preciso instalar nada
 const fontCss = `
-@font-face{font-family:Montserrat;font-weight:700;src:url(${F('montserrat', '700Bold', 'Montserrat_700Bold')})}
-@font-face{font-family:Montserrat;font-weight:600;src:url(${F('montserrat', '600SemiBold', 'Montserrat_600SemiBold')})}
-@font-face{font-family:Montserrat;font-weight:500;src:url(${F('montserrat', '500Medium', 'Montserrat_500Medium')})}
-@font-face{font-family:Ubuntu;font-weight:400;src:url(${F('ubuntu', '400Regular', 'Ubuntu_400Regular')})}
-@font-face{font-family:Ubuntu;font-weight:500;src:url(${F('ubuntu', '500Medium', 'Ubuntu_500Medium')})}
-@font-face{font-family:Ubuntu;font-weight:700;src:url(${F('ubuntu', '700Bold', 'Ubuntu_700Bold')})}
+@font-face{font-family:Montserrat;font-weight:700;src:url(file://${FONTS}/Montserrat-Bold.ttf)}
+@font-face{font-family:Montserrat;font-weight:600;src:url(file://${FONTS}/Montserrat-SemiBold.ttf)}
+@font-face{font-family:Montserrat;font-weight:500;src:url(file://${FONTS}/Montserrat-SemiBold.ttf)}
+@font-face{font-family:Ubuntu;font-weight:400;src:url(file://${FONTS}/Ubuntu-Regular.ttf)}
+@font-face{font-family:Ubuntu;font-weight:500;src:url(file://${FONTS}/Ubuntu-Medium.ttf)}
+@font-face{font-family:Ubuntu;font-weight:700;src:url(file://${FONTS}/Ubuntu-Bold.ttf)}
 `;
 
 let browser;
@@ -53,8 +56,8 @@ export const glyph = (main, check, sw = 13) => `
 export const wordmark = (main, tag, check, font = 'Ubuntu', weight = 700) => `
 <svg xmlns="http://www.w3.org/2000/svg" width="780" height="200" viewBox="0 0 780 200">
   <g transform="translate(0,14)">${glyph(main, check)}</g>
-  <text x="226" y="126" font-family="${font}" font-weight="${weight}" font-size="118" letter-spacing="-1" fill="${main}">NestKeep</text>
-  <text x="230" y="176" font-family="Ubuntu" font-weight="400" font-size="45" fill="${tag}">Your home in flow.</text>
+  <text x="226" y="126" font-family="${font}" font-weight="${weight}" font-size="118" letter-spacing="-1" fill="${main}">Omyva</text>
+  <text x="230" y="176" font-family="Ubuntu" font-weight="400" font-size="45" fill="${tag}">Your home, effortless.</text>
 </svg>`;
 
 // ---------- ícones do separador (grelha 32x32, traço 2.4) ----------

@@ -1,4 +1,4 @@
-# DESIGN.md — NestKeep (App da Casa)
+# DESIGN.md — Omyva (App da Casa)
 
 Guia de design da app. Lê este ficheiro antes de criar ou alterar qualquer ecrã,
 componente ou estilo. Complementa o CLAUDE.md; se algo contradisser o CLAUDE.md,
@@ -19,7 +19,7 @@ fina ou num diário bem desenhado: muito espaço em branco, poucos elementos por
 ecrã, detalhes delicados. Não deve parecer um painel de controlo corporativo.
 
 ## 3. Marca (já existe: não substituir)
-- Nome: NestKeep ("Your home in flow.").
+- Nome: Omyva ("Your home, effortless.").
 - Cores (em lib/theme.ts): roxo #5C4DB1 (base), amarelo #FFBF67 e rosa #DC4F89
   (acentos e estados), lavanda #EAE6FA, fundo quente #FAF7F2, texto #231F4F,
   texto secundário #6B6790; verde de sucesso menta #2FBF9B (em texto, o mais

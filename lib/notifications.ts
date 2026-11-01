@@ -73,7 +73,7 @@ export const STATUS_TEXT: Record<PushStatus, string> = {
   ok: '✅ Este telemóvel está pronto para receber lembretes.',
   expo_go: 'No Expo Go os lembretes não funcionam. Precisas da versão instalada da app (development build).',
   no_device: 'Os lembretes só funcionam num telemóvel a sério, não num emulador.',
-  denied: 'Sem permissão para notificações. Ativa-a nas definições do telemóvel (Apps → NestKeep → Notificações).',
+  denied: 'Sem permissão para notificações. Ativa-a nas definições do telemóvel (Apps → Omyva → Notificações).',
   no_project: 'Falta ligar a app ao Expo (passo do development build).',
   error: 'Não foi possível ativar os lembretes. Tenta outra vez.',
 };

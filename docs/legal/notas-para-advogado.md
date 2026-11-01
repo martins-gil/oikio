@@ -4,8 +4,9 @@ Os textos estão em `lib/legal.ts` (ecrãs `app/terms.tsx` e `app/privacy.tsx`) 
 **São um rascunho: não substituem a revisão de um advogado.** Se a app mudar (novos dados, novos fornecedores), mudar os textos.
 
 ## O que ainda tem de ser preenchido
-- `LEGAL.controller` (nome ou empresa responsável pelo tratamento) e `LEGAL.contactEmail`: hoje aparecem como «[… por definir]» na app.
-  Convém um e-mail do domínio da app (ver `docs/email-proprio.md`).
+- `LEGAL.controller`: está como «Gil Martins», a título pessoal. **Confirmar o nome completo** e, se a app for comercial, passar a uma empresa
+  (ou empresário em nome individual) antes de cobrar o que quer que seja. Um advogado ou contabilista ajuda a escolher.
+- `LEGAL.contactEmail`: `privacidade@omyva.app` (tem de receber mensagens: ver `docs/email-proprio.md`, «Receber»).
 - `LEGAL.updated`: atualizar a data sempre que os textos mudarem.
 
 ## Lacunas da app que a Política já assume

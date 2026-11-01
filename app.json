@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "NestKeep",
+    "name": "Omyva",
     "slug": "app-da-casa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "nestkeep",
+    "scheme": "omyva",
     "userInterfaceStyle": "light",
     "android": {
       "adaptiveIcon": {
@@ -37,8 +37,8 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "O NestKeep usa a câmara para ler os talões das tuas compras.",
-          "photosPermission": "O NestKeep usa as tuas fotos para ler talões.",
+          "cameraPermission": "A Omyva usa a câmara para ler os talões das tuas compras.",
+          "photosPermission": "A Omyva usa as tuas fotos para ler talões.",
           "microphonePermission": false
         }
       ]

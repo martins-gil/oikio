@@ -1,4 +1,4 @@
-// Gera os desenhos dos produtos da casa (assets/products/*.png) no estilo NestKeep: formas planas, sem contorno.
+// Gera os desenhos dos produtos da casa (assets/products/*.png) no estilo Omyva: formas planas, sem contorno.
 // Uso (na pasta design/, com o Chromium do Playwright): node products.mjs
 //   OUT=<pasta>  muda a pasta de saída; ONLY=milk,eggs  gera só alguns; SHEET=1 gera também uma folha de contacto.
 // Escreve ainda lib/productIconAssets.ts (os `require` de cada desenho) a partir da lista abaixo.
